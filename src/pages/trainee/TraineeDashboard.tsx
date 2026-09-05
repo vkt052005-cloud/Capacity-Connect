@@ -17,7 +17,7 @@ export const TraineeDashboard: React.FC = () => {
   const { courses, enrollments, certificates } = useCoursesStore();
   const { assessments, attempts } = useAssessmentsStore();
   const { openClassroom, sessions, launchGoogleMeet, joinByMeetUrlOrCode } = useLiveSessionsStore();
-  const { setCertificateVerifierOpen, addToast } = useAppStore();
+  const { addToast } = useAppStore();
   const navigate = useNavigate();
 
   const [quickMeetInput, setQuickMeetInput] = useState("");

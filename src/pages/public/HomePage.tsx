@@ -14,7 +14,6 @@ import { useAppStore } from "../../store/appStore";
 import { Header } from "../../components/layout/Header";
 import { Footer } from "../../components/layout/Footer";
 import { ToastContainer } from "../../components/common/ToastContainer";
-import { CertificateVerifierModal } from "../../components/assessment/CertificateVerifierModal";
 import { initialCourses } from "../../data/seed";
 
 export const HomePage: React.FC = () => {
@@ -24,9 +23,6 @@ export const HomePage: React.FC = () => {
     load();
   }, [load]);
   const { notifications } = useNotificationsStore();
-  const { setCertificateVerifierOpen } = useAppStore();
-  const [verifyHashInput, setVerifyHashInput] = useState("");
-  const [verifyResult, setVerifyResult] = useState<any>(null);
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [subscribeEmail, setSubscribeEmail] = useState("");
@@ -53,10 +49,6 @@ export const HomePage: React.FC = () => {
       a: "When a faculty member launches or joins a live Google Meet class, participant join timestamps are captured through the automated attendance engine. Verified attendees are automatically marked present and synced to the LMS gradebook and certification ledger."
     },
     {
-      q: "How can employers or auditors verify digital certificates?",
-      a: "Every certificate generated on Capacity Connect contains a cryptographically signed SHA-256 hash and a dynamic QR code. Anyone can scan the QR code or enter the certificate hash in the public verification ledger to instantly verify its authenticity without login."
-    },
-    {
       q: "What role types are supported on the portal?",
       a: "The portal strictly enforces three isolated role workspaces: Trainee (learning, proctored exams, Google Meet classes, certificates), Trainer (Google Meet console, library manager, AI quiz generator, gradebook), and Administrator (user approvals, competency mapping, bulletins, audit logs)."
     }
@@ -72,7 +64,7 @@ export const HomePage: React.FC = () => {
 
       <main className="flex-1 space-y-10 pb-12 overflow-hidden">
         {/* Hero Section */}
-        <section className="relative pt-6 sm:pt-10 pb-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 z-10">
+        <section className="relative pt-6 sm:pt-10 pb-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 z-10">
           {/* Large Hero Brand Logo */}
           <div className="flex justify-center mb-1">
             <img
@@ -114,18 +106,10 @@ export const HomePage: React.FC = () => {
             >
               Sign In to Portal
             </Link>
-            <button
-              onClick={() => setCertificateVerifierOpen(true)}
-              className="px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-slate-300 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition cursor-pointer"
-            >
-              <QrCode className="w-4 h-4 text-[#2997ff]" />
-              <span>Verify Certificate QR</span>
-            </button>
-            
           </div>
 
           {/* Quick Role Entrance Cards */}
-          <div className="pt-8 max-w-4xl mx-auto">
+          <div className="pt-8 max-w-5xl mx-auto">
             <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-4">
               Select User Role to Access Workspace
             </p>
@@ -192,7 +176,7 @@ export const HomePage: React.FC = () => {
 
         {/* Announcements Section */}
         {pinned.length > 0 && (
-          <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="card p-4 sm:p-5 border-[#2997ff]/30 bg-gradient-to-r from-blue-950/20 via-slate-900/30 to-purple-950/20 space-y-3">
               <h2 className="text-[11px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                 <Bell className="w-3.5 h-3.5 text-[#2997ff]" /> Organizational Announcements & Notices
@@ -220,7 +204,7 @@ export const HomePage: React.FC = () => {
         )}
 
         {/* Core Architectural Pillars */}
-        <section className="py-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-8">
+        <section className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-8">
           <div className="text-center max-w-xl mx-auto space-y-1.5">
             <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
               Key Platform Features
@@ -275,7 +259,7 @@ export const HomePage: React.FC = () => {
         </section>
 
         {/* Featured Courses Spotlight */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
             <div>
               <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
@@ -329,7 +313,7 @@ export const HomePage: React.FC = () => {
         </section>
 
         {/* Metrics & Operational Scale */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="glass-panel p-6 sm:p-8 border border-white/15 space-y-6">
             <div className="text-center space-y-1">
               <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Platform Scale & Operational Impact</h2>
@@ -356,93 +340,8 @@ export const HomePage: React.FC = () => {
 
         
 
-        {/* Public Instant Certificate Authenticity Verifier */}
-        <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="glass-panel p-5 sm:p-6 border border-white/15 space-y-4">
-            <div className="text-center space-y-1">
-              <span className="badge-blue text-[9px] uppercase font-semibold">Public Verification Ledger</span>
-              <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
-                Instant Certificate Authenticity Verification
-              </h2>
-              <p className="text-[11.5px] text-slate-400 max-w-lg mx-auto">
-                Verify any credentials issued by Capacity Connect. Enter the certificate ID below to inspect authenticity in real time.
-              </p>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!verifyHashInput.trim()) return;
-                setVerifyResult({
-                  id: "CC-CERT-948F2A1C",
-                  recipientName: "Certified Graduate",
-                  recipientEmail: "Verified Academic Credential",
-                  courseTitle: "Enterprise Cloud Architecture & Distributed Systems",
-                  issueDate: "2026-08-15",
-                  grade: "96.4% (Distinction)",
-                  instructor: "Faculty Board",
-                  hash: "SHA256: 948f2a1c8b3e7d5a2c1f0e9b8a7d6c5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c",
-                  verified: true
-                });
-              }}
-              className="flex flex-col sm:flex-row gap-2 max-w-lg mx-auto"
-            >
-              <div className="relative flex-1">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-                <input
-                  type="text"
-                  value={verifyHashInput}
-                  onChange={(e) => setVerifyHashInput(e.target.value)}
-                  placeholder="Enter Certificate ID"
-                  className="apple-input !pl-8 text-xs font-mono"
-                />
-              </div>
-              <button
-                type="submit"
-                className="apple-btn-primary px-4 py-2 text-xs font-semibold shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" /> Verify
-              </button>
-            </form>
-
-
-            {verifyResult && (
-              <div className="p-3.5 rounded-xl bg-[#0071e3]/10 border border-[#2997ff]/30 space-y-2.5 animate-fadeIn">
-                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Cryptographically Verified Credential</span>
-                  </div>
-                  <span className="badge-green text-[8.5px]">LEDGER ACTIVE</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Recipient:</span>
-                    <strong className="text-white">{verifyResult.recipientName}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Course:</span>
-                    <strong className="text-white truncate block">{verifyResult.courseTitle}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Instructor:</span>
-                    <strong className="text-white">{verifyResult.instructor}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">Grade:</span>
-                    <strong className="text-emerald-400">{verifyResult.grade}</strong>
-                  </div>
-                </div>
-                <p className="text-[9.5px] font-mono text-slate-400 break-all bg-black/40 p-1.5 rounded-lg border border-white/5">
-                  SHA-256 Ledger Hash: {verifyResult.hash}
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* FAQ Accordion */}
-        <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-4">
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-4">
           <div className="text-center space-y-1">
             <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
               Frequently Asked Questions
@@ -531,7 +430,7 @@ export const HomePage: React.FC = () => {
         </section>
 
         {/* Official Contact & Campus Helpdesk Section */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="glass-panel p-6 sm:p-8 border border-white/15 bg-gradient-to-b from-white/[0.04] to-black/60 shadow-xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               <div className="space-y-2">
@@ -583,7 +482,7 @@ export const HomePage: React.FC = () => {
         </section>
 
         {/* Bottom CTA Banner */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="glass-panel p-8 sm:p-12 text-center space-y-4 border border-[#2997ff]/40 bg-gradient-to-r from-[#0071e3]/10 via-[#0a0d16] to-purple-900/20 shadow-2xl">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Start Building Organizational Capacity Today
@@ -606,7 +505,6 @@ export const HomePage: React.FC = () => {
 
       <Footer />
       <ToastContainer />
-      <CertificateVerifierModal />
     </div>
   );
 };

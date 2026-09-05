@@ -12,7 +12,6 @@ export const Header: React.FC = () => {
   const { currentUser, logout, login } = useAuthStore();
   const {
     dataSaverMode, toggleDataSaverMode,
-    setCertificateVerifierOpen,
     addToast, zoomLevel, setZoomLevel,
     increaseZoom, decreaseZoom, resetZoom
   } = useAppStore();
@@ -74,17 +73,6 @@ export const Header: React.FC = () => {
           >
             {dataSaverMode ? <WifiOff className="w-3 h-3 text-emerald-400" /> : <Wifi className="w-3 h-3" />}
             <span className="text-[10px] whitespace-nowrap">{dataSaverMode ? "Data-Saver On" : "Data-Saver"}</span>
-          </button>
-
-          
-
-          {/* Certificate Public Verifier Link */}
-          <button
-            onClick={() => setCertificateVerifierOpen(true)}
-            className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs text-slate-300 hover:text-white transition whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-[#2997ff]" />
-            <span className="text-[10px] whitespace-nowrap">Verify Certificate</span>
           </button>
 
           {/* Live Meet Navigation / Active Indicator */}

@@ -4,7 +4,6 @@ import { Sidebar } from "./Sidebar";
 import { Footer } from "./Footer";
 import { ToastContainer } from "../common/ToastContainer";
 import { LiveMeetClassroom } from "../live/LiveMeetClassroom";
-import { CertificateVerifierModal } from "../assessment/CertificateVerifierModal";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -58,7 +57,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <Footer />
       <ToastContainer />
       <LiveMeetClassroom />
-      <CertificateVerifierModal />
     </div>
   );
 };

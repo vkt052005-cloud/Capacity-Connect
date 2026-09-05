@@ -38,7 +38,7 @@ export type ZoomLevel = (typeof ZOOM_LEVELS)[number];
 
 const initialZoom = Number(localStorage.getItem("displayZoom")) || 100;
 if (typeof document !== "undefined") {
-  document.documentElement.style.fontSize = (11.5 * (initialZoom / 100)).toFixed(1) + "px";
+  document.documentElement.style.fontSize = (16 * (initialZoom / 100)).toFixed(1) + "px";
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -64,7 +64,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setZoomLevel: (lvl: number) => {
     const clamped = Math.min(160, Math.max(70, lvl));
     localStorage.setItem("displayZoom", String(clamped));
-    const basePx = (15 * (clamped / 100)).toFixed(1);
+    const basePx = (16 * (clamped / 100)).toFixed(1);
     if (typeof document !== "undefined") {
       document.documentElement.style.fontSize = basePx + "px";
     }
