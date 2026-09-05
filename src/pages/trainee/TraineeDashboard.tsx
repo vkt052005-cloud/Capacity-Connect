@@ -1,3 +1,4 @@
+import { getCourseThumbnail } from "../../utils/courseThumbnail";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -302,16 +303,12 @@ export const TraineeDashboard: React.FC = () => {
                 <div key={c.id} className="glass-card p-4 space-y-3 flex flex-col justify-between">
                   <div className="flex items-start gap-3">
                     <img
-                      src={c.thumbnail || (c.id === "c-sql" || c.title?.toLowerCase().includes("sql") ? "/thumbnails/sql-course.jpg" : c.id === "c-dsa" || c.title?.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
+                      src={getCourseThumbnail(c)}
                       alt={c.title}
                       className="w-20 h-16 rounded-xl object-cover border border-white/10 shrink-0"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        const fallback = (c.id === "c-sql" || c.title?.toLowerCase().includes("sql"))
-                          ? "/thumbnails/sql-course.jpg"
-                          : (c.id === "c-dsa" || c.title?.toLowerCase().includes("data structure"))
-                          ? "/thumbnails/dsa-course.jpg"
-                          : "/thumbnails/webdev-course.jpg";
+                        const fallback = getCourseThumbnail(c);
                         if (!target.src.endsWith(fallback)) {
                           target.src = fallback;
                         }

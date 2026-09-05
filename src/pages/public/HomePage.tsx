@@ -1,3 +1,4 @@
+import { getCourseThumbnail } from "../../utils/courseThumbnail";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -284,16 +285,12 @@ export const HomePage: React.FC = () => {
                 <div key={c.id} className="card overflow-hidden grid grid-cols-1 sm:grid-cols-12 group hover:border-[#2997ff]/50 transition shadow-2xl">
                   <div className="sm:col-span-5 relative min-h-[220px] overflow-hidden">
                     <img
-                      src={c.thumbnail || (c.id === "c-sql" || c.title.toLowerCase().includes("sql") ? "/thumbnails/sql-course.jpg" : c.id === "c-dsa" || c.title.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
+                      src={getCourseThumbnail(c)}
                       alt={c.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        const fallback = (c.id === "c-sql" || c.title.toLowerCase().includes("sql"))
-                          ? "/thumbnails/sql-course.jpg"
-                          : (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure"))
-                          ? "/thumbnails/dsa-course.jpg"
-                          : "/thumbnails/webdev-course.jpg";
+                        const fallback = getCourseThumbnail(c);
                         if (!target.src.endsWith(fallback)) {
                           target.src = fallback;
                         }
@@ -342,20 +339,16 @@ export const HomePage: React.FC = () => {
                   <div>
                     <div className="relative h-32 overflow-hidden">
                       <img
-                        src={c.thumbnail || (c.id === "c-sql" || c.title.toLowerCase().includes("sql") ? "/thumbnails/sql-course.jpg" : c.id === "c-dsa" || c.title.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
+                        src={getCourseThumbnail(c)}
                         alt={c.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                         onError={(e) => {
-                          const target = e.currentTarget;
-                          const fallback = (c.id === "c-sql" || c.title.toLowerCase().includes("sql"))
-                            ? "/thumbnails/sql-course.jpg"
-                            : (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure"))
-                            ? "/thumbnails/dsa-course.jpg"
-                            : "/thumbnails/webdev-course.jpg";
-                          if (!target.src.endsWith(fallback)) {
-                            target.src = fallback;
-                          }
-                        }}
+                        const target = e.currentTarget;
+                        const fallback = getCourseThumbnail(c);
+                        if (!target.src.endsWith(fallback)) {
+                          target.src = fallback;
+                        }
+                      }}
                       />
                       <div className="absolute top-2 right-2">
                         <span className="badge-blue text-[8px]">{c.category}</span>

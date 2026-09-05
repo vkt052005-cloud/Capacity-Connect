@@ -1,3 +1,4 @@
+import { getCourseThumbnail } from "../../utils/courseThumbnail";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Search, Filter, Play, CheckCircle2, ArrowRight } from "lucide-react";
@@ -80,16 +81,12 @@ export const CourseCatalog: React.FC = () => {
                 <div>
                   <div className="relative h-36 overflow-hidden">
                     <img
-                      src={c.thumbnail || (c.id === "c-sql" || c.title.toLowerCase().includes("sql") ? "/thumbnails/sql-course.jpg" : c.id === "c-dsa" || c.title.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
+                      src={getCourseThumbnail(c)}
                       alt={c.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        const fallback = (c.id === "c-sql" || c.title.toLowerCase().includes("sql"))
-                          ? "/thumbnails/sql-course.jpg"
-                          : (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure"))
-                          ? "/thumbnails/dsa-course.jpg"
-                          : "/thumbnails/webdev-course.jpg";
+                        const fallback = getCourseThumbnail(c);
                         if (!target.src.endsWith(fallback)) {
                           target.src = fallback;
                         }

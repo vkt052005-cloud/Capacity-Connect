@@ -1,3 +1,4 @@
+import { getCourseThumbnail } from "../../utils/courseThumbnail";
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, BookOpen } from 'lucide-react';
@@ -36,14 +37,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       <div className="relative h-40 overflow-hidden bg-gradient-to-br from-[#12172b] to-[#1c2340]">
         {course.thumbnail || true ? (
           <img
-            src={course.thumbnail || (course.id === "c-dsa" || course.title.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
+            src={getCourseThumbnail(course)}
             alt={course.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100"
             onError={e => {
               const target = e.currentTarget;
-              const fallback = (course.id === "c-dsa" || course.title.toLowerCase().includes("data structure"))
-                ? "/thumbnails/dsa-course.jpg"
-                : "/thumbnails/webdev-course.jpg";
+              const fallback = getCourseThumbnail(course);
               if (!target.src.endsWith(fallback)) {
                 target.src = fallback;
               }

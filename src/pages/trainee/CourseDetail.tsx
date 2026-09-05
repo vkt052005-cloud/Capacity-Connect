@@ -17,6 +17,14 @@ import { initialDiscussions, initialCourses } from "../../data/seed";
 import { sigmaWebDevLessons } from "../../data/sigmaWebDevPlaylist";
 import { dsaLessons } from "../../data/dsaPlaylist";
 import { sqlLessons } from "../../data/sqlPlaylist";
+import { cLessons } from "../../data/cPlaylist";
+import { pythonLessons } from "../../data/pythonPlaylist";
+import { cppDsaLessons } from "../../data/cppDsaPlaylist";
+import { dbmsLessons } from "../../data/dbmsPlaylist";
+import { cnLessons } from "../../data/cnPlaylist";
+import { daaLessons } from "../../data/daaPlaylist";
+import { seLessons } from "../../data/sePlaylist";
+import { getCourseThumbnail } from "../../utils/courseThumbnail";
 
 const WEBDEV_MODULE_FILTERS = [
   { label: "All (139)", start: 1, end: 139 },
@@ -50,6 +58,84 @@ const SQL_MODULE_FILTERS = [
   { label: "Optimization & Scaling (6-8)", start: 6, end: 8 }
 ];
 
+const C_MODULE_FILTERS = [
+  { label: "All (14)", start: 1, end: 14 },
+  { label: "Variables & Operators (1-2)", start: 1, end: 2 },
+  { label: "Conditionals & Loops (3-4)", start: 3, end: 4 },
+  { label: "Functions & Pointers (5-6)", start: 5, end: 6 },
+  { label: "Arrays & Strings (7-8)", start: 7, end: 8 },
+  { label: "Structures & File I/O (9-10)", start: 9, end: 10 },
+  { label: "Dynamic Memory & Projects (11-14)", start: 11, end: 14 }
+];
+
+const PYTHON_MODULE_FILTERS = [
+  { label: "All (100)", start: 1, end: 100 },
+  { label: "Days 1-20 (Fundamentals)", start: 1, end: 20 },
+  { label: "Days 21-40 (Collections & Files)", start: 21, end: 40 },
+  { label: "Days 41-60 (OOP Principles)", start: 41, end: 60 },
+  { label: "Days 61-80 (Advanced Python)", start: 61, end: 80 },
+  { label: "Days 81-100 (Projects & GUI)", start: 81, end: 100 }
+];
+
+const CPP_DSA_MODULE_FILTERS = [
+  { label: "All (100)", start: 1, end: 100 },
+  { label: "Foundations & STL (1-25)", start: 1, end: 25 },
+  { label: "Sorting & Searching (26-45)", start: 26, end: 45 },
+  { label: "Recursion & Backtracking (46-60)", start: 46, end: 60 },
+  { label: "Linked Lists & Stacks (61-80)", start: 61, end: 80 },
+  { label: "Trees, Graphs & DP (81-100)", start: 81, end: 100 }
+];
+
+const DBMS_MODULE_FILTERS = [
+  { label: "All (91)", start: 1, end: 91 },
+  { label: "Basics & ER Model (1-18)", start: 1, end: 18 },
+  { label: "Relational Algebra (19-35)", start: 1, end: 35 },
+  { label: "SQL & Normalization (36-60)", start: 36, end: 60 },
+  { label: "Transactions & Concurrency (61-78)", start: 61, end: 78 },
+  { label: "Recovery & Deadlocks (79-91)", start: 79, end: 91 }
+];
+
+const CN_MODULE_FILTERS = [
+  { label: "All (100)", start: 1, end: 100 },
+  { label: "OSI & Physical Layer (1-20)", start: 1, end: 20 },
+  { label: "Data Link Layer & Framing (21-45)", start: 21, end: 45 },
+  { label: "Network Layer & Subnetting (46-70)", start: 46, end: 70 },
+  { label: "Transport Layer & TCP (71-88)", start: 71, end: 88 },
+  { label: "Application Layer & Security (89-100)", start: 89, end: 100 }
+];
+
+const DAA_MODULE_FILTERS = [
+  { label: "All (10)", start: 1, end: 10 },
+  { label: "Asymptotic & Master Theorem (1-2)", start: 1, end: 2 },
+  { label: "Divide & Conquer (3)", start: 3, end: 3 },
+  { label: "Greedy Algorithms (4)", start: 4, end: 4 },
+  { label: "Dynamic Programming (5)", start: 5, end: 5 },
+  { label: "Backtracking & Branch Bound (6-7)", start: 6, end: 7 },
+  { label: "String Matching & NP-Complete (8-10)", start: 8, end: 10 }
+];
+
+const SE_MODULE_FILTERS = [
+  { label: "All (60)", start: 1, end: 60 },
+  { label: "SDLC & Process Models (1-12)", start: 1, end: 12 },
+  { label: "Requirements & Metrics (13-24)", start: 1, end: 24 },
+  { label: "Software Design & UML (25-36)", start: 25, end: 36 },
+  { label: "Software Testing (37-48)", start: 37, end: 48 },
+  { label: "Reliability & Maintenance (49-60)", start: 49, end: 60 }
+];
+
+const COURSE_ASSESSMENT_MAP: Record<string, string> = {
+  "c6": "a-webdev-sigma",
+  "c-dsa": "a-dsa-striver",
+  "c-sql": "a-sql-cs50",
+  "c-c-prog": "a-c-prog",
+  "c-python": "a-python-100",
+  "c-cpp-dsa": "a-cpp-dsa",
+  "c-dbms": "a-dbms-neso",
+  "c-cn": "a-cn-gate",
+  "c-daa": "a-daa-kg",
+  "c-se": "a-se-iit"
+};
+
 export const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { courses, completeCourse } = useCoursesStore();
@@ -66,21 +152,29 @@ export const CourseDetail: React.FC = () => {
   // Ensure course is always resolved, falling back to seed data if localStorage is stale
   const foundCourse = courses.find((c) => c.id === id);
   const course = foundCourse || initialCourses.find((c) => c.id === id) || initialCourses.find((c) => c.id === "c6");
-  const isDsaCourse = id === "c-dsa" || course?.id === "c-dsa" || course?.title?.toLowerCase().includes("data structure") || false;
-  const isSqlCourse = id === "c-sql" || course?.id === "c-sql" || course?.title?.toLowerCase().includes("database") || course?.title?.toLowerCase().includes("sql") || false;
 
-  const currentModuleFilters = isSqlCourse
-    ? SQL_MODULE_FILTERS
-    : isDsaCourse
-    ? DSA_MODULE_FILTERS
-    : WEBDEV_MODULE_FILTERS;
+  const currentModuleFilters = useMemo(() => {
+    const courseId = course?.id || id || "";
+    const title = (course?.title || "").toLowerCase();
+
+    if (courseId === "c-c-prog" || title.includes("c programming")) return C_MODULE_FILTERS;
+    if (courseId === "c-python" || title.includes("python")) return PYTHON_MODULE_FILTERS;
+    if (courseId === "c-cpp-dsa" || (title.includes("c++") && title.includes("dsa"))) return CPP_DSA_MODULE_FILTERS;
+    if (courseId === "c-dbms" || title.includes("dbms")) return DBMS_MODULE_FILTERS;
+    if (courseId === "c-cn" || title.includes("computer network") || title.includes("network")) return CN_MODULE_FILTERS;
+    if (courseId === "c-daa" || title.includes("daa") || title.includes("analysis of algorithm")) return DAA_MODULE_FILTERS;
+    if (courseId === "c-se" || title.includes("software engineering")) return SE_MODULE_FILTERS;
+    if (courseId === "c-sql" || title.includes("sql") || title.includes("database")) return SQL_MODULE_FILTERS;
+    if (courseId === "c-dsa" || title.includes("data structure")) return DSA_MODULE_FILTERS;
+    return WEBDEV_MODULE_FILTERS;
+  }, [course, id]);
 
   const activeModuleFilter = selectedModuleFilter && currentModuleFilters.some(m => m.label === selectedModuleFilter)
     ? selectedModuleFilter
     : currentModuleFilters[0].label;
 
   const [discussions, setDiscussions] = useState(
-    initialDiscussions.filter((d) => d.courseId === "c1" || d.courseId === id || (isDsaCourse && d.courseId === "c-dsa") || (isSqlCourse && d.courseId === "c-sql"))
+    initialDiscussions.filter((d) => d.courseId === "c1" || d.courseId === id || d.courseId === course?.id)
   );
   const [newQuestion, setNewQuestion] = useState("");
   const [newQuestionTitle, setNewQuestionTitle] = useState("");
@@ -90,21 +184,24 @@ export const CourseDetail: React.FC = () => {
     if (course?.lessons && course.lessons.length > 0) {
       return course.lessons;
     }
-    if (isSqlCourse) {
-      return sqlLessons;
-    }
-    if (isDsaCourse) {
-      return dsaLessons;
-    }
-    if (id === "c6" || course?.id === "c6") {
-      return sigmaWebDevLessons;
-    }
-    const seedMatch = initialCourses.find((c) => c.id === id);
+    const courseId = course?.id || id || "";
+    if (courseId === "c-c-prog") return cLessons;
+    if (courseId === "c-python") return pythonLessons;
+    if (courseId === "c-cpp-dsa") return cppDsaLessons;
+    if (courseId === "c-dbms") return dbmsLessons;
+    if (courseId === "c-cn") return cnLessons;
+    if (courseId === "c-daa") return daaLessons;
+    if (courseId === "c-se") return seLessons;
+    if (courseId === "c-sql") return sqlLessons;
+    if (courseId === "c-dsa") return dsaLessons;
+    if (courseId === "c6") return sigmaWebDevLessons;
+
+    const seedMatch = initialCourses.find((c) => c.id === courseId);
     if (seedMatch?.lessons && seedMatch.lessons.length > 0) {
       return seedMatch.lessons;
     }
     return sigmaWebDevLessons;
-  }, [course, id, isDsaCourse, isSqlCourse]);
+  }, [course, id]);
 
   if (!course) {
     return (
@@ -138,7 +235,6 @@ export const CourseDetail: React.FC = () => {
 
   const handleSelectLesson = (idx: number) => {
     setSelectedLessonIndex(idx);
-    // Smoothly scroll to video player if clicked from bottom catalog
     if (playerRef.current) {
       playerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -202,6 +298,8 @@ export const CourseDetail: React.FC = () => {
     return matchesSearch && matchesModule;
   });
 
+  const assessmentId = (course && COURSE_ASSESSMENT_MAP[course.id]) || "a-webdev-sigma";
+
   return (
     <DashboardLayout
       pageTitle={course.title}
@@ -254,7 +352,7 @@ export const CourseDetail: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(`/trainee/assessment/${isSqlCourse ? "a-sql-cs50" : isDsaCourse ? "a-dsa-striver" : "a-webdev-sigma"}`)}
+              onClick={() => navigate(`/trainee/assessment/${assessmentId}`)}
               className="apple-btn-secondary text-xs px-4 py-2 font-semibold cursor-pointer"
             >
               <Award className="w-4 h-4" /> Certification Exam
@@ -330,7 +428,7 @@ export const CourseDetail: React.FC = () => {
               <div className="lg:col-span-8 space-y-4">
                 <AdaptiveVideoPlayer
                   videoUrl={activeVideoUrl}
-                  thumbnail={course.thumbnail || (isSqlCourse ? "/thumbnails/sql-course.jpg" : isDsaCourse ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
+                  thumbnail={getCourseThumbnail(course)}
                   transcripts={mainResource?.transcripts}
                   title={activeVideoTitle}
                 />
@@ -394,7 +492,7 @@ export const CourseDetail: React.FC = () => {
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Search videos (e.g. HTML, CSS, React, 100)..."
+                    placeholder="Search videos (e.g. loops, recursion, routing)..."
                     value={lessonSearch}
                     onChange={(e) => setLessonSearch(e.target.value)}
                     className="apple-input !pl-8 !py-1.5 text-xs w-full"

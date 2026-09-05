@@ -6,6 +6,13 @@ import { generateAnswerHash } from "../utils/quizSecurity";
 import { sigmaWebDevLessons } from "./sigmaWebDevPlaylist";
 import { dsaLessons } from "./dsaPlaylist";
 import { sqlLessons } from "./sqlPlaylist";
+import { cLessons } from "./cPlaylist";
+import { pythonLessons } from "./pythonPlaylist";
+import { cppDsaLessons } from "./cppDsaPlaylist";
+import { dbmsLessons } from "./dbmsPlaylist";
+import { cnLessons } from "./cnPlaylist";
+import { daaLessons } from "./daaPlaylist";
+import { seLessons } from "./sePlaylist";
 
 export const initialBadges: Badge[] = [
   { id: "b1", name: "Quick Starter", description: "Enrolled and completed first orientation module within 24 hours.", icon: "⚡", category: "milestone" },
@@ -36,23 +43,23 @@ export const initialUsers: User[] = [
   },
   {
     id: "u-trainer-official",
-    name: "Raj Tiwari",
+    name: "CodeWithHarry (Haris Khan)",
     email: "tiwariraj052005@gmail.com",
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
-      bio: "Senior Technical Trainer & Academic Lead at Capacity Connect.",
-      expertise: ["Full-Stack Architecture", "Cloud Engineering", "DevOps"],
-      competencies: ["Curriculum Design", "Hands-on Labs", "Mentorship"],
+      bio: "Master Software Educator, Creator of Sigma Web Development & Python 100 Days. Over 6M+ students trained globally.",
+      expertise: ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"],
+      competencies: ["Hands-on Coding", "Curriculum Design", "Real-world Projects"],
       phone: "+91 98765 11111",
       department: "Computer Science & Engineering",
-      designation: "Senior Lead Instructor",
-      experience: "8+ Years Industry Leadership",
-      rating: 5,
-      totalStudentsTaught: 124,
-      verifiedCredentials: ["Institutional Accreditation"]
+      designation: "Principal Technical Educator",
+      experience: "10+ Years Technical Education",
+      rating: 4.99,
+      totalStudentsTaught: 6000000,
+      verifiedCredentials: ["CodeWithHarry Founder", "Top Developer Educator"]
     }
   },
   {
@@ -120,11 +127,116 @@ export const initialUsers: User[] = [
       totalStudentsTaught: 750000,
       verifiedCredentials: ["Harvard University Faculty", "CS50 Lead Instructor"]
     }
+  },
+  {
+    id: "u-trainer-shradha",
+    name: "Shradha Khapra",
+    email: "shradha@apnacollege.in",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Ex-Microsoft Software Engineer, Co-Founder of Apna College. One of India's most recognized programming educators.",
+      expertise: ["C++", "Data Structures & Algorithms", "Full Stack Development"],
+      competencies: ["DSA Problem Solving", "C++ STL", "Interview Preparation"],
+      phone: "+91 98765 33333",
+      department: "Computer Science & Engineering",
+      designation: "Co-Founder & Lead Instructor, Apna College",
+      experience: "6+ Years Tech Industry & Mentorship",
+      rating: 4.98,
+      totalStudentsTaught: 4500000,
+      verifiedCredentials: ["Ex-Microsoft Engineer", "Apna College Co-Founder"]
+    }
+  },
+  {
+    id: "u-trainer-neso",
+    name: "Neso Academy",
+    email: "contact@nesoacademy.org",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Globally acclaimed engineering education platform delivering foundational computer science and electrical engineering courses.",
+      expertise: ["Database Management Systems", "Digital Electronics", "Operating Systems"],
+      competencies: ["Relational Theory", "Normalization", "Concurrency Control", "Transaction Management"],
+      phone: "+91 98765 44444",
+      department: "Computer Science & Engineering",
+      designation: "Senior Academic Faculty",
+      experience: "12+ Years University Curriculum",
+      rating: 4.97,
+      totalStudentsTaught: 2200000,
+      verifiedCredentials: ["Neso Academy Academic Lead", "Global STEM Contributor"]
+    }
+  },
+  {
+    id: "u-trainer-varun",
+    name: "Varun Singla",
+    email: "varun@gatesmashers.com",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Founder of Gate Smashers, India's most popular GATE CSE educator known for intuitive, high-yield conceptual explanations.",
+      expertise: ["Computer Networks", "Operating Systems", "Theory of Computation"],
+      competencies: ["OSI/TCP-IP Protocols", "Network Security", "Routing Algorithms", "IP Subnetting"],
+      phone: "+91 98765 55555",
+      department: "Computer Science & Engineering",
+      designation: "Founder & Lead Educator, Gate Smashers",
+      experience: "11+ Years GATE & University Training",
+      rating: 4.99,
+      totalStudentsTaught: 1800000,
+      verifiedCredentials: ["Gate Smashers Founder", "Master GATE Educator"]
+    }
+  },
+  {
+    id: "u-trainer-sanchit",
+    name: "Sanchit Jain",
+    email: "sanchit@knowledgegate.in",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Founder of KnowledgeGATE, renowned educator specializing in Algorithm Design, Theory of Computation, and GATE CS.",
+      expertise: ["Design & Analysis of Algorithms", "Asymptotic Analysis", "Dynamic Programming", "Greedy Techniques"],
+      competencies: ["Time & Space Complexity", "Divide & Conquer", "Graph Algorithms", "NP-Completeness"],
+      phone: "+91 98765 66666",
+      department: "Computer Science & Engineering",
+      designation: "Founder & Principal Faculty, KnowledgeGATE",
+      experience: "10+ Years Algorithm Mastery",
+      rating: 4.96,
+      totalStudentsTaught: 1200000,
+      verifiedCredentials: ["KnowledgeGATE Founder", "GATE CS Specialist"]
+    }
+  },
+  {
+    id: "u-trainer-rajib",
+    name: "Prof. Rajib Mall",
+    email: "rajib@cse.iitkgp.ac.in",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Professor in the Department of Computer Science & Engineering at IIT Kharagpur. World-renowned authority and author on Software Engineering.",
+      expertise: ["Software Engineering", "Object-Oriented Design", "Software Testing", "Agile & Waterfall Models"],
+      competencies: ["Software Architecture", "UML Modeling", "Reliability Engineering", "Function Point Analysis"],
+      phone: "+91 3222 282222",
+      department: "Department of Computer Science & Engineering, IIT Kharagpur",
+      designation: "Professor & Author, IIT Kharagpur",
+      experience: "30+ Years Academic & Research Excellence",
+      rating: 4.98,
+      totalStudentsTaught: 950000,
+      verifiedCredentials: ["IIT Kharagpur Senior Faculty", "Author of Fundamentals of Software Engineering"]
+    }
   }
 ];
 
 export const initialCourses: Course[] = [
-{
+  {
     id: "c6",
     title: "Web Development Course",
     description: "The complete hands-on roadmap to becoming a full stack web developer: learn semantic HTML5, modern CSS3 & Flexbox, vanilla JavaScript ES6+, DOM manipulation, Node.js runtime, Express backend, MongoDB database, and React & Next.js.",
@@ -249,53 +361,56 @@ export const initialCourses: Course[] = [
     prerequisites: ["Basic understanding of programming in C++ or Java"],
     resources: [
       {
-        id: "r-dsa-1",
+        id: "r-dsa-01",
         courseId: "c-dsa",
-        title: "A2Z DSA Comprehensive Cheatsheet & Pattern Handbook",
+        title: "Striver's A2Z DSA Handbook & Cheatsheet",
         type: "presentation",
         url: "#slides",
-        size: "24.6 MB",
+        size: "22.4 MB",
         uploadedAt: "2026-03-01T10:00:00Z",
         uploadedBy: "Raj Vikramaditya (Striver)",
-        version: "v4.2",
-        summary: "Detailed engineering notes covering Big-O analysis, binary search templates, tree traversal tricks, graph cycle detection, and DP state transitions.",
+        version: "v4.0",
+        summary: "Complete blueprint of algorithmic problem solving, time/space complexities, recursion trees, two-pointer patterns, graph algorithms, and DP memoization tables.",
         keyTakeaways: [
-          "Binary search operates on any monotonically sorted search space, not just arrays.",
-          "Monotonic stack pattern solves Next Greater Element and largest rectangle in histogram in O(N).",
-          "Graph BFS computes unweighted shortest paths, while Dijkstra handles non-negative weighted edges.",
-          "Dynamic programming solves overlapping subproblems using memoization (top-down) or tabulation (bottom-up)."
+          "Always analyze time and space complexity before choosing a data structure.",
+          "Two pointer and sliding window patterns optimize nested O(N^2) loops to linear O(N).",
+          "Binary Search can be applied to monotonic functions and optimal answer ranges, not just sorted arrays.",
+          "Graphs require clear understanding of BFS (shortest path in unweighted) vs DFS (cycle detection, topological sort).",
+          "Dynamic Programming is recursion + memoization to eliminate redundant subproblem recalculations."
         ],
         flashcards: [
-          { id: "f-dsa-1", front: "What is the time complexity of Binary Search?", back: "O(log N), because the search space is halved at each comparison step.", category: "Algorithms" },
-          { id: "f-dsa-2", front: "What data structure is used to detect cycles in an undirected graph?", back: "Breadth-First Search (BFS) / Depth-First Search (DFS) with a visited array, or Disjoint Set Union (DSU).", category: "Graphs" },
-          { id: "f-dsa-3", front: "What is the difference between Memoization and Tabulation in DP?", back: "Memoization is top-down recursion with cached results; Tabulation is bottom-up iterative table filling.", category: "Dynamic Programming" }
+          { id: "f-dsa-1", front: "What is the amortized time complexity of inserting into a Dynamic Array (std::vector)?", back: "O(1) amortized, because doubling capacity happens infrequently.", category: "Complexity" },
+          { id: "f-dsa-2", front: "When can Binary Search be used on an answer space?", back: "When the predicate function condition(x) is monotonic (e.g. false, false, ..., true, true).", category: "Binary Search" },
+          { id: "f-dsa-3", front: "What is Dijkstra's algorithm used for?", back: "Finding single-source shortest paths in graphs with non-negative edge weights in O((V + E) log V) time.", category: "Graphs" },
+          { id: "f-dsa-4", front: "How do you detect a cycle in an undirected graph using BFS?", back: "If during traversal you encounter an already visited node that is not the parent of the current node, a cycle exists.", category: "Graphs" },
+          { id: "f-dsa-5", front: "What are the two key properties of Dynamic Programming?", back: "Optimal Substructure and Overlapping Subproblems.", category: "DP" }
         ],
         slides: [
           {
             slideNumber: 1,
-            title: "Mastering Asymptotic Analysis",
+            title: "Asymptotic Analysis & Big-O",
             bullets: [
-              "Time complexity: Big-O, Omega, and Theta notations",
-              "Space complexity: Auxiliary space vs. Input space",
-              "Recursion tree method and Master Theorem",
-              "Practical tradeoffs: In-place vs. Out-of-place algorithms"
+              "Worst-case (O), Average-case (Theta), Best-case (Omega)",
+              "Common complexities: O(1) < O(log N) < O(N) < O(N log N) < O(N^2) < O(2^N)",
+              "Master Theorem for divide-and-conquer recurrences",
+              "Auxiliary space vs Total space"
             ],
-            keyConcept: "Writing clean code is about achieving optimal asymptotic bounds without hidden overhead."
+            keyConcept: "Choose algorithms that stay within 10^8 operations per second limits."
           },
           {
             slideNumber: 2,
-            title: "Graph Traversal & Shortest Path Topologies",
+            title: "Graph Traversal Mastery",
             bullets: [
-              "Adjacency list representation and memory compactness",
-              "Breadth-First Search (Queue) vs Depth-First Search (Call Stack)",
-              "Dijkstra algorithm using priority queue (min-heap)",
-              "Kahn algorithm for Topological Sorting in DAGs"
+              "Adjacency List representation using vector<vector<int>>",
+              "Breadth-First Search (queue, level order, shortest path)",
+              "Depth-First Search (recursion/stack, component counting)",
+              "Cycle detection in directed vs undirected graphs"
             ],
-            keyConcept: "Graphs model dependencies, networks, and state spaces across production systems."
+            keyConcept: "Breadth-First Search naturally explores equidistant paths level by level."
           },
           {
             slideNumber: 3,
-            title: "Dynamic Programming Patterns",
+            title: "Dynamic Programming Strategy",
             bullets: [
               "Identifying overlapping subproblems and optimal substructure",
               "1D DP: Fibonacci, Climbing Stairs, Frog Jump",
@@ -398,11 +513,225 @@ export const initialCourses: Course[] = [
         ]
       }
     ]
+  },
+  {
+    id: "c-c-prog",
+    title: "C Programming Complete Course",
+    description: "Master C Language programming from scratch with CodeWithHarry. Covers variables, data types, control flow, functions, recursion, pointers, dynamic memory allocation (malloc, calloc, realloc, free), structs, file I/O, and real-world projects like Snake Water Gun game.",
+    trainerId: "u-trainer-official",
+    trainerName: "CodeWithHarry (Haris Khan)",
+    category: "Technical",
+    thumbnail: "/thumbnails/c-prog-course.jpg",
+    duration: "10+ Hours • 14 Chapters & Projects",
+    level: "Beginner",
+    status: "active",
+    createdAt: "2026-03-03T10:00:00Z",
+    rating: 4.98,
+    totalRatings: 2150,
+    videoUrl: "https://youtu.be/aZb0iu4uGwA",
+    lessons: cLessons,
+    tags: ["C Programming", "Pointers", "Memory Management", "Data Structures", "Low-Level Programming"],
+    syllabus: [
+      "Chapter 1: Variables, Constants & Keywords",
+      "Chapter 2: Instructions & Operators",
+      "Chapter 3: Conditional Instructions (if-else, switch)",
+      "Chapter 4: Loop Control Instructions (while, do-while, for)",
+      "Chapter 5: Functions & Recursion",
+      "Chapter 6: Pointers & Pointer Arithmetic",
+      "Chapter 7: Arrays & Multi-Dimensional Arrays",
+      "Chapter 8: Strings & Standard Library Functions",
+      "Chapter 9: Structures & Unions",
+      "Chapter 10: File Input & Output",
+      "Chapter 11: Dynamic Memory Allocation (malloc, calloc, realloc, free)",
+      "Project 1: Number Guessing Game",
+      "Project 2: Snake, Water, Gun Game"
+    ],
+    prerequisites: ["No prior programming experience required", "A computer with GCC or VS Code installed"],
+    resources: []
+  },
+  {
+    id: "c-python",
+    title: "Python for Beginners (100 Days of Code)",
+    description: "The complete 100 Days of Code Python Bootcamp by CodeWithHarry. Learn Python programming from beginner syntax to advanced object-oriented programming, data structures, decorators, generators, file handling, multi-threading, GUI development, and production project creation.",
+    trainerId: "u-trainer-official",
+    trainerName: "CodeWithHarry (Haris Khan)",
+    category: "Technical",
+    thumbnail: "/thumbnails/python-course.jpg",
+    duration: "35+ Hours • 100 Lessons",
+    level: "Beginner",
+    status: "active",
+    createdAt: "2026-03-03T10:00:00Z",
+    rating: 4.99,
+    totalRatings: 4200,
+    videoUrl: "https://youtube.com/playlist?list=PLu0W_9lII9agwh1XjRt242xIpHhPT2llg",
+    lessons: pythonLessons,
+    tags: ["Python", "100 Days of Code", "OOP", "Data Science", "Automation", "Software Engineering"],
+    syllabus: [
+      "Days 1-20: Python Fundamentals, Syntax, Loops, Functions & Collections (Lists, Tuples, Dictionaries)",
+      "Days 21-40: Advanced Collections, File Handling, Exception Handling & Virtual Environments",
+      "Days 41-60: Object-Oriented Programming (Classes, Inheritance, Polymorphism, Encapsulation)",
+      "Days 61-80: Advanced Python (Decorators, Generators, Regular Expressions, AsyncIO)",
+      "Days 81-100: Real-World Applications, APIs, Multithreading, GUI Projects & Packaging"
+    ],
+    prerequisites: ["No prerequisites required"],
+    resources: []
+  },
+  {
+    id: "c-cpp-dsa",
+    title: "Complete C++ DSA Course",
+    description: "Master Data Structures & Algorithms with C++ taught by Shradha Khapra (Apna College, Ex-Microsoft). Covers C++ basics, STL, bit manipulation, recursion, backtracking, linked lists, stacks, queues, binary trees, BST, heaps, hashing, graphs, and dynamic programming.",
+    trainerId: "u-trainer-shradha",
+    trainerName: "Shradha Khapra (Apna College)",
+    category: "Technical",
+    thumbnail: "/thumbnails/cpp-dsa-course.jpg",
+    duration: "50+ Hours • 100 Lessons",
+    level: "Intermediate",
+    status: "active",
+    createdAt: "2026-03-03T10:00:00Z",
+    rating: 4.98,
+    totalRatings: 3890,
+    videoUrl: "https://youtube.com/playlist?list=PLfqMhTWNBTe137I_EPQd34TsgV6IO55pt",
+    lessons: cppDsaLessons,
+    tags: ["C++", "DSA", "Algorithms", "Data Structures", "LeetCode", "Apna College"],
+    syllabus: [
+      "Module 1: C++ Foundations, Control Structures & Patterns",
+      "Module 2: Arrays, Vectors & C++ Standard Template Library (STL)",
+      "Module 3: Sorting & Searching Algorithms (Binary Search & Applications)",
+      "Module 4: Strings, Two Pointers & Bit Manipulation",
+      "Module 5: Recursion & Backtracking (N-Queens, Sudoku Solver)",
+      "Module 6: Linked Lists (Singly, Doubly, Circular & LeetCode problems)",
+      "Module 7: Stacks & Queues (Implementation, Expressions & Sliding Window)",
+      "Module 8: Binary Trees, Binary Search Trees & Heaps",
+      "Module 9: Hashing, Graphs (BFS, DFS, Shortest Paths) & Dynamic Programming"
+    ],
+    prerequisites: ["Familiarity with high school mathematics and logic"],
+    resources: []
+  },
+  {
+    id: "c-dbms",
+    title: "Database Management Systems (DBMS)",
+    description: "The authoritative university curriculum on Database Management Systems by Neso Academy. Learn relational data models, ER diagrams, relational algebra, SQL, functional dependencies, normalization (1NF, 2NF, 3NF, BCNF, 4NF, 5NF), transactions, concurrency control, locking, and recovery.",
+    trainerId: "u-trainer-neso",
+    trainerName: "Neso Academy",
+    category: "Technical",
+    thumbnail: "/thumbnails/dbms-course.jpg",
+    duration: "28+ Hours • 91 Lessons",
+    level: "Intermediate",
+    status: "active",
+    createdAt: "2026-03-03T10:00:00Z",
+    rating: 4.97,
+    totalRatings: 1980,
+    videoUrl: "https://youtube.com/playlist?list=PLBlnK6fEyqRiyryTrbKHX1Sh9luYI0dhX",
+    lessons: dbmsLessons,
+    tags: ["DBMS", "Relational Algebra", "SQL", "Normalization", "Concurrency Control", "Transactions"],
+    syllabus: [
+      "Unit 1: Introduction to DBMS, 3-Tier Architecture & Data Independence",
+      "Unit 2: Entity-Relationship (ER) Modeling, Entities, Attributes & Cardinality",
+      "Unit 3: Relational Model & Relational Algebra Operators",
+      "Unit 4: SQL Queries, Constraints, Triggers & Views",
+      "Unit 5: Functional Dependencies & Attribute Closure",
+      "Unit 6: Normalization Forms: 1NF, 2NF, 3NF, BCNF, 4NF & 5NF",
+      "Unit 7: Transactions, ACID Properties, Schedules & Serializability",
+      "Unit 8: Concurrency Control (2PL, Timestamp Ordering, Multiversion)",
+      "Unit 9: Deadlock Handling, Recovery Protocols & Log-Based Recovery"
+    ],
+    prerequisites: ["Basic knowledge of computer systems and discrete structures"],
+    resources: []
+  },
+  {
+    id: "c-cn",
+    title: "Computer Networks (Complete Course)",
+    description: "Complete university and GATE syllabus course on Computer Networks by Varun Singla (Gate Smashers). Dive deep into OSI and TCP/IP 5-layer architecture, Physical Layer, Data Link Layer (Framing, Flow Control, Error Detection, CSMA/CD), Network Layer (IP Addressing, Subnetting, CIDR, Routing Algorithms), Transport Layer (TCP, UDP, Congestion Control), and Application Layer protocols (DNS, HTTP, SMTP).",
+    trainerId: "u-trainer-varun",
+    trainerName: "Varun Singla (Gate Smashers)",
+    category: "Technical",
+    thumbnail: "/thumbnails/cn-course.jpg",
+    duration: "32+ Hours • 100 Lessons",
+    level: "Intermediate",
+    status: "active",
+    createdAt: "2026-03-03T10:00:00Z",
+    rating: 4.99,
+    totalRatings: 3100,
+    videoUrl: "https://youtube.com/playlist?list=PLxCzCOWd7aiGFBD2-2joCpWOLUrDLvVV_",
+    lessons: cnLessons,
+    tags: ["Computer Networks", "TCP/IP", "OSI Model", "Subnetting", "Routing", "Gate Smashers"],
+    syllabus: [
+      "Chapter 1: Network Fundamentals, Topologies, OSI vs TCP/IP Protocol Suites",
+      "Chapter 2: Physical Layer, Transmission Media, Switching (Packet vs Circuit)",
+      "Chapter 3: Data Link Layer: Framing, Flow Control (Stop & Wait, Go-Back-N, Selective Repeat)",
+      "Chapter 4: Error Detection & Correction (CRC, Hamming Code) & Multiple Access (CSMA/CD)",
+      "Chapter 5: Network Layer: IPv4 Addressing, Classful vs Classless, Subnetting, VLSM & CIDR",
+      "Chapter 6: Routing Protocols: Distance Vector, Link State (OSPF), BGP & NAT",
+      "Chapter 7: Transport Layer: TCP 3-Way Handshake, Sliding Window, Congestion Control & UDP",
+      "Chapter 8: Application Layer: DNS, DHCP, HTTP/HTTPS, FTP, SMTP & Network Security"
+    ],
+    prerequisites: ["Basic computer literacy and binary arithmetic"],
+    resources: []
+  },
+  {
+    id: "c-daa",
+    title: "Design and Analysis of Algorithms (DAA)",
+    description: "Comprehensive university and competitive exam masterclass on Algorithm Design & Analysis by Sanchit Jain (KnowledgeGATE). Covers Asymptotic Notations (Big-O, Omega, Theta), Master Theorem, Divide and Conquer, Greedy Techniques, Dynamic Programming, Backtracking, Branch & Bound, and NP-Completeness.",
+    trainerId: "u-trainer-sanchit",
+    trainerName: "Sanchit Jain (KnowledgeGATE)",
+    category: "Technical",
+    thumbnail: "/thumbnails/daa-course.jpg",
+    duration: "8+ Hours • 10 Chapters",
+    level: "Advanced",
+    status: "active",
+    createdAt: "2026-03-03T10:00:00Z",
+    rating: 4.96,
+    totalRatings: 1450,
+    videoUrl: "https://youtu.be/z6DY_YSdyww",
+    lessons: daaLessons,
+    tags: ["DAA", "Algorithms", "Complexity Analysis", "Dynamic Programming", "Greedy", "NP-Complete"],
+    syllabus: [
+      "Chapter 1: Introduction to Algorithms & Asymptotic Notations",
+      "Chapter 2: Recurrence Relations & Master Theorem",
+      "Chapter 3: Divide and Conquer (Merge Sort, Quick Sort, Binary Search)",
+      "Chapter 4: Greedy Algorithms (Knapsack, Huffman Coding, Prim's, Kruskal's)",
+      "Chapter 5: Dynamic Programming (LCS, Matrix Chain Multiplication, 0/1 Knapsack)",
+      "Chapter 6: Backtracking & Branch and Bound (N-Queens, Graph Coloring, TSP)",
+      "Chapter 7: String Matching Algorithms (KMP, Rabin-Karp)",
+      "Chapter 8: NP-Hard and NP-Complete Problems"
+    ],
+    prerequisites: ["Data Structures (Arrays, Trees, Graphs) and C/C++ programming"],
+    resources: []
+  },
+  {
+    id: "c-se",
+    title: "Software Engineering",
+    description: "NPTEL & University flagship course on Software Engineering by Prof. Rajib Mall (IIT Kharagpur). Master software lifecycles (Waterfall, Spiral, Agile, Scrum), Requirements Engineering (SRS), Object-Oriented Software Design with UML diagrams, Function-Oriented Design, Coding Standards, Software Testing (Black-Box, White-Box), and Software Quality Management.",
+    trainerId: "u-trainer-rajib",
+    trainerName: "Prof. Rajib Mall (IIT Kharagpur)",
+    category: "Technical",
+    thumbnail: "/thumbnails/se-course.jpg",
+    duration: "30+ Hours • 60 Lessons",
+    level: "Intermediate",
+    status: "active",
+    createdAt: "2026-03-03T10:00:00Z",
+    rating: 4.98,
+    totalRatings: 1870,
+    videoUrl: "https://youtube.com/playlist?list=PLbRMhDVUMngf8oZR3DpKMvYhZKga90JVt",
+    lessons: seLessons,
+    tags: ["Software Engineering", "SDLC", "Agile", "UML", "Software Testing", "IIT Kharagpur"],
+    syllabus: [
+      "Module 1: Evolution of Software Engineering & Life Cycle Models (Waterfall, Iterative, Agile)",
+      "Module 2: Software Requirements Analysis & Specification (SRS Document)",
+      "Module 3: Software Project Management: Metrics, Cost Estimation (COCOMO), Risk Analysis",
+      "Module 4: Software Design: Coupling, Cohesion, Function-Oriented Design (DFD)",
+      "Module 5: Object-Oriented Design using UML (Use Case, Class, Sequence & State Diagrams)",
+      "Module 6: Coding Guidelines, Code Review & Verification",
+      "Module 7: Software Testing: Unit, Integration, Black-Box & White-Box Testing",
+      "Module 8: Software Reliability, Quality Metrics (ISO 9001, SEI CMM) & Maintenance"
+    ],
+    prerequisites: ["Object-Oriented Programming and basic software concepts"],
+    resources: []
   }
 ];
 
 export const initialAssessments: Assessment[] = [
-{
+  {
     id: "a-webdev-sigma",
     courseId: "c6",
     courseTitle: "Web Development Course",
@@ -448,46 +777,46 @@ export const initialAssessments: Assessment[] = [
         id: "q-wd-3",
         text: "In modern JavaScript (ES6+), what is the primary difference between 'let' and 'var'?",
         options: [
-          { id: "o1", text: "'let' is block-scoped, while 'var' is function-scoped" },
-          { id: "o2", text: "'var' cannot be reassigned once declared" },
-          { id: "o3", text: "'let' variables are globally scoped across all scripts" },
-          { id: "o4", text: "'var' causes synchronous thread locking" }
+          { id: "o1", text: "'var' is block-scoped while 'let' is function-scoped" },
+          { id: "o2", text: "'let' is block-scoped while 'var' is function-scoped" },
+          { id: "o3", text: "'let' cannot be reassigned" },
+          { id: "o4", text: "There is no functional difference" }
         ],
-        correctIndex: 0,
-        answerHash: generateAnswerHash("q-wd-3", 0),
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-wd-3", 1),
         points: 20,
-        explanation: "let allows you to declare variables that are limited to the scope of a block statement, whereas var defines a variable globally or locally to an entire function.",
+        explanation: "let is block-scoped (confined to the enclosing curly braces {}), whereas var is function-scoped.",
         topic: "JavaScript ES6+"
       },
       {
         id: "q-wd-4",
-        text: "In Node.js Express applications, what is the role of middleware functions?",
+        text: "What HTTP method is considered idempotent and used to retrieve representation of a resource?",
         options: [
-          { id: "o1", text: "They compile JavaScript directly into C++ bytecode" },
-          { id: "o2", text: "They have access to request (req) and response (res) objects to execute code, modify data, or terminate the cycle" },
-          { id: "o3", text: "They format the CSS styling before rendering to browser" },
-          { id: "o4", text: "They automatically restart the computer on errors" }
+          { id: "o1", text: "POST" },
+          { id: "o2", text: "GET" },
+          { id: "o3", text: "PATCH" },
+          { id: "o4", text: "CONNECT" }
         ],
         correctIndex: 1,
         answerHash: generateAnswerHash("q-wd-4", 1),
         points: 20,
-        explanation: "Middleware functions are functions that have access to the request object, the response object, and the next middleware function in the application's request-response cycle.",
-        topic: "Backend & Express"
+        explanation: "GET requests must be safe and idempotent, meaning repeated identical requests produce the same side effect.",
+        topic: "REST APIs"
       },
       {
         id: "q-wd-5",
-        text: "In React, which hook is used to perform side effects such as data fetching, subscriptions, or manual DOM manipulations?",
+        text: "In React, why must hooks like useState and useEffect only be called at the top level of a component?",
         options: [
-          { id: "o1", text: "useState" },
-          { id: "o2", text: "useContext" },
-          { id: "o3", text: "useEffect" },
-          { id: "o4", text: "useReducer" }
+          { id: "o1", text: "Because JavaScript engines cannot compile functions inside loops" },
+          { id: "o2", text: "To guarantee that hooks are called in the exact same order on every render" },
+          { id: "o3", text: "Because React components can only have a single hook invocation" },
+          { id: "o4", text: "To prevent variables from leaking into global window scope" }
         ],
-        correctIndex: 2,
-        answerHash: generateAnswerHash("q-wd-5", 2),
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-wd-5", 1),
         points: 20,
-        explanation: "useEffect lets you synchronize a component with an external system and execute side effects after rendering.",
-        topic: "React Architecture"
+        explanation: "React relies on the call order of Hooks across renders to associate local state with the corresponding Hook.",
+        topic: "React State"
       }
     ]
   },
@@ -495,47 +824,47 @@ export const initialAssessments: Assessment[] = [
     id: "a-dsa-striver",
     courseId: "c-dsa",
     courseTitle: "DATA STRUCTURE AND ALGORITHM",
-    title: "Data Structures & Algorithms Certification Assessment",
-    description: "Proctored DSA assessment covering Time & Space complexity, Binary Search, Trees, Graphs, and Dynamic Programming.",
+    title: "Data Structures & Algorithms Mastery Certification",
+    description: "Comprehensive proctored assessment testing core algorithmic principles: asymptotic analysis, binary search, dynamic programming, monotonic stacks, and graph algorithms.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 30,
     passingScore: 70,
     createdBy: "Raj Vikramaditya (Striver)",
-    createdAt: "2026-03-01T12:00:00Z",
+    createdAt: "2026-03-01T10:00:00Z",
     questions: [
       {
         id: "q-dsa-1",
-        text: "What is the worst-case time complexity of searching an element in a balanced Binary Search Tree (BST) of N nodes?",
+        text: "What is the worst-case time complexity of searching for an element in a Balanced Binary Search Tree (such as AVL or Red-Black Tree)?",
         options: [
-          { id: "o1", text: "O(1)" },
+          { id: "o1", text: "O(N)" },
           { id: "o2", text: "O(log N)" },
-          { id: "o3", text: "O(N)" },
-          { id: "o4", text: "O(N log N)" }
+          { id: "o3", text: "O(N log N)" },
+          { id: "o4", text: "O(1)" }
         ],
         correctIndex: 1,
         answerHash: generateAnswerHash("q-dsa-1", 1),
         points: 20,
-        explanation: "In a balanced BST (like AVL or Red-Black tree), the height is O(log N), so search operations take O(log N) time in the worst case.",
-        topic: "Binary Search Trees"
+        explanation: "In a balanced BST, tree height is strictly bounded by O(log N), guaranteeing O(log N) worst-case search, insertion, and deletion.",
+        topic: "Trees & BST"
       },
       {
         id: "q-dsa-2",
-        text: "Which data structure is optimal for implementing Dijkstra's single-source shortest path algorithm on a graph with V vertices and E edges?",
+        text: "In Dijkstra's single-source shortest path algorithm implemented with a Min-Priority Queue, what is the overall time complexity?",
         options: [
-          { id: "o1", text: "Queue (FIFO)" },
-          { id: "o2", text: "Min-Heap / Priority Queue" },
-          { id: "o3", text: "Stack (LIFO)" },
-          { id: "o4", text: "Doubly Linked List" }
+          { id: "o1", text: "O(V^3)" },
+          { id: "o2", text: "O((V + E) log V)" },
+          { id: "o3", text: "O(V * E)" },
+          { id: "o4", text: "O(E^2)" }
         ],
         correctIndex: 1,
         answerHash: generateAnswerHash("q-dsa-2", 1),
         points: 20,
-        explanation: "A min-heap / priority queue allows extracting the minimum distance node in O(log V) time, yielding an overall complexity of O((V + E) log V).",
+        explanation: "Extracting min vertex takes O(V log V) and edge relaxations take O(E log V), yielding total O((V + E) log V) time.",
         topic: "Graph Algorithms"
       },
       {
         id: "q-dsa-3",
-        text: "In the 0/1 Knapsack Problem with N items and weight capacity W, what is the space-optimized dynamic programming complexity?",
+        text: "What is the space-optimized auxiliary space complexity for solving the 0/1 Knapsack problem using Dynamic Programming?",
         options: [
           { id: "o1", text: "O(1) space" },
           { id: "o2", text: "O(W) space using a single 1D array" },
@@ -598,35 +927,35 @@ export const initialAssessments: Assessment[] = [
         options: [
           { id: "o1", text: "WHERE" },
           { id: "o2", text: "HAVING" },
-          { id: "o3", text: "ORDER BY" },
+          { id: "o3", text: "FILTER" },
           { id: "o4", text: "GROUP BY" }
         ],
         correctIndex: 1,
         answerHash: generateAnswerHash("q-sql-1", 1),
         points: 20,
-        explanation: "HAVING filters groups of rows based on aggregate conditions, whereas WHERE filters individual rows before grouping.",
-        topic: "SQL Querying"
+        explanation: "WHERE filters rows before aggregation occurs; HAVING filters grouped rows after aggregation.",
+        topic: "SQL Syntax"
       },
       {
         id: "q-sql-2",
-        text: "Which type of JOIN returns all records from the left table and the matched records from the right table, filling with NULL for unmatched rows?",
+        text: "Which type of SQL JOIN returns all records from the left table and matched records from the right table, filling with NULL for unmatched rows?",
         options: [
           { id: "o1", text: "INNER JOIN" },
-          { id: "o2", text: "LEFT JOIN" },
-          { id: "o3", text: "RIGHT JOIN" },
+          { id: "o2", text: "LEFT OUTER JOIN" },
+          { id: "o3", text: "FULL OUTER JOIN" },
           { id: "o4", text: "CROSS JOIN" }
         ],
         correctIndex: 1,
         answerHash: generateAnswerHash("q-sql-2", 1),
         points: 20,
-        explanation: "LEFT JOIN (or LEFT OUTER JOIN) returns all records from the left table, and matching values from the right table, or NULL if no match.",
+        explanation: "A LEFT OUTER JOIN preserves every row from the left table regardless of whether a matching record exists in the right table.",
         topic: "Relational Joins"
       },
       {
         id: "q-sql-3",
-        text: "What rule must a table satisfy to be in Third Normal Form (3NF)?",
+        text: "What condition is required for a relation to be in Third Normal Form (3NF)?",
         options: [
-          { id: "o1", text: "It must only contain integer column values" },
+          { id: "o1", text: "It must have no composite primary keys" },
           { id: "o2", text: "It must be in 2NF and have no transitive dependencies of non-key attributes on the primary key" },
           { id: "o3", text: "It must have at least three distinct foreign keys" },
           { id: "o4", text: "All rows must be indexed in ascending chronological order" }
@@ -666,6 +995,629 @@ export const initialAssessments: Assessment[] = [
         points: 20,
         explanation: "Durability guarantees that once a transaction has been committed, its effects are permanently recorded (usually via WAL/disk persistence) even in the event of a crash.",
         topic: "Transactions & ACID"
+      }
+    ]
+  },
+  {
+    id: "a-c-prog",
+    courseId: "c-c-prog",
+    courseTitle: "C Programming Complete Course",
+    title: "C Language Fundamentals & Systems Certification",
+    description: "Proctored examination covering pointers, dynamic memory allocation, structs, recursion, and file input/output in C.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 20,
+    passingScore: 70,
+    createdBy: "CodeWithHarry (Haris Khan)",
+    createdAt: "2026-03-03T10:00:00Z",
+    questions: [
+      {
+        id: "q-c-1",
+        text: "In C, what is the operator used to obtain the memory address of a variable?",
+        options: [
+          { id: "o1", text: "*" },
+          { id: "o2", text: "&" },
+          { id: "o3", text: "->" },
+          { id: "o4", text: "%" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-c-1", 1),
+        points: 20,
+        explanation: "The address-of operator '&' returns the physical memory address of its operand.",
+        topic: "Pointers & Memory"
+      },
+      {
+        id: "q-c-2",
+        text: "Which standard library function dynamically allocates memory on the heap and initializes all bytes to zero?",
+        options: [
+          { id: "o1", text: "malloc()" },
+          { id: "o2", text: "calloc()" },
+          { id: "o3", text: "realloc()" },
+          { id: "o4", text: "free()" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-c-2", 1),
+        points: 20,
+        explanation: "calloc(n, size) allocates memory for an array of elements and zeroes out all allocated bits.",
+        topic: "Dynamic Memory Allocation"
+      },
+      {
+        id: "q-c-3",
+        text: "What does the dereference operator '*' do when applied to a pointer variable in C?",
+        options: [
+          { id: "o1", text: "Multiplies the address by 2" },
+          { id: "o2", text: "Accesses the value stored at the address contained in the pointer" },
+          { id: "o3", text: "Frees the memory allocated to the pointer" },
+          { id: "o4", text: "Declares a new constant" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-c-3", 1),
+        points: 20,
+        explanation: "The indirection or dereference operator * accesses or modifies the value located at the pointer's referenced memory address.",
+        topic: "Pointers"
+      },
+      {
+        id: "q-c-4",
+        text: "What is the return value of strcmp('abc', 'abc') in C?",
+        options: [
+          { id: "o1", text: "1" },
+          { id: "o2", text: "0" },
+          { id: "o3", text: "-1" },
+          { id: "o4", text: "true" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-c-4", 1),
+        points: 20,
+        explanation: "strcmp returns 0 when both null-terminated strings are completely identical.",
+        topic: "Strings"
+      },
+      {
+        id: "q-c-5",
+        text: "What happens if dynamic memory allocated with malloc() is never released using free() before program termination in long-running processes?",
+        options: [
+          { id: "o1", text: "Compiler error" },
+          { id: "o2", text: "Memory leak" },
+          { id: "o3", text: "Segmentation fault" },
+          { id: "o4", text: "Stack overflow" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-c-5", 1),
+        points: 20,
+        explanation: "Unreleased heap memory causes memory leaks, gradually consuming available system RAM.",
+        topic: "Memory Management"
+      }
+    ]
+  },
+  {
+    id: "a-python-100",
+    courseId: "c-python",
+    courseTitle: "Python for Beginners (100 Days of Code)",
+    title: "Python 100 Days of Code Mastery Assessment",
+    description: "Evaluates comprehensive Python programming capabilities: list comprehensions, OOP principles, decorators, generators, and exception handling.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 20,
+    passingScore: 70,
+    createdBy: "CodeWithHarry (Haris Khan)",
+    createdAt: "2026-03-03T10:00:00Z",
+    questions: [
+      {
+        id: "q-py-1",
+        text: "In Python, which data structure is ordered, mutable, and allows duplicate elements?",
+        options: [
+          { id: "o1", text: "Set" },
+          { id: "o2", text: "List" },
+          { id: "o3", text: "Tuple" },
+          { id: "o4", text: "Dictionary Keys" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-py-1", 1),
+        points: 20,
+        explanation: "Lists are ordered and mutable collections in Python that permit duplicate values.",
+        topic: "Data Structures"
+      },
+      {
+        id: "q-py-2",
+        text: "What keyword is used inside a Python function to turn it into a generator function?",
+        options: [
+          { id: "o1", text: "return" },
+          { id: "o2", text: "yield" },
+          { id: "o3", text: "generate" },
+          { id: "o4", text: "async" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-py-2", 1),
+        points: 20,
+        explanation: "The yield statement suspends function execution and yields a value to the caller, producing a generator iterator.",
+        topic: "Generators"
+      },
+      {
+        id: "q-py-3",
+        text: "In Python OOP, what is the purpose of the '__init__' method?",
+        options: [
+          { id: "o1", text: "To destroy the object instance" },
+          { id: "o2", text: "Constructor method to initialize attributes when an instance is created" },
+          { id: "o3", text: "To define private package variables" },
+          { id: "o4", text: "To import standard libraries" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-py-3", 1),
+        points: 20,
+        explanation: "__init__ is Python's instance initializer method automatically invoked upon object instantiation.",
+        topic: "Object-Oriented Programming"
+      },
+      {
+        id: "q-py-4",
+        text: "What is a decorator in Python?",
+        options: [
+          { id: "o1", text: "A GUI theme library" },
+          { id: "o2", text: "A design pattern that allows modifying or extending the behavior of a function or class without permanently changing its source code" },
+          { id: "o3", text: "A tool for formatting code indentation" },
+          { id: "o4", text: "A syntax error detector" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-py-4", 1),
+        points: 20,
+        explanation: "Decorators take a callable as input and return a modified wrapper callable, commonly using the @decorator syntax.",
+        topic: "Decorators"
+      },
+      {
+        id: "q-py-5",
+        text: "What block in Python is guaranteed to execute regardless of whether an exception was raised in the try block?",
+        options: [
+          { id: "o1", text: "catch" },
+          { id: "o2", text: "finally" },
+          { id: "o3", text: "else" },
+          { id: "o4", text: "except" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-py-5", 1),
+        points: 20,
+        explanation: "The finally block always runs during cleanup, regardless of normal completion or handled/unhandled exceptions.",
+        topic: "Exception Handling"
+      }
+    ]
+  },
+  {
+    id: "a-cpp-dsa",
+    courseId: "c-cpp-dsa",
+    courseTitle: "Complete C++ DSA Course",
+    title: "C++ Data Structures & Algorithms Certification",
+    description: "Evaluates proficiency in C++ STL (vector, map, priority_queue), recursion, linked list operations, binary trees, and backtracking.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 25,
+    passingScore: 70,
+    createdBy: "Shradha Khapra (Apna College)",
+    createdAt: "2026-03-03T10:00:00Z",
+    questions: [
+      {
+        id: "q-cpp-1",
+        text: "What is the underlying data structure of std::map in C++ Standard Template Library (STL)?",
+        options: [
+          { id: "o1", text: "Hash Table" },
+          { id: "o2", text: "Red-Black Tree (Self-Balancing BST)" },
+          { id: "o3", text: "Dynamic Array" },
+          { id: "o4", text: "Min-Heap" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cpp-1", 1),
+        points: 20,
+        explanation: "std::map in C++ is ordered and implemented as a Red-Black Tree providing O(log N) lookup, insertion, and deletion.",
+        topic: "C++ STL"
+      },
+      {
+        id: "q-cpp-2",
+        text: "How do you pass a variable by reference in C++ to avoid expensive object copies?",
+        options: [
+          { id: "o1", text: "void func(Type *x)" },
+          { id: "o2", text: "void func(Type &x)" },
+          { id: "o3", text: "void func(Type %x)" },
+          { id: "o4", text: "void func(ref Type x)" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cpp-2", 1),
+        points: 20,
+        explanation: "Type &x creates a reference parameter, allowing in-place modifications without copying data.",
+        topic: "C++ Syntax"
+      },
+      {
+        id: "q-cpp-3",
+        text: "What is the worst-case time complexity of QuickSort when a poor pivot (e.g. smallest or largest element) is repeatedly chosen?",
+        options: [
+          { id: "o1", text: "O(N log N)" },
+          { id: "o2", text: "O(N^2)" },
+          { id: "o3", text: "O(N)" },
+          { id: "o4", text: "O(log N)" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cpp-3", 1),
+        points: 20,
+        explanation: "Unbalanced partitions reduce QuickSort's recursion depth to N, yielding O(N^2) quadratic time.",
+        topic: "Algorithms"
+      },
+      {
+        id: "q-cpp-4",
+        text: "In Floyd's Cycle-Finding Algorithm (Tortoise and Hare), what are the step sizes of the two pointers?",
+        options: [
+          { id: "o1", text: "Slow moves 2 steps, Fast moves 3 steps" },
+          { id: "o2", text: "Slow moves 1 step, Fast moves 2 steps" },
+          { id: "o3", text: "Slow moves 1 step, Fast moves 1 step" },
+          { id: "o4", text: "Slow moves 2 steps, Fast moves 1 step" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cpp-4", 1),
+        points: 20,
+        explanation: "Slow advances by 1 node while Fast advances by 2 nodes. If a cycle exists, they will collide in O(N) time.",
+        topic: "Linked Lists"
+      },
+      {
+        id: "q-cpp-5",
+        text: "Which traversal of a Binary Search Tree (BST) visits nodes in strictly non-decreasing sorted numerical order?",
+        options: [
+          { id: "o1", text: "Pre-order" },
+          { id: "o2", text: "In-order (Left, Root, Right)" },
+          { id: "o3", text: "Post-order" },
+          { id: "o4", text: "Level-order" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cpp-5", 1),
+        points: 20,
+        explanation: "In-order traversal of a valid BST always yields elements in sorted ascending order.",
+        topic: "Binary Trees"
+      }
+    ]
+  },
+  {
+    id: "a-dbms-neso",
+    courseId: "c-dbms",
+    courseTitle: "Database Management Systems (DBMS)",
+    title: "Database Management Systems Academic Certification",
+    description: "Proctored academic assessment evaluating relational algebra, Boyce-Codd Normal Form (BCNF), serializability, and 2-Phase Locking (2PL).",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 25,
+    passingScore: 70,
+    createdBy: "Neso Academy",
+    createdAt: "2026-03-03T10:00:00Z",
+    questions: [
+      {
+        id: "q-dbms-1",
+        text: "Which relational algebra operator selects tuples that satisfy a given predicate condition?",
+        options: [
+          { id: "o1", text: "Projection (Π)" },
+          { id: "o2", text: "Selection (σ)" },
+          { id: "o3", text: "Cartesian Product (⨯)" },
+          { id: "o4", text: "Join (⨝)" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dbms-1", 1),
+        points: 20,
+        explanation: "Sigma (σ) represents the selection operator in relational algebra to filter horizontal tuples matching conditions.",
+        topic: "Relational Algebra"
+      },
+      {
+        id: "q-dbms-2",
+        text: "What is the requirement for a functional dependency X -> Y to satisfy Boyce-Codd Normal Form (BCNF)?",
+        options: [
+          { id: "o1", text: "Y must be a primary key" },
+          { id: "o2", text: "X must be a superkey (or trivial dependency)" },
+          { id: "o3", text: "X must be a foreign key" },
+          { id: "o4", text: "The relation must contain no null values" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dbms-2", 1),
+        points: 20,
+        explanation: "For every non-trivial functional dependency X -> Y in BCNF, the left-hand determinant X must be a superkey.",
+        topic: "Normalization"
+      },
+      {
+        id: "q-dbms-3",
+        text: "In the Two-Phase Locking (2PL) protocol, what is guaranteed if all transactions follow strict 2PL?",
+        options: [
+          { id: "o1", text: "Freedom from deadlocks" },
+          { id: "o2", text: "Conflict serializability and strict schedules (cascadeless)" },
+          { id: "o3", text: "Zero disk I/O" },
+          { id: "o4", text: "Infinite throughput" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dbms-3", 1),
+        points: 20,
+        explanation: "2PL guarantees conflict serializability, and strict 2PL additionally guarantees cascadeless recoverable schedules.",
+        topic: "Concurrency Control"
+      },
+      {
+        id: "q-dbms-4",
+        text: "In database recovery, what does the Write-Ahead Logging (WAL) protocol mandate?",
+        options: [
+          { id: "o1", text: "Log records must be written after the transaction commits" },
+          { id: "o2", text: "Log records corresponding to a database modification must be flushed to stable storage before the data page is written to disk" },
+          { id: "o3", text: "Logs must be stored in volatile RAM only" },
+          { id: "o4", text: "Only SELECT queries generate log entries" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dbms-4", 1),
+        points: 20,
+        explanation: "WAL dictates that log records describing a change must be persisted before the updated data page reaches disk.",
+        topic: "Crash Recovery"
+      },
+      {
+        id: "q-dbms-5",
+        text: "What anomaly occurs when transaction T1 reads uncommitted data written by transaction T2, and T2 subsequently aborts/rolls back?",
+        options: [
+          { id: "o1", text: "Non-repeatable read" },
+          { id: "o2", text: "Dirty read (Read-Write conflict)" },
+          { id: "o3", text: "Phantom read" },
+          { id: "o4", text: "Lost update" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dbms-5", 1),
+        points: 20,
+        explanation: "A dirty read happens when a transaction reads uncommitted changes of another concurrent transaction that later fails.",
+        topic: "Transaction Anomalies"
+      }
+    ]
+  },
+  {
+    id: "a-cn-gate",
+    courseId: "c-cn",
+    courseTitle: "Computer Networks (Complete Course)",
+    title: "Computer Networks Protocol Engineering Certification",
+    description: "Proctored exam covering IPv4 subnetting, TCP flow control, Hamming codes, routing algorithms, and OSI reference model.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 25,
+    passingScore: 70,
+    createdBy: "Varun Singla (Gate Smashers)",
+    createdAt: "2026-03-03T10:00:00Z",
+    questions: [
+      {
+        id: "q-cn-1",
+        text: "In IPv4 subnetting with CIDR notation /27, how many usable host addresses are available per subnet?",
+        options: [
+          { id: "o1", text: "32" },
+          { id: "o2", text: "30" },
+          { id: "o3", text: "62" },
+          { id: "o4", text: "14" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cn-1", 1),
+        points: 20,
+        explanation: "A /27 prefix leaves 32 - 27 = 5 host bits. Total addresses = 2^5 = 32. Subtracting Network and Broadcast IDs gives 30 usable hosts.",
+        topic: "IPv4 Subnetting"
+      },
+      {
+        id: "q-cn-2",
+        text: "In TCP, what mechanism is used to achieve reliable connection establishment between client and server?",
+        options: [
+          { id: "o1", text: "Single ACK packet" },
+          { id: "o2", text: "Three-way handshake (SYN, SYN-ACK, ACK)" },
+          { id: "o3", text: "Four-way handshake (FIN, ACK, FIN, ACK)" },
+          { id: "o4", text: "UDP broadcast" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cn-2", 1),
+        points: 20,
+        explanation: "TCP uses a 3-way handshake: Client sends SYN, Server replies with SYN-ACK, Client completes with ACK.",
+        topic: "Transport Layer"
+      },
+      {
+        id: "q-cn-3",
+        text: "Which layer of the OSI model is directly responsible for framing, physical MAC addressing, and link-level error detection?",
+        options: [
+          { id: "o1", text: "Physical Layer" },
+          { id: "o2", text: "Data Link Layer" },
+          { id: "o3", text: "Network Layer" },
+          { id: "o4", text: "Transport Layer" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cn-3", 1),
+        points: 20,
+        explanation: "The Data Link Layer packages bit streams into frames and handles MAC addressing and CRC error detection.",
+        topic: "OSI Model"
+      },
+      {
+        id: "q-cn-4",
+        text: "What major problem is associated with Distance Vector Routing algorithms (like RIP)?",
+        options: [
+          { id: "o1", text: "High memory consumption" },
+          { id: "o2", text: "Count-to-Infinity problem" },
+          { id: "o3", text: "Requires global link-state topology maps" },
+          { id: "o4", text: "Inability to support IP routing" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cn-4", 1),
+        points: 20,
+        explanation: "Distance Vector Routing suffers from the count-to-infinity issue when link failures occur, mitigated by Split Horizon and Poison Reverse.",
+        topic: "Routing Algorithms"
+      },
+      {
+        id: "q-cn-5",
+        text: "Which application layer protocol automatically assigns IP addresses, default gateways, and DNS servers to client devices joining a network?",
+        options: [
+          { id: "o1", text: "DNS" },
+          { id: "o2", text: "DHCP" },
+          { id: "o3", text: "ARP" },
+          { id: "o4", text: "ICMP" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-cn-5", 1),
+        points: 20,
+        explanation: "DHCP (Dynamic Host Configuration Protocol) automatically assigns IP configuration parameters to network clients.",
+        topic: "Application Layer"
+      }
+    ]
+  },
+  {
+    id: "a-daa-kg",
+    courseId: "c-daa",
+    courseTitle: "Design and Analysis of Algorithms (DAA)",
+    title: "Algorithm Design & Complexity Analysis Certification",
+    description: "Evaluates asymptotic analysis, recurrence solutions via Master Theorem, greedy proof techniques, and NP-completeness reductions.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 25,
+    passingScore: 70,
+    createdBy: "Sanchit Jain (KnowledgeGATE)",
+    createdAt: "2026-03-03T10:00:00Z",
+    questions: [
+      {
+        id: "q-daa-1",
+        text: "What is the solution of the recurrence T(n) = 2T(n/2) + O(n) according to the Master Theorem?",
+        options: [
+          { id: "o1", text: "O(n)" },
+          { id: "o2", text: "O(n log n)" },
+          { id: "o3", text: "O(n^2)" },
+          { id: "o4", text: "O(log n)" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-daa-1", 1),
+        points: 20,
+        explanation: "With a = 2, b = 2, log_b(a) = log_2(2) = 1. Since f(n) = O(n^1), case 2 of Master Theorem applies: T(n) = O(n log n) (e.g. Merge Sort).",
+        topic: "Master Theorem"
+      },
+      {
+        id: "q-daa-2",
+        text: "Which algorithmic paradigm does the Fractional Knapsack problem solve optimally in O(n log n) time?",
+        options: [
+          { id: "o1", text: "Dynamic Programming" },
+          { id: "o2", text: "Greedy Technique (sorting by value-to-weight ratio)" },
+          { id: "o3", text: "Branch and Bound" },
+          { id: "o4", text: "Backtracking" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-daa-2", 1),
+        points: 20,
+        explanation: "Fractional Knapsack exhibits the greedy choice property: sorting items by value/weight ratio yields optimal solution.",
+        topic: "Greedy Algorithms"
+      },
+      {
+        id: "q-daa-3",
+        text: "What is the time complexity to find the Longest Common Subsequence (LCS) of two strings of lengths m and n using Dynamic Programming?",
+        options: [
+          { id: "o1", text: "O(m + n)" },
+          { id: "o2", text: "O(m * n)" },
+          { id: "o3", text: "O(2^(m+n))" },
+          { id: "o4", text: "O(m log n)" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-daa-3", 1),
+        points: 20,
+        explanation: "Constructing the 2D DP table of size (m+1) x (n+1) requires filling each cell in O(1), leading to O(m*n) time.",
+        topic: "Dynamic Programming"
+      },
+      {
+        id: "q-daa-4",
+        text: "In complexity theory, what defines the complexity class NP?",
+        options: [
+          { id: "o1", text: "Problems solvable in non-polynomial time" },
+          { id: "o2", text: "Decision problems whose solutions can be verified in polynomial time by a deterministic Turing machine" },
+          { id: "o3", text: "Problems that cannot be solved by any computer" },
+          { id: "o4", text: "Problems solvable in linear logarithmic time" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-daa-4", 1),
+        points: 20,
+        explanation: "NP denotes Non-deterministic Polynomial time: problems for which a candidate certificate can be verified in polynomial time.",
+        topic: "Complexity Theory"
+      },
+      {
+        id: "q-daa-5",
+        text: "Which algorithm finds the Minimum Spanning Tree (MST) of a connected edge-weighted graph by greedily adding the smallest weight edge that doesn't form a cycle?",
+        options: [
+          { id: "o1", text: "Dijkstra's Algorithm" },
+          { id: "o2", text: "Kruskal's Algorithm" },
+          { id: "o3", text: "Bellman-Ford Algorithm" },
+          { id: "o4", text: "Floyd-Warshall Algorithm" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-daa-5", 1),
+        points: 20,
+        explanation: "Kruskal's algorithm sorts all edges and uses a Disjoint Set Union (DSU) structure to greedily add cycle-free minimum edges.",
+        topic: "Graph Algorithms"
+      }
+    ]
+  },
+  {
+    id: "a-se-iit",
+    courseId: "c-se",
+    courseTitle: "Software Engineering",
+    title: "Software Engineering & Lifecycle Architectures Certification",
+    description: "Proctored academic evaluation based on Prof. Rajib Mall's IIT Kharagpur curriculum: SDLC models, SRS standards, UML modeling, cyclomatic complexity, and software testing.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 25,
+    passingScore: 70,
+    createdBy: "Prof. Rajib Mall (IIT Kharagpur)",
+    createdAt: "2026-03-03T10:00:00Z",
+    questions: [
+      {
+        id: "q-se-1",
+        text: "Which Software Development Life Cycle (SDLC) model incorporates risk analysis and mitigation at every iterative loop?",
+        options: [
+          { id: "o1", text: "Classical Waterfall Model" },
+          { id: "o2", text: "Spiral Model (Boehm)" },
+          { id: "o3", text: "V-Model" },
+          { id: "o4", text: "Rapid Application Development (RAD)" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-se-1", 1),
+        points: 20,
+        explanation: "Barry Boehm's Spiral model is a risk-driven process model with four quadrants in every iteration, explicitly focusing on risk management.",
+        topic: "SDLC Models"
+      },
+      {
+        id: "q-se-2",
+        text: "What is the formula for calculating McCabe's Cyclomatic Complexity V(G) of a program's Control Flow Graph with E edges, N nodes, and P connected components?",
+        options: [
+          { id: "o1", text: "V(G) = E + N - P" },
+          { id: "o2", text: "V(G) = E - N + 2P" },
+          { id: "o3", text: "V(G) = E * N / P" },
+          { id: "o4", text: "V(G) = 2E - N + P" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-se-2", 1),
+        points: 20,
+        explanation: "McCabe's metric is V(G) = E - N + 2P, which also equals the number of enclosed predicate regions plus 1.",
+        topic: "Software Metrics"
+      },
+      {
+        id: "q-se-3",
+        text: "In Object-Oriented software design, which design quality attribute indicates how closely elements within a single module are related to each other?",
+        options: [
+          { id: "o1", text: "Coupling" },
+          { id: "o2", text: "Cohesion" },
+          { id: "o3", text: "Inheritance" },
+          { id: "o4", text: "Redundancy" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-se-3", 1),
+        points: 20,
+        explanation: "High Cohesion is desirable: it measures the degree to which all elements inside a component focus on a single, well-defined objective.",
+        topic: "Software Design"
+      },
+      {
+        id: "q-se-4",
+        text: "Which testing technique evaluates software functionality without examining the internal source code or implementation details?",
+        options: [
+          { id: "o1", text: "White-Box Testing (Structural)" },
+          { id: "o2", text: "Black-Box Testing (Functional / Behavioral)" },
+          { id: "o3", text: "Mutation Testing" },
+          { id: "o4", text: "Basis Path Testing" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-se-4", 1),
+        points: 20,
+        explanation: "Black-Box testing focuses purely on inputs and expected outputs according to specifications, without knowledge of internal logic.",
+        topic: "Software Testing"
+      },
+      {
+        id: "q-se-5",
+        text: "In UML (Unified Modeling Language), which diagram models dynamic interaction between objects sequentially over time?",
+        options: [
+          { id: "o1", text: "Class Diagram" },
+          { id: "o2", text: "Sequence Diagram" },
+          { id: "o3", text: "Component Diagram" },
+          { id: "o4", text: "Deployment Diagram" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-se-5", 1),
+        points: 20,
+        explanation: "Sequence diagrams capture object lifelines, activation bars, and chronological message exchanges.",
+        topic: "UML Modeling"
       }
     ]
   }
@@ -749,6 +1701,83 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     priority: "High",
     suitableTrainers: [
       { id: "u-trainer-carter", name: "Carter Zenke (Harvard University)", rating: 4.99, matchPercentage: 100, experienceYears: 7, competencies: ["Relational Databases", "SQL", "Database Design", "PostgreSQL", "SQLite", "Indexing"] }
+    ]
+  },
+  {
+    subject: "C Programming Language & Systems",
+    category: "Technical",
+    organizationalDemandScore: 96,
+    internalCapacityScore: 92,
+    gapScore: 4,
+    priority: "High",
+    suitableTrainers: [
+      { id: "u-trainer-official", name: "CodeWithHarry (Haris Khan)", rating: 4.98, matchPercentage: 100, experienceYears: 10, competencies: ["C Programming", "Pointers", "Memory Management", "Data Structures"] }
+    ]
+  },
+  {
+    subject: "Python Programming & Automation",
+    category: "Technical",
+    organizationalDemandScore: 99,
+    internalCapacityScore: 95,
+    gapScore: 4,
+    priority: "Critical",
+    suitableTrainers: [
+      { id: "u-trainer-official", name: "CodeWithHarry (Haris Khan)", rating: 4.99, matchPercentage: 100, experienceYears: 10, competencies: ["Python", "Automation", "OOP", "Data Structures", "APIs"] }
+    ]
+  },
+  {
+    subject: "Data Structures & Algorithms in C++",
+    category: "Technical",
+    organizationalDemandScore: 99,
+    internalCapacityScore: 94,
+    gapScore: 5,
+    priority: "Critical",
+    suitableTrainers: [
+      { id: "u-trainer-shradha", name: "Shradha Khapra (Apna College)", rating: 4.98, matchPercentage: 100, experienceYears: 6, competencies: ["C++", "DSA", "STL", "Trees", "Graphs", "DP"] }
+    ]
+  },
+  {
+    subject: "Database Management Systems (DBMS)",
+    category: "Technical",
+    organizationalDemandScore: 97,
+    internalCapacityScore: 93,
+    gapScore: 4,
+    priority: "High",
+    suitableTrainers: [
+      { id: "u-trainer-neso", name: "Neso Academy", rating: 4.97, matchPercentage: 100, experienceYears: 12, competencies: ["Relational Algebra", "Normalization", "Concurrency Control", "2PL", "WAL"] }
+    ]
+  },
+  {
+    subject: "Computer Networks & Protocols",
+    category: "Technical",
+    organizationalDemandScore: 98,
+    internalCapacityScore: 91,
+    gapScore: 7,
+    priority: "High",
+    suitableTrainers: [
+      { id: "u-trainer-varun", name: "Varun Singla (Gate Smashers)", rating: 4.99, matchPercentage: 100, experienceYears: 11, competencies: ["OSI Model", "TCP/IP", "Subnetting", "Routing", "Flow Control"] }
+    ]
+  },
+  {
+    subject: "Design and Analysis of Algorithms (DAA)",
+    category: "Technical",
+    organizationalDemandScore: 98,
+    internalCapacityScore: 90,
+    gapScore: 8,
+    priority: "Critical",
+    suitableTrainers: [
+      { id: "u-trainer-sanchit", name: "Sanchit Jain (KnowledgeGATE)", rating: 4.96, matchPercentage: 100, experienceYears: 10, competencies: ["Asymptotic Analysis", "Master Theorem", "DP", "Greedy", "NP-Completeness"] }
+    ]
+  },
+  {
+    subject: "Software Engineering & Lifecycle Architectures",
+    category: "Technical",
+    organizationalDemandScore: 96,
+    internalCapacityScore: 92,
+    gapScore: 4,
+    priority: "High",
+    suitableTrainers: [
+      { id: "u-trainer-rajib", name: "Prof. Rajib Mall (IIT Kharagpur)", rating: 4.98, matchPercentage: 100, experienceYears: 30, competencies: ["SDLC", "Agile", "UML", "Software Testing", "Metrics"] }
     ]
   }
 ];
@@ -884,11 +1913,11 @@ export const initialNotifications: Notification[] = [
   {
     id: "n3",
     type: "new_content",
-    title: "New Course Available: Enterprise Cloud Architecture & Distributed Systems",
-    content: "A comprehensive 6-module curriculum is now open for enrollment featuring interactive transcripts, slide deck notes, and proctored MCQ certification.",
-    createdAt: "2026-08-25T11:15:00Z",
+    title: "New Courses Added: C, Python, C++ DSA, DBMS, Computer Networks, DAA & Software Engineering",
+    content: "7 comprehensive new curriculums are now available with full YouTube playlists, interactive chapter navigation, slide decks, and proctored certification assessments.",
+    createdAt: "2026-09-03T10:00:00Z",
     pinned: false,
-    author: "Dr. Marcus Vance"
+    author: "Capacity Connect Academic Council"
   },
   {
     id: "n4",
@@ -904,20 +1933,17 @@ export const initialNotifications: Notification[] = [
 export const initialAuditLogs: AuditLog[] = [];
 
 export function initializeStorage() {
-  // Check and purge legacy notifications if they contain old meta text
   try {
     const existingNotifs = localStorage.getItem("cc_notifications");
     if (existingNotifs && (existingNotifs.includes("Apple Glass") || existingNotifs.includes("2.0") || existingNotifs.includes("📢") || existingNotifs.includes("🏆"))) {
       localStorage.setItem("cc_notifications", JSON.stringify(initialNotifications));
     }
 
-    // Purge fake mock audit logs if present in localStorage
     const existingLogs = localStorage.getItem("cc_audit_logs");
     if (existingLogs && (existingLogs.includes("log-101") || existingLogs.includes("trainee@capacityconnect.org") || existingLogs.includes("INSTANT_QR_AUTH_SUCCESS"))) {
       localStorage.setItem("cc_audit_logs", JSON.stringify([]));
     }
 
-    // Purge demo credentials from localStorage (admin@capacityconnect.org, trainer@capacityconnect.org, trainee@capacityconnect.org)
     const rawUsers = localStorage.getItem("cc_users");
     if (rawUsers) {
       const parsedUsers = JSON.parse(rawUsers);
@@ -971,7 +1997,6 @@ export function initializeStorage() {
   }
 }
 
-
 export const STORAGE_KEYS = {
   AUTH: "cc_auth",
   USERS: "cc_users",
@@ -1016,6 +2041,10 @@ export function getFromStorage<T>(key: string): T[] {
         if (key === STORAGE_KEYS.ASSESSMENTS) {
           localStorage.setItem(key, JSON.stringify(initialAssessments));
           return initialAssessments as any;
+        }
+        if (key === STORAGE_KEYS.COMPETENCIES) {
+          localStorage.setItem(key, JSON.stringify(initialCompetencyMatrix));
+          return initialCompetencyMatrix as any;
         }
         return parsed;
       }
