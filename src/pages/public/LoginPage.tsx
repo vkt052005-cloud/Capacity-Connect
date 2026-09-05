@@ -15,6 +15,12 @@ import { ToastContainer } from "../../components/common/ToastContainer";
 import { sendLoginAlertEmail, sendOtpEmail, verifyOtpCode } from "../../services/emailService";
 import type { User } from "../../types";
 
+const DEMO_CREDENTIALS = {
+  trainee: { email: "t2005madhav@gmail.com", password: "SRNNv@2005", name: "Madhav Kumar" },
+  trainer: { email: "tiwariraj052005@gmail.com", password: "SRNNv@2005", name: "Raj Tiwari" },
+  admin: { email: "vkt052005@gmail.com", password: "SRNNv@2005", name: "Capacity Connect Admin" }
+};
+
 export const LoginPage: React.FC = () => {
   const [step, setStep] = useState<"credentials" | "otp">("credentials");
   const [role, setRole] = useState<"trainee" | "trainer" | "admin">("trainee");
@@ -285,6 +291,30 @@ export const LoginPage: React.FC = () => {
                     {r}
                   </button>
                 ))}
+              </div>
+
+              {/* Saved Pre-configured Account Shortcut */}
+              <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-2 text-xs">
+                <div className="text-left overflow-hidden">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">
+                    Saved {role.toUpperCase()} Account
+                  </span>
+                  <span className="text-white font-mono text-[11px] truncate block">
+                    {DEMO_CREDENTIALS[role].email}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(DEMO_CREDENTIALS[role].email);
+                    setPassword(DEMO_CREDENTIALS[role].password);
+                    setCaptchaVerified(true);
+                    setError("");
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-[#0071e3]/20 hover:bg-[#0071e3]/35 border border-[#2997ff]/40 text-[#2997ff] text-[11px] font-semibold shrink-0 transition cursor-pointer"
+                >
+                  Auto-Fill ⚡
+                </button>
               </div>
 
               <form onSubmit={handleCredentialsSubmit} className="space-y-4">

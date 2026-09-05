@@ -29,6 +29,51 @@ export const initialUsers: User[] = [
     role: "admin",
     status: "active",
     createdAt: "2026-08-01T09:00:00Z"
+  },
+  {
+    id: "u-trainer-official",
+    name: "Raj Tiwari",
+    email: "tiwariraj052005@gmail.com",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Senior Technical Trainer & Academic Lead at Capacity Connect.",
+      expertise: ["Full-Stack Architecture", "Cloud Engineering", "DevOps"],
+      competencies: ["Curriculum Design", "Hands-on Labs", "Mentorship"],
+      phone: "+91 98765 11111",
+      department: "Computer Science & Engineering",
+      designation: "Senior Lead Instructor",
+      experience: "8+ Years Industry Leadership",
+      rating: 5,
+      totalStudentsTaught: 124,
+      verifiedCredentials: ["Institutional Accreditation"]
+    }
+  },
+  {
+    id: "u-trainee-official",
+    name: "Madhav Kumar",
+    email: "t2005madhav@gmail.com",
+    password: "SRNNv@2005",
+    role: "trainee",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    traineeProfile: {
+      bio: "Dedicated Engineering scholar actively acquiring advanced competencies on Capacity Connect.",
+      phone: "+91 98765 00000",
+      department: "Computer Science & Engineering",
+      designation: "Undergraduate Student",
+      qualifications: ["B.Tech Computer Science (In Progress)"],
+      experience: ["Student Scholar"],
+      skills: ["Full-Stack Web Development", "Cloud Infrastructure", "System Design"],
+      interests: ["Cloud Systems", "AI", "Microservices"],
+      certificates: [],
+      xpPoints: 1250,
+      streakDays: 4,
+      completedCoursesCount: 1,
+      badges: []
+    }
   }
 ];
 
@@ -783,6 +828,19 @@ export function getFromStorage<T>(key: string): T[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        if (key === STORAGE_KEYS.USERS) {
+          const existingEmails = new Set(parsed.map((u: any) => u.email?.toLowerCase()));
+          let modified = false;
+          for (const initUser of initialUsers) {
+            if (!existingEmails.has(initUser.email.toLowerCase())) {
+              parsed.push(initUser);
+              modified = true;
+            }
+          }
+          if (modified) {
+            localStorage.setItem(key, JSON.stringify(parsed));
+          }
+        }
         return parsed;
       }
     }
