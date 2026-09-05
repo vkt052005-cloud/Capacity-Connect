@@ -4,6 +4,7 @@ import {
 } from "../types";
 import { generateAnswerHash } from "../utils/quizSecurity";
 import { sigmaWebDevLessons } from "./sigmaWebDevPlaylist";
+import { dsaLessons } from "./dsaPlaylist";
 
 export const initialBadges: Badge[] = [
   { id: "b1", name: "Quick Starter", description: "Enrolled and completed first orientation module within 24 hours.", icon: "⚡", category: "milestone" },
@@ -75,6 +76,27 @@ export const initialUsers: User[] = [
       streakDays: 4,
       completedCoursesCount: 1,
       badges: []
+    }
+  },
+  {
+    id: "u-trainer-striver",
+    name: "Raj Vikramaditya (Striver)",
+    email: "striver@takeuforward.org",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Ex-Google, Ex-Amazon Software Engineer. Founder of take U forward and creator of the A2Z DSA Course.",
+      expertise: ["Data Structures & Algorithms", "Competitive Programming", "System Design"],
+      competencies: ["Algorithm Design", "Dynamic Programming", "Interview Preparation"],
+      phone: "+91 98765 22222",
+      department: "Computer Science & Engineering",
+      designation: "Principal Algorithms Instructor",
+      experience: "8+ Years Engineering & Mentorship",
+      rating: 4.99,
+      totalStudentsTaught: 500000,
+      verifiedCredentials: ["take U forward Founder", "Competitive Programming Master"]
     }
   }
 ];
@@ -171,6 +193,98 @@ export const initialCourses: Course[] = [
         ]
       }
     ]
+  },
+  {
+    id: "c-dsa",
+    title: "DATA STRUCTURE AND ALGORITHM",
+    description: "The complete A2Z Data Structures & Algorithms roadmap by Striver (take U forward). Master Arrays, Binary Search, Strings, Linked Lists, Recursion, Bit Manipulation, Stacks & Queues, Sliding Window, Heaps, Greedy Algorithms, Binary Trees, BSTs, Graphs, Dynamic Programming, Tries, and Advanced DSA with 315 structured video lessons.",
+    trainerId: "u-trainer-striver",
+    trainerName: "Raj Vikramaditya (Striver)",
+    category: "Technical",
+    thumbnail: "https://images.unsplash.com/photo-1516116211227-bbc13c734187?w=800&auto=format&fit=crop&q=80",
+    duration: "120+ Hours • 315 Lessons",
+    level: "Intermediate",
+    status: "active",
+    createdAt: "2026-03-01T10:00:00Z",
+    rating: 4.99,
+    totalRatings: 3420,
+    videoUrl: "https://youtube.com/playlist?list=PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+    lessons: dsaLessons,
+    tags: ["Data Structures", "Algorithms", "C++", "Java", "Dynamic Programming", "Graphs", "Binary Trees", "Binary Search", "LeetCode"],
+    syllabus: [
+      "Module 1: Learn the Basics (C++, Java, Math, Recursion, Time & Space Complexity)",
+      "Module 2: Sorting Techniques & Array Problems (Easy, Medium, Hard)",
+      "Module 3: Binary Search on 1D/2D Arrays & Search Space",
+      "Module 4: Linked List Mastery (Singly, Doubly, Medium & Hard Problems)",
+      "Module 5: Recursion & Backtracking (Subsequences, Permutations, N-Queens)",
+      "Module 6: Bit Manipulation, Stack & Queues (Prefix/Infix/Postfix, Monotonic Stack)",
+      "Module 7: Sliding Window & Two Pointer Problems",
+      "Module 8: Binary Trees & Binary Search Trees (Traversals, Views, Construction)",
+      "Module 9: Graphs & Graph Algorithms (BFS, DFS, Dijkstra, Topo Sort, Disjoint Set)",
+      "Module 10: Dynamic Programming (1D, 2D, Grids, Subsequences, Strings, Stocks, MCM)",
+      "Module 11: Tries, Advanced String Algorithms & Hard Interview Problems"
+    ],
+    prerequisites: ["Basic understanding of programming in C++ or Java"],
+    resources: [
+      {
+        id: "r-dsa-1",
+        courseId: "c-dsa",
+        title: "A2Z DSA Comprehensive Cheatsheet & Pattern Handbook",
+        type: "presentation",
+        url: "#slides",
+        size: "24.6 MB",
+        uploadedAt: "2026-03-01T10:00:00Z",
+        uploadedBy: "Raj Vikramaditya (Striver)",
+        version: "v4.2",
+        summary: "Detailed engineering notes covering Big-O analysis, binary search templates, tree traversal tricks, graph cycle detection, and DP state transitions.",
+        keyTakeaways: [
+          "Binary search operates on any monotonically sorted search space, not just arrays.",
+          "Monotonic stack pattern solves Next Greater Element and largest rectangle in histogram in O(N).",
+          "Graph BFS computes unweighted shortest paths, while Dijkstra handles non-negative weighted edges.",
+          "Dynamic programming solves overlapping subproblems using memoization (top-down) or tabulation (bottom-up)."
+        ],
+        flashcards: [
+          { id: "f-dsa-1", front: "What is the time complexity of Binary Search?", back: "O(log N), because the search space is halved at each comparison step.", category: "Algorithms" },
+          { id: "f-dsa-2", front: "What data structure is used to detect cycles in an undirected graph?", back: "Breadth-First Search (BFS) / Depth-First Search (DFS) with a visited array, or Disjoint Set Union (DSU).", category: "Graphs" },
+          { id: "f-dsa-3", front: "What is the difference between Memoization and Tabulation in DP?", back: "Memoization is top-down recursion with cached results; Tabulation is bottom-up iterative table filling.", category: "Dynamic Programming" }
+        ],
+        slides: [
+          {
+            slideNumber: 1,
+            title: "Mastering Asymptotic Analysis",
+            bullets: [
+              "Time complexity: Big-O, Omega, and Theta notations",
+              "Space complexity: Auxiliary space vs. Input space",
+              "Recursion tree method and Master Theorem",
+              "Practical tradeoffs: In-place vs. Out-of-place algorithms"
+            ],
+            keyConcept: "Writing clean code is about achieving optimal asymptotic bounds without hidden overhead."
+          },
+          {
+            slideNumber: 2,
+            title: "Graph Traversal & Shortest Path Topologies",
+            bullets: [
+              "Adjacency list representation and memory compactness",
+              "Breadth-First Search (Queue) vs Depth-First Search (Call Stack)",
+              "Dijkstra algorithm using priority queue (min-heap)",
+              "Kahn algorithm for Topological Sorting in DAGs"
+            ],
+            keyConcept: "Graphs model dependencies, networks, and state spaces across production systems."
+          },
+          {
+            slideNumber: 3,
+            title: "Dynamic Programming Patterns",
+            bullets: [
+              "Identifying overlapping subproblems and optimal substructure",
+              "1D DP: Fibonacci, Climbing Stairs, Frog Jump",
+              "2D Grid DP: Unique Paths, Minimum Path Sum",
+              "DP on Subsequences: 0/1 Knapsack, Target Sum, Coin Change"
+            ],
+            keyConcept: "Formulate recurrence relations from base cases to achieve polynomial time execution."
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -263,6 +377,95 @@ export const initialAssessments: Assessment[] = [
         topic: "React Architecture"
       }
     ]
+  },
+  {
+    id: "a-dsa-striver",
+    courseId: "c-dsa",
+    courseTitle: "DATA STRUCTURE AND ALGORITHM",
+    title: "Data Structures & Algorithms Certification Assessment",
+    description: "Proctored DSA assessment covering Time & Space complexity, Binary Search, Trees, Graphs, and Dynamic Programming.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 30,
+    passingScore: 70,
+    createdBy: "Raj Vikramaditya (Striver)",
+    createdAt: "2026-03-01T12:00:00Z",
+    questions: [
+      {
+        id: "q-dsa-1",
+        text: "What is the worst-case time complexity of searching an element in a balanced Binary Search Tree (BST) of N nodes?",
+        options: [
+          { id: "o1", text: "O(1)" },
+          { id: "o2", text: "O(log N)" },
+          { id: "o3", text: "O(N)" },
+          { id: "o4", text: "O(N log N)" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dsa-1", 1),
+        points: 20,
+        explanation: "In a balanced BST (like AVL or Red-Black tree), the height is O(log N), so search operations take O(log N) time in the worst case.",
+        topic: "Binary Search Trees"
+      },
+      {
+        id: "q-dsa-2",
+        text: "Which data structure is optimal for implementing Dijkstra's single-source shortest path algorithm on a graph with V vertices and E edges?",
+        options: [
+          { id: "o1", text: "Queue (FIFO)" },
+          { id: "o2", text: "Min-Heap / Priority Queue" },
+          { id: "o3", text: "Stack (LIFO)" },
+          { id: "o4", text: "Doubly Linked List" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dsa-2", 1),
+        points: 20,
+        explanation: "A min-heap / priority queue allows extracting the minimum distance node in O(log V) time, yielding an overall complexity of O((V + E) log V).",
+        topic: "Graph Algorithms"
+      },
+      {
+        id: "q-dsa-3",
+        text: "In the 0/1 Knapsack Problem with N items and weight capacity W, what is the space-optimized dynamic programming complexity?",
+        options: [
+          { id: "o1", text: "O(1) space" },
+          { id: "o2", text: "O(W) space using a single 1D array" },
+          { id: "o3", text: "O(N * W) space only" },
+          { id: "o4", text: "O(N^2) space" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dsa-3", 1),
+        points: 20,
+        explanation: "By iterating weight from W down to item weight, we can update the DP state in a single 1D array of size O(W).",
+        topic: "Dynamic Programming"
+      },
+      {
+        id: "q-dsa-4",
+        text: "Which algorithm can detect a cycle in a Directed Acyclic Graph (DAG) during topological sorting?",
+        options: [
+          { id: "o1", text: "Kruskal's Algorithm" },
+          { id: "o2", text: "Kahn's Algorithm (BFS using in-degrees)" },
+          { id: "o3", text: "Floyd-Warshall Algorithm" },
+          { id: "o4", text: "Prim's Algorithm" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dsa-4", 1),
+        points: 20,
+        explanation: "If Kahn's algorithm fails to include all V vertices in the topological sort order, the directed graph contains at least one cycle.",
+        topic: "Graphs"
+      },
+      {
+        id: "q-dsa-5",
+        text: "What is the time complexity to find the Next Greater Element for all elements in an array of size N using a Monotonic Stack?",
+        options: [
+          { id: "o1", text: "O(N^2)" },
+          { id: "o2", text: "O(N)" },
+          { id: "o3", text: "O(log N)" },
+          { id: "o4", text: "O(N log N)" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-dsa-5", 1),
+        points: 20,
+        explanation: "Each element is pushed and popped from the monotonic stack at most once, resulting in amortized O(N) linear time.",
+        topic: "Stacks & Queues"
+      }
+    ]
   }
 ];
 
@@ -323,6 +526,17 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     suitableTrainers: [
       { id: "u-trainer-official", name: "CodeWithHarry (Haris Khan)", rating: 4.98, matchPercentage: 100, experienceYears: 12, competencies: ["Full-Stack", "JavaScript", "React", "Next.js", "Express", "Node.js", "Tailwind"] }
     ]
+  },
+  {
+    subject: "DATA STRUCTURE AND ALGORITHM",
+    category: "Technical",
+    organizationalDemandScore: 99,
+    internalCapacityScore: 96,
+    gapScore: 3,
+    priority: "Critical",
+    suitableTrainers: [
+      { id: "u-trainer-striver", name: "Raj Vikramaditya (Striver)", rating: 4.99, matchPercentage: 100, experienceYears: 10, competencies: ["DSA", "LeetCode", "Dynamic Programming", "Graphs", "Binary Search", "Trees"] }
+    ]
   }
 ];
 
@@ -379,6 +593,31 @@ export const initialDiscussions: DiscussionThread[] = [
         authorRole: "trainer",
         content: "CSS Grid is 2D and excels when you want uniform column alignments across rows. Flexbox is 1D and best for header bars or uneven tag strips. In Tutorial #44 we cover exactly this comparison!",
         createdAt: "2026-02-22T10:30:00Z",
+        isTrainerVerified: true
+      }
+    ]
+  },
+  {
+    id: "disc-dsa-01",
+    courseId: "c-dsa",
+    title: "How to identify if a problem should be solved with Monotonic Stack?",
+    content: "Whenever a problem asks for Next Greater Element or Previous Smaller Element, is Monotonic Stack always the optimal O(N) choice?",
+    authorId: "u-trainee-official",
+    authorName: "Madhav Kumar",
+    authorRole: "trainee",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    createdAt: "2026-03-02T10:00:00Z",
+    upvotes: 19,
+    upvotedBy: ["u-trainee-official"],
+    replies: [
+      {
+        id: "rep-dsa-01",
+        authorId: "u-trainer-striver",
+        authorName: "Raj Vikramaditya (Striver)",
+        authorRole: "trainer",
+        authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+        content: "Yes! Whenever you need the nearest greater/smaller element on the left or right, a monotonic stack maintains elements in sorted order and guarantees each index is pushed and popped at most once in O(N). Check video #300 and the Stack series!",
+        createdAt: "2026-03-02T11:15:00Z",
         isTrainerVerified: true
       }
     ]

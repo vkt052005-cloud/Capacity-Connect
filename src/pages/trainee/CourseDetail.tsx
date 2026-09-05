@@ -15,8 +15,9 @@ import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { initialDiscussions, initialCourses } from "../../data/seed";
 import { sigmaWebDevLessons } from "../../data/sigmaWebDevPlaylist";
+import { dsaLessons } from "../../data/dsaPlaylist";
 
-const MODULE_FILTERS = [
+const WEBDEV_MODULE_FILTERS = [
   { label: "All (139)", start: 1, end: 139 },
   { label: "HTML5 (1-13)", start: 1, end: 13 },
   { label: "CSS3 & Layouts (14-53)", start: 14, end: 53 },
@@ -26,6 +27,17 @@ const MODULE_FILTERS = [
   { label: "Tailwind CSS & Projects (98-104)", start: 98, end: 104 },
   { label: "React.js Complete (105-120)", start: 105, end: 120 },
   { label: "Next.js 15 & Fullstack (121-139)", start: 121, end: 139 }
+];
+
+const DSA_MODULE_FILTERS = [
+  { label: "All (315)", start: 1, end: 315 },
+  { label: "Basics, STL & Arrays (1-44)", start: 1, end: 44 },
+  { label: "Binary Search (45-76)", start: 45, end: 76 },
+  { label: "Binary Trees & BST (77-125)", start: 77, end: 125 },
+  { label: "Graphs (126-181)", start: 126, end: 181 },
+  { label: "Dynamic Programming (182-236)", start: 182, end: 236 },
+  { label: "Linked Lists (237-296)", start: 237, end: 296 },
+  { label: "Stacks, Queues & Caches (297-315)", start: 297, end: 315 }
 ];
 
 export const CourseDetail: React.FC = () => {
@@ -39,21 +51,31 @@ export const CourseDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"video" | "slides" | "ai" | "discussions">("video");
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
   const [lessonSearch, setLessonSearch] = useState("");
-  const [activeModuleFilter, setActiveModuleFilter] = useState("All (139)");
-  const [discussions, setDiscussions] = useState(
-    initialDiscussions.filter((d) => d.courseId === "c1" || d.courseId === id)
-  );
-  const [newQuestion, setNewQuestion] = useState("");
-  const [newQuestionTitle, setNewQuestionTitle] = useState("");
+  const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("");
 
   // Ensure course is always resolved, falling back to seed data if localStorage is stale
   const foundCourse = courses.find((c) => c.id === id);
   const course = foundCourse || initialCourses.find((c) => c.id === id) || initialCourses.find((c) => c.id === "c6");
+  const isDsaCourse = id === "c-dsa" || course?.id === "c-dsa" || course?.title?.toLowerCase().includes("data structure") || false;
 
-  // Ensure all 139 lessons are always present and never empty
+  const currentModuleFilters = isDsaCourse ? DSA_MODULE_FILTERS : WEBDEV_MODULE_FILTERS;
+  const activeModuleFilter = selectedModuleFilter && currentModuleFilters.some(m => m.label === selectedModuleFilter)
+    ? selectedModuleFilter
+    : currentModuleFilters[0].label;
+
+  const [discussions, setDiscussions] = useState(
+    initialDiscussions.filter((d) => d.courseId === "c1" || d.courseId === id || (isDsaCourse && d.courseId === "c-dsa"))
+  );
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newQuestionTitle, setNewQuestionTitle] = useState("");
+
+  // Ensure all lessons are always present and never empty
   const allLessons = useMemo(() => {
     if (course?.lessons && course.lessons.length > 0) {
       return course.lessons;
+    }
+    if (isDsaCourse) {
+      return dsaLessons;
     }
     if (id === "c6" || course?.id === "c6") {
       return sigmaWebDevLessons;
@@ -63,7 +85,7 @@ export const CourseDetail: React.FC = () => {
       return seedMatch.lessons;
     }
     return sigmaWebDevLessons;
-  }, [course, id]);
+  }, [course, id, isDsaCourse]);
 
   if (!course) {
     return (
@@ -155,7 +177,7 @@ export const CourseDetail: React.FC = () => {
       l.title.toLowerCase().includes(term) ||
       String(l.lessonNumber).includes(term);
 
-    const mod = MODULE_FILTERS.find((m) => m.label === activeModuleFilter);
+    const mod = currentModuleFilters.find((m) => m.label === activeModuleFilter);
     const matchesModule = mod ? l.lessonNumber >= mod.start && l.lessonNumber <= mod.end : true;
 
     return matchesSearch && matchesModule;
@@ -213,7 +235,7 @@ export const CourseDetail: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(`/trainee/assessment/a-webdev-sigma`)}
+              onClick={() => navigate(`/trainee/assessment/${isDsaCourse ? "a-dsa-striver" : "a-webdev-sigma"}`)}
               className="apple-btn-secondary text-xs px-4 py-2 font-semibold cursor-pointer"
             >
               <Award className="w-4 h-4" /> Certification Exam
@@ -406,7 +428,7 @@ export const CourseDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* 3. COMPLETE 139-VIDEO CATALOG: All videos shown with modules and direct 1-click play */}
+            {/* 3. COMPLETE COURSE CATALOG: All videos shown with modules and direct 1-click play */}
             <div className="card p-5 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
                 <div>
@@ -415,7 +437,7 @@ export const CourseDetail: React.FC = () => {
                     Complete Course Curriculum ({allLessons.length} Videos Available)
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
-                    All 139 videos are completely unlocked. Click any video below to instantly play it on the portal.
+                    All {allLessons.length} videos are completely unlocked. Click any video below to instantly play it on the portal.
                   </p>
                 </div>
                 <span className="badge-green text-xs font-mono">
@@ -425,10 +447,10 @@ export const CourseDetail: React.FC = () => {
 
               {/* Module Filter Chips */}
               <div className="flex flex-wrap gap-1.5">
-                {MODULE_FILTERS.map((m) => (
+                {currentModuleFilters.map((m) => (
                   <button
                     key={m.label}
-                    onClick={() => setActiveModuleFilter(m.label)}
+                    onClick={() => setSelectedModuleFilter(m.label)}
                     className={
                       "px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer " +
                       (activeModuleFilter === m.label
