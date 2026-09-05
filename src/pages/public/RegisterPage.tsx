@@ -777,6 +777,23 @@ export const RegisterPage: React.FC = () => {
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                   <span>Security code dispatched to your email address</span>
                 </div>
+
+                {generatedOtp && (
+                  <div className="mt-2 p-2.5 rounded-xl bg-[#0071e3]/15 border border-[#2997ff]/30 text-center space-y-1">
+                    <p className="text-[11px] text-slate-300">
+                      Security Verification Code: <strong className="font-mono text-sm tracking-widest text-[#2997ff]">{generatedOtp}</strong>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOtpDigits(generatedOtp.split(""));
+                      }}
+                      className="text-[10px] text-[#2997ff] hover:underline font-semibold cursor-pointer"
+                    >
+                      Click to Auto-Fill Code ⚡
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 6 Digit Inputs */}

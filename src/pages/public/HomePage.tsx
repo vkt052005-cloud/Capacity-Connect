@@ -88,9 +88,9 @@ export const HomePage: React.FC = () => {
           </div>
 
           <div className="space-y-4 max-w-3xl mx-auto">
-            <h1 className="text-2xl sm:text-4xl lg:text-[46px] font-extrabold tracking-tight text-white leading-[1.18]">
-              Digital Capacity Building &<br />
-              <span className="bg-gradient-to-r from-[#2997ff] via-[#64d2ff] to-[#a1e3ff] bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight sm:leading-snug">
+              Digital Capacity Building &
+              <span className="block mt-1.5 sm:mt-2.5 pb-1 bg-gradient-to-r from-[#2997ff] via-[#64d2ff] to-[#a1e3ff] bg-clip-text text-transparent">
                 Learning Management
               </span>
             </h1>

@@ -64,7 +64,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setZoomLevel: (lvl: number) => {
     const clamped = Math.min(160, Math.max(70, lvl));
     localStorage.setItem("displayZoom", String(clamped));
-    const basePx = (11.5 * (clamped / 100)).toFixed(1);
+    const basePx = (15 * (clamped / 100)).toFixed(1);
     if (typeof document !== "undefined") {
       document.documentElement.style.fontSize = basePx + "px";
     }

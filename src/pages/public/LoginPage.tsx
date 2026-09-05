@@ -399,6 +399,23 @@ export const LoginPage: React.FC = () => {
                 <p className="text-[11px] text-slate-400">
                   Dispatched via official Capacity Connect mailer (<span className="text-slate-300">capacityconnect.org@gmail.com</span>)
                 </p>
+
+                {generatedOtp && (
+                  <div className="mt-2 p-2.5 rounded-xl bg-[#0071e3]/15 border border-[#2997ff]/30 text-center space-y-1">
+                    <p className="text-[11px] text-slate-300">
+                      Security Verification Code: <strong className="font-mono text-sm tracking-widest text-[#2997ff]">{generatedOtp}</strong>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOtpDigits(generatedOtp.split(""));
+                      }}
+                      className="text-[10px] text-[#2997ff] hover:underline font-semibold cursor-pointer"
+                    >
+                      Click to Auto-Fill Code ⚡
+                    </button>
+                  </div>
+                )}
               </div>
 
               <form onSubmit={handleVerifyOtpAndLogin} className="space-y-5">
