@@ -134,6 +134,16 @@ export interface Course {
   syllabus?: string[];
   prerequisites?: string[];
   videoUrl?: string;
+  lessons?: CourseLesson[];
+}
+
+export interface CourseLesson {
+  id: string;
+  lessonNumber: number;
+  title: string;
+  duration: string;
+  youtubeUrl: string;
+  videoId: string;
 }
 
 export interface Enrollment {

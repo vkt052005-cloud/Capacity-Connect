@@ -3,6 +3,7 @@ import {
   SubjectCompetency, LiveSession, LeaderboardEntry, Badge, DiscussionThread, AuditLog
 } from "../types";
 import { generateAnswerHash } from "../utils/quizSecurity";
+import { sigmaWebDevLessons } from "./sigmaWebDevPlaylist";
 
 export const initialBadges: Badge[] = [
   { id: "b1", name: "Quick Starter", description: "Enrolled and completed first orientation module within 24 hours.", icon: "⚡", category: "milestone" },
@@ -408,6 +409,7 @@ export const initialCourses: Course[] = [
     rating: 4.98,
     totalRatings: 1840,
     videoUrl: "https://youtube.com/playlist?list=PLu0W_9lII9agq5TrH9XLIKQvv0iaF2X3w",
+    lessons: sigmaWebDevLessons,
     tags: ["Web Development", "HTML5", "CSS3", "JavaScript", "React", "Next.js", "Node.js", "Express", "MongoDB", "Tailwind"],
     syllabus: [
       "Module 1: Internet Fundamentals, HTTP Protocol & Semantic HTML5",

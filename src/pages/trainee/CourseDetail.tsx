@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   BookOpen, Video, Presentation, Sparkles, MessageSquare, Award,
-  CheckCircle2, ArrowRight, Share2, Star, CheckSquare, Layers, Download, AlertTriangle
+  CheckCircle2, ArrowRight, Share2, Star, CheckSquare, Layers, Download, AlertTriangle,
+  ListVideo, Search, ChevronLeft, ChevronRight, Play
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
@@ -22,6 +23,8 @@ export const CourseDetail: React.FC = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"video" | "slides" | "ai" | "discussions">("video");
+  const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
+  const [lessonSearch, setLessonSearch] = useState("");
   const [discussions, setDiscussions] = useState(initialDiscussions.filter((d) => d.courseId === "c1" || d.courseId === id));
   const [newQuestion, setNewQuestion] = useState("");
   const [newQuestionTitle, setNewQuestionTitle] = useState("");
@@ -98,6 +101,17 @@ export const CourseDetail: React.FC = () => {
     });
   };
 
+  const allLessons = course.lessons || [];
+  const filteredLessons = allLessons.filter((l) =>
+    !lessonSearch.trim() ||
+    l.title.toLowerCase().includes(lessonSearch.toLowerCase()) ||
+    String(l.lessonNumber).includes(lessonSearch.trim())
+  );
+
+  const currentLesson = allLessons[selectedLessonIndex] || allLessons[0];
+  const activeVideoUrl = currentLesson?.youtubeUrl || mainResource?.url || course.videoUrl;
+  const activeVideoTitle = currentLesson ? `${currentLesson.lessonNumber}. ${currentLesson.title}` : course.title;
+
   return (
     <DashboardLayout
       pageTitle={course.title}
@@ -114,7 +128,7 @@ export const CourseDetail: React.FC = () => {
               onClick={() => setActiveTab("video")}
               className={"flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " + (activeTab === "video" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")}
             >
-              <Video className="w-3.5 h-3.5" /> Video Lecture (1080p)
+              <Video className="w-3.5 h-3.5" /> Video Lecture {allLessons.length > 0 ? `(${allLessons.length} Lessons)` : "(1080p)"}
             </button>
             <button
               onClick={() => setActiveTab("slides")}
@@ -138,10 +152,10 @@ export const CourseDetail: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate("/trainee/assessments")}
+              onClick={() => navigate(`/trainee/assessment/a-webdev-sigma`)}
               className="apple-btn-secondary text-xs px-4 py-2 font-semibold"
             >
-              <CheckSquare className="w-4 h-4 text-[#2997ff]" /> Take Assessment
+              <Award className="w-4 h-4" /> Certification Exam
             </button>
             <button
               onClick={handleComplete}
@@ -152,15 +166,136 @@ export const CourseDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Tab 1: Video Player */}
+        {/* Tab 1: Video Player & Interactive Playlist */}
         {activeTab === "video" && (
           <div className="space-y-6 animate-fadeIn">
-            <AdaptiveVideoPlayer
-              videoUrl={course.videoUrl}
-              thumbnail={course.thumbnail}
-              transcripts={mainResource?.transcripts}
-              title={course.title}
-            />
+            {allLessons.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Main Video Stream */}
+                <div className="lg:col-span-8 space-y-4">
+                  <AdaptiveVideoPlayer
+                    videoUrl={activeVideoUrl}
+                    thumbnail={course.thumbnail}
+                    transcripts={mainResource?.transcripts}
+                    title={activeVideoTitle}
+                  />
+
+                  <div className="card p-5 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="badge-blue text-[10px] font-mono">
+                            LESSON {currentLesson.lessonNumber} OF {allLessons.length}
+                          </span>
+                          <span className="text-xs text-slate-400 font-mono">
+                            ⏱ {currentLesson.duration}
+                          </span>
+                        </div>
+                        <h2 className="text-base sm:text-lg font-bold text-white">
+                          {currentLesson.title}
+                        </h2>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedLessonIndex(Math.max(0, selectedLessonIndex - 1))}
+                          disabled={selectedLessonIndex === 0}
+                          className="apple-btn-secondary text-xs px-3 py-1.5 disabled:opacity-30 cursor-pointer flex items-center gap-1"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                        </button>
+                        <button
+                          onClick={() => setSelectedLessonIndex(Math.min(allLessons.length - 1, selectedLessonIndex + 1))}
+                          disabled={selectedLessonIndex === allLessons.length - 1}
+                          className="apple-btn-primary text-xs px-3 py-1.5 disabled:opacity-30 cursor-pointer flex items-center gap-1"
+                        >
+                          Next <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {course.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Playlist Drawer / Lesson Selector */}
+                <div className="lg:col-span-4 card p-4 space-y-3 flex flex-col h-[680px]">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <ListVideo className="w-4 h-4 text-[#2997ff]" />
+                      <h3 className="text-sm font-bold text-white">Course Playlist</h3>
+                    </div>
+                    <span className="badge-blue text-[10px]">
+                      {allLessons.length} Lessons
+                    </span>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Filter videos (e.g. HTML, CSS, React)..."
+                      value={lessonSearch}
+                      onChange={(e) => setLessonSearch(e.target.value)}
+                      className="apple-input !pl-8 !py-1.5 text-xs w-full"
+                    />
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+                    {filteredLessons.map((l) => {
+                      const isCurrent = l.lessonNumber === currentLesson.lessonNumber;
+                      const originalIdx = allLessons.findIndex((item) => item.id === l.id);
+
+                      return (
+                        <div
+                          key={l.id}
+                          onClick={() => setSelectedLessonIndex(originalIdx)}
+                          className={
+                            "p-2.5 rounded-xl border text-xs cursor-pointer transition flex items-start gap-2.5 " +
+                            (isCurrent
+                              ? "bg-[#0071e3]/20 border-[#2997ff] text-white shadow-md shadow-blue-500/10"
+                              : "bg-white/[0.03] border-white/5 text-slate-300 hover:bg-white/[0.07]")
+                          }
+                        >
+                          <div
+                            className={
+                              "w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-[10px] font-mono font-bold mt-0.5 " +
+                              (isCurrent
+                                ? "bg-[#0071e3] text-white"
+                                : "bg-black/40 text-slate-400")
+                            }
+                          >
+                            {isCurrent ? <Play className="w-3 h-3 fill-white" /> : l.lessonNumber}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className={"line-clamp-2 text-xs font-medium " + (isCurrent ? "text-white font-bold" : "text-slate-300")}>
+                              {l.title}
+                            </p>
+                            <span className="text-[10px] text-slate-400 font-mono mt-0.5 inline-block">
+                              ⏱ {l.duration}
+                            </span>
+                          </div>
+
+                          {isCurrent && (
+                            <span className="w-2 h-2 rounded-full bg-[#2997ff] shrink-0 mt-2 animate-pulse" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <AdaptiveVideoPlayer
+                videoUrl={course.videoUrl}
+                thumbnail={course.thumbnail}
+                transcripts={mainResource?.transcripts}
+                title={course.title}
+              />
+            )}
           </div>
         )}
 
