@@ -10,7 +10,7 @@ export const TrainerLibrary: React.FC = () => {
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
 
-  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "c1");
+  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "c6");
   const [resourceTitle, setResourceTitle] = useState("");
   const [resourceType, setResourceType] = useState<"presentation" | "pdf" | "video">("presentation");
   const [version, setVersion] = useState("v2.5");

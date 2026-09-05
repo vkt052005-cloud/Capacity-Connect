@@ -10,7 +10,7 @@ export const FeedbackPage: React.FC = () => {
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
 
-  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "c1");
+  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "c6");
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);

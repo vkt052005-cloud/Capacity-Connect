@@ -35,7 +35,7 @@ export const TrainerLiveClasses: React.FC = () => {
   const [showInstantModal, setShowInstantModal] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState("dsa");
   const [scheduleSubjectId, setScheduleSubjectId] = useState("dsa");
-  const [selectedCourseId, setSelectedCourseId] = useState(myCourses[0]?.id || "c1");
+  const [selectedCourseId, setSelectedCourseId] = useState(myCourses[0]?.id || "c6");
   const [instantMeetTitle, setInstantMeetTitle] = useState(STANDARD_SUBJECTS[0].defaultTitle);
   const [instantMeetUrl, setInstantMeetUrl] = useState("");
   const [sessionTitle, setSessionTitle] = useState(STANDARD_SUBJECTS[0].defaultTitle);

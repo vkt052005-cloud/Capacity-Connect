@@ -16,7 +16,7 @@ export const Questionnaires: React.FC = () => {
   const { addToast } = useAppStore();
 
   const [aiModalOpen, setAiModalOpen] = useState(false);
-  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "c1");
+  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "c6");
   const [assessmentTitle, setAssessmentTitle] = useState("");
   const [duration, setDuration] = useState(15);
   const [passingScore, setPassingScore] = useState(70);
