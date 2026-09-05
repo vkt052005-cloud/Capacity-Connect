@@ -361,15 +361,6 @@ export const LoginPage: React.FC = () => {
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
-
-              {role !== "admin" && (
-                <div className="pt-2 text-center text-xs text-slate-400">
-                  <span>New user? </span>
-                  <Link to="/register" className="text-[#2997ff] font-bold hover:underline">
-                    Register here →
-                  </Link>
-                </div>
-              )}
             </>
           ) : (
             <div className="space-y-5">
