@@ -60,6 +60,39 @@
   "updatedAt": "2026-09-04T14:17:43.715Z",
   "audit_logs": [
     {
+      "id": "log_mtojh84s_mx9t",
+      "timestamp": "2026-09-05T15:30:02.476Z",
+      "actor": "Madhav Kumar",
+      "role": "trainee",
+      "action": "SESSION_AUTHENTICATED",
+      "target": "TRAINEE Portal",
+      "status": "SUCCESS",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-09-05T15:30:02.667Z"
+    },
+    {
+      "id": "log_mtojh2ui_qz7h",
+      "timestamp": "2026-09-05T15:29:55.626Z",
+      "actor": "t2205madhav@gmail.com",
+      "role": "trainee",
+      "action": "FAILED_LOGIN_ATTEMPT",
+      "target": "Auth Service",
+      "status": "FAILED",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-09-05T15:29:55.811Z"
+    },
+    {
+      "id": "log_mtojg3ar_10sn",
+      "timestamp": "2026-09-05T15:29:09.555Z",
+      "actor": "Madhav Kumar",
+      "role": "trainee",
+      "action": "SESSION_TERMINATED",
+      "target": "Auth Service",
+      "status": "SUCCESS",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-09-05T15:29:09.868Z"
+    },
+    {
       "id": "log_mtofqt0c_jpu5",
       "timestamp": "2026-09-05T13:45:30.972Z",
       "actor": "Madhav Kumar",
