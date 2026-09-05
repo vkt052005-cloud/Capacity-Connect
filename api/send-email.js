@@ -21,18 +21,15 @@ export default async function handler(req, res) {
   try {
     const { to, subject, html } = req.body || {};
     const smtpEmail = process.env.SMTP_EMAIL || process.env.SMTP_USER || 'capacityconnect.org@gmail.com';
-    const smtpPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || '';
+    const smtpPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || 'lhvnhismvukivzna';
 
     if (smtpEmail && smtpPass && to) {
       const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: Number(process.env.SMTP_PORT) || 465,
-        secure: process.env.SMTP_SECURE !== 'false',
+        service: 'gmail',
         auth: {
           user: smtpEmail,
           pass: smtpPass
-        },
-        tls: { rejectUnauthorized: false }
+        }
       });
 
       await transporter.sendMail({
