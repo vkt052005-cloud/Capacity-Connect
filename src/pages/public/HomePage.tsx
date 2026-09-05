@@ -284,9 +284,18 @@ export const HomePage: React.FC = () => {
                 <div key={c.id} className="card overflow-hidden grid grid-cols-1 sm:grid-cols-12 group hover:border-[#2997ff]/50 transition shadow-2xl">
                   <div className="sm:col-span-5 relative min-h-[220px] overflow-hidden">
                     <img
-                      src={c.thumbnail}
+                      src={c.thumbnail || (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
                       alt={c.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        const fallback = (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure"))
+                          ? "/thumbnails/dsa-course.jpg"
+                          : "/thumbnails/webdev-course.jpg";
+                        if (!target.src.endsWith(fallback)) {
+                          target.src = fallback;
+                        }
+                      }}
                     />
                     <div className="absolute top-3 left-3">
                       <span className="badge-blue text-[10px] font-bold">Featured Playlist</span>
@@ -296,8 +305,8 @@ export const HomePage: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <span className="badge-blue text-[9px]">{c.category}</span>
-                        <span className="badge-green text-[9px]">139 Lessons</span>
-                        <span className="badge-blue text-[9px] font-mono">⭐ 4.98</span>
+                        <span className="badge-green text-[9px]">{c.lessons?.length || (c.id === 'c-dsa' ? 315 : 139)} Lessons</span>
+                        <span className="badge-blue text-[9px] font-mono">⭐ {c.rating || 4.98}</span>
                       </div>
                       <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#2997ff] transition">
                         {c.title}
@@ -331,9 +340,18 @@ export const HomePage: React.FC = () => {
                   <div>
                     <div className="relative h-32 overflow-hidden">
                       <img
-                        src={c.thumbnail}
+                        src={c.thumbnail || (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
                         alt={c.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          const fallback = (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure"))
+                            ? "/thumbnails/dsa-course.jpg"
+                            : "/thumbnails/webdev-course.jpg";
+                          if (!target.src.endsWith(fallback)) {
+                            target.src = fallback;
+                          }
+                        }}
                       />
                       <div className="absolute top-2 right-2">
                         <span className="badge-blue text-[8px]">{c.category}</span>

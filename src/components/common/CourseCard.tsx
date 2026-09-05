@@ -34,12 +34,20 @@ export const CourseCard: React.FC<CourseCardProps> = ({
     <div className="bg-[#101424] rounded-2xl border border-[#1e2540] overflow-hidden hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all group flex flex-col">
       {/* Thumbnail */}
       <div className="relative h-40 overflow-hidden bg-gradient-to-br from-[#12172b] to-[#1c2340]">
-        {course.thumbnail ? (
+        {course.thumbnail || true ? (
           <img
-            src={course.thumbnail}
+            src={course.thumbnail || (course.id === "c-dsa" || course.title.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
             alt={course.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100"
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            onError={e => {
+              const target = e.currentTarget;
+              const fallback = (course.id === "c-dsa" || course.title.toLowerCase().includes("data structure"))
+                ? "/thumbnails/dsa-course.jpg"
+                : "/thumbnails/webdev-course.jpg";
+              if (!target.src.endsWith(fallback)) {
+                target.src = fallback;
+              }
+            }}
           />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-[#101424] via-[#101424]/30 to-transparent" />

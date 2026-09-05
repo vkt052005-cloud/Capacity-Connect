@@ -80,9 +80,18 @@ export const CourseCatalog: React.FC = () => {
                 <div>
                   <div className="relative h-36 overflow-hidden">
                     <img
-                      src={c.thumbnail}
+                      src={c.thumbnail || (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
                       alt={c.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        const fallback = (c.id === "c-dsa" || c.title.toLowerCase().includes("data structure"))
+                          ? "/thumbnails/dsa-course.jpg"
+                          : "/thumbnails/webdev-course.jpg";
+                        if (!target.src.endsWith(fallback)) {
+                          target.src = fallback;
+                        }
+                      }}
                     />
                     <div className="absolute top-2 right-2">
                       <span className="badge-blue text-[8px]">{c.category}</span>
