@@ -402,7 +402,7 @@ export const initialCourses: Course[] = [
     trainerName: "CodeWithHarry (Haris Khan)",
     category: "Technical",
     thumbnail: "https://images.unsplash.com/photo-1593720219276-0b1eacd0aef4?w=800&auto=format&fit=crop&q=80",
-    duration: "85+ Hours • 130+ Lessons",
+    duration: "85+ Hours • 139 Lessons",
     level: "Beginner",
     status: "active",
     createdAt: "2026-02-15T10:00:00Z",
