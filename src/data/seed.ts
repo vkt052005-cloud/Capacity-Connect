@@ -395,30 +395,6 @@ export const initialCourses: Course[] = [
   },
   {
     id: "c6",
-    title: "Full-Stack Web Engineering with Modern React & TypeScript",
-    description: "Build ultra-fast, accessible, and responsive enterprise web applications using modern React, TypeScript, Tailwind CSS, and scalable state management.",
-    trainerId: "u-trainer-1",
-    trainerName: "Dr. Marcus Vance",
-    category: "Technical",
-    thumbnail: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80",
-    duration: "22 Hours • 7 Modules",
-    level: "Intermediate",
-    status: "active",
-    createdAt: "2026-02-10T12:00:00Z",
-    rating: 4.92,
-    totalRatings: 380,
-    tags: ["React", "TypeScript", "Tailwind", "Full-Stack", "Web Performance"],
-    syllabus: [
-      "Module 1: Strict TypeScript Type Systems & Generics",
-      "Module 2: High-Performance React State Architecture",
-      "Module 3: Glassmorphism, CSS Variables & Design Systems",
-      "Module 4: Client-Side Routing & Resilient Wildcard Fallbacks",
-      "Module 5: Optimizing Core Web Vitals (LCP, INP, CLS)"
-    ],
-    resources: []
-  },
-  {
-    id: "c7",
     title: "Complete Sigma Web Development Course (HTML, CSS, JS, Node, React)",
     description: "The complete hands-on roadmap to becoming a full stack web developer: learn semantic HTML5, modern CSS3 & Flexbox, vanilla JavaScript ES6+, DOM manipulation, Node.js runtime, Express backend, MongoDB database, and React & Next.js.",
     trainerId: "u-trainer-official",
@@ -446,8 +422,8 @@ export const initialCourses: Course[] = [
     prerequisites: ["No prior programming experience required", "A computer with Chrome and VS Code installed"],
     resources: [
       {
-        id: "r701",
-        courseId: "c7",
+        id: "r601",
+        courseId: "c6",
         title: "Full Stack Web Development Master Notes & Cheatsheet",
         type: "presentation",
         url: "#slides",
@@ -464,11 +440,11 @@ export const initialCourses: Course[] = [
           "React utilizes virtual DOM reconciliation and reusable component hooks for fast UI rendering."
         ],
         flashcards: [
-          { id: "f701", front: "What is the Box Model in CSS?", back: "The CSS box model consists of content, padding, border, and margin around every HTML element.", category: "CSS" },
-          { id: "f702", front: "What is Event Bubbling in the DOM?", back: "Event bubbling is when an event triggers on the innermost target element and then propagates upwards through its parent elements in the DOM tree.", category: "JavaScript" },
-          { id: "f703", front: "What is the difference between synchronous and asynchronous code?", back: "Synchronous code executes sequentially and blocks execution; asynchronous code executes in the background and resolves via callbacks, Promises, or async/await.", category: "JavaScript" },
-          { id: "f704", front: "What is Middleware in Express.js?", back: "Functions that have access to the request, response, and the next() function in the application's request-response cycle.", category: "Backend" },
-          { id: "f705", front: "What is JSX in React?", back: "JSX is a syntax extension for JavaScript that allows you to write HTML-like markup directly inside JavaScript code.", category: "React" }
+          { id: "f601", front: "What is the Box Model in CSS?", back: "The CSS box model consists of content, padding, border, and margin around every HTML element.", category: "CSS" },
+          { id: "f602", front: "What is Event Bubbling in the DOM?", back: "Event bubbling is when an event triggers on the innermost target element and then propagates upwards through its parent elements in the DOM tree.", category: "JavaScript" },
+          { id: "f603", front: "What is the difference between synchronous and asynchronous code?", back: "Synchronous code executes sequentially and blocks execution; asynchronous code executes in the background and resolves via callbacks, Promises, or async/await.", category: "JavaScript" },
+          { id: "f604", front: "What is Middleware in Express.js?", back: "Functions that have access to the request, response, and the next() function in the application's request-response cycle.", category: "Backend" },
+          { id: "f605", front: "What is JSX in React?", back: "JSX is a syntax extension for JavaScript that allows you to write HTML-like markup directly inside JavaScript code.", category: "React" }
         ],
         slides: [
           {
@@ -667,7 +643,7 @@ export const initialAssessments: Assessment[] = [
   },
   {
     id: "a-webdev-sigma",
-    courseId: "c7",
+    courseId: "c6",
     courseTitle: "Complete Sigma Web Development Course (HTML, CSS, JS, Node, React)",
     title: "Full Stack Web Development Certification Assessment",
     description: "Proctored competency evaluation covering HTML5 semantics, CSS Flexbox/Grid, JavaScript asynchronous logic, REST APIs, and React component state.",
@@ -1030,6 +1006,12 @@ export function getFromStorage<T>(key: string): T[] {
               parsed.push(initCourse);
               modified = true;
             }
+          }
+          const c6 = parsed.find((c: any) => c.id === 'c6');
+          const initC6 = initialCourses.find((c: any) => c.id === 'c6');
+          if (c6 && initC6 && (c6.title !== initC6.title || !c6.videoUrl)) {
+            Object.assign(c6, initC6);
+            modified = true;
           }
           if (modified) {
             localStorage.setItem(key, JSON.stringify(parsed));
