@@ -783,15 +783,6 @@ export const RegisterPage: React.FC = () => {
                     <p className="text-[11px] text-slate-300">
                       Security Verification Code: <strong className="font-mono text-sm tracking-widest text-[#2997ff]">{generatedOtp}</strong>
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOtpDigits(generatedOtp.split(""));
-                      }}
-                      className="text-[10px] text-[#2997ff] hover:underline font-semibold cursor-pointer"
-                    >
-                      Click to Auto-Fill Code ⚡
-                    </button>
                   </div>
                 )}
               </div>
