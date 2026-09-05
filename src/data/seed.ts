@@ -82,7 +82,7 @@ export const initialUsers: User[] = [
 export const initialCourses: Course[] = [
 {
     id: "c6",
-    title: "Complete Sigma Web Development Course (HTML, CSS, JS, Node, React)",
+    title: "Web Development Course",
     description: "The complete hands-on roadmap to becoming a full stack web developer: learn semantic HTML5, modern CSS3 & Flexbox, vanilla JavaScript ES6+, DOM manipulation, Node.js runtime, Express backend, MongoDB database, and React & Next.js.",
     trainerId: "u-trainer-official",
     trainerName: "CodeWithHarry (Haris Khan)",
@@ -178,7 +178,7 @@ export const initialAssessments: Assessment[] = [
 {
     id: "a-webdev-sigma",
     courseId: "c6",
-    courseTitle: "Complete Sigma Web Development Course (HTML, CSS, JS, Node, React)",
+    courseTitle: "Web Development Course",
     title: "Full Stack Web Development Certification Assessment",
     description: "Proctored competency evaluation covering HTML5 semantics, CSS Flexbox/Grid, JavaScript asynchronous logic, REST APIs, and React component state.",
     deadline: "2026-12-31T23:59:59Z",
@@ -314,7 +314,7 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     ]
   },
   {
-    subject: "Full-Stack Web Development (HTML, CSS, JS, Node, React)",
+    subject: "Web Development Course",
     category: "Technical",
     organizationalDemandScore: 98,
     internalCapacityScore: 95,
