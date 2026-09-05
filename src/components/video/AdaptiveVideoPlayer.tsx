@@ -52,7 +52,15 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
 
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
-    return (match && match[2].length === 11) ? `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1&rel=0` : null;
+    if (match && match[2].length === 11) {
+      let startParam = "";
+      const startMatch = url.match(/[?&](?:t|start)=(\d+)/);
+      if (startMatch) {
+        startParam = `&start=${startMatch[1]}`;
+      }
+      return `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1&rel=0${startParam}`;
+    }
+    return null;
   };
 
   const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);

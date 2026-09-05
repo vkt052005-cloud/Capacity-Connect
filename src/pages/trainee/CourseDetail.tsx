@@ -16,6 +16,7 @@ import { useAppStore } from "../../store/appStore";
 import { initialDiscussions, initialCourses } from "../../data/seed";
 import { sigmaWebDevLessons } from "../../data/sigmaWebDevPlaylist";
 import { dsaLessons } from "../../data/dsaPlaylist";
+import { sqlLessons } from "../../data/sqlPlaylist";
 
 const WEBDEV_MODULE_FILTERS = [
   { label: "All (139)", start: 1, end: 139 },
@@ -40,6 +41,15 @@ const DSA_MODULE_FILTERS = [
   { label: "Stacks, Queues & Caches (297-315)", start: 297, end: 315 }
 ];
 
+const SQL_MODULE_FILTERS = [
+  { label: "All (16)", start: 1, end: 16 },
+  { label: "Core Lectures (1-8)", start: 1, end: 8 },
+  { label: "Deep Dive Modules (9-16)", start: 9, end: 16 },
+  { label: "Querying & Relating (2-3)", start: 2, end: 3 },
+  { label: "Design & Writing (4-5)", start: 4, end: 5 },
+  { label: "Optimization & Scaling (6-8)", start: 6, end: 8 }
+];
+
 export const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { courses, completeCourse } = useCoursesStore();
@@ -57,14 +67,20 @@ export const CourseDetail: React.FC = () => {
   const foundCourse = courses.find((c) => c.id === id);
   const course = foundCourse || initialCourses.find((c) => c.id === id) || initialCourses.find((c) => c.id === "c6");
   const isDsaCourse = id === "c-dsa" || course?.id === "c-dsa" || course?.title?.toLowerCase().includes("data structure") || false;
+  const isSqlCourse = id === "c-sql" || course?.id === "c-sql" || course?.title?.toLowerCase().includes("database") || course?.title?.toLowerCase().includes("sql") || false;
 
-  const currentModuleFilters = isDsaCourse ? DSA_MODULE_FILTERS : WEBDEV_MODULE_FILTERS;
+  const currentModuleFilters = isSqlCourse
+    ? SQL_MODULE_FILTERS
+    : isDsaCourse
+    ? DSA_MODULE_FILTERS
+    : WEBDEV_MODULE_FILTERS;
+
   const activeModuleFilter = selectedModuleFilter && currentModuleFilters.some(m => m.label === selectedModuleFilter)
     ? selectedModuleFilter
     : currentModuleFilters[0].label;
 
   const [discussions, setDiscussions] = useState(
-    initialDiscussions.filter((d) => d.courseId === "c1" || d.courseId === id || (isDsaCourse && d.courseId === "c-dsa"))
+    initialDiscussions.filter((d) => d.courseId === "c1" || d.courseId === id || (isDsaCourse && d.courseId === "c-dsa") || (isSqlCourse && d.courseId === "c-sql"))
   );
   const [newQuestion, setNewQuestion] = useState("");
   const [newQuestionTitle, setNewQuestionTitle] = useState("");
@@ -73,6 +89,9 @@ export const CourseDetail: React.FC = () => {
   const allLessons = useMemo(() => {
     if (course?.lessons && course.lessons.length > 0) {
       return course.lessons;
+    }
+    if (isSqlCourse) {
+      return sqlLessons;
     }
     if (isDsaCourse) {
       return dsaLessons;
@@ -85,7 +104,7 @@ export const CourseDetail: React.FC = () => {
       return seedMatch.lessons;
     }
     return sigmaWebDevLessons;
-  }, [course, id, isDsaCourse]);
+  }, [course, id, isDsaCourse, isSqlCourse]);
 
   if (!course) {
     return (
@@ -235,7 +254,7 @@ export const CourseDetail: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(`/trainee/assessment/${isDsaCourse ? "a-dsa-striver" : "a-webdev-sigma"}`)}
+              onClick={() => navigate(`/trainee/assessment/${isSqlCourse ? "a-sql-cs50" : isDsaCourse ? "a-dsa-striver" : "a-webdev-sigma"}`)}
               className="apple-btn-secondary text-xs px-4 py-2 font-semibold cursor-pointer"
             >
               <Award className="w-4 h-4" /> Certification Exam
@@ -311,7 +330,7 @@ export const CourseDetail: React.FC = () => {
               <div className="lg:col-span-8 space-y-4">
                 <AdaptiveVideoPlayer
                   videoUrl={activeVideoUrl}
-                  thumbnail={course.thumbnail}
+                  thumbnail={course.thumbnail || (isSqlCourse ? "/thumbnails/sql-course.jpg" : isDsaCourse ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
                   transcripts={mainResource?.transcripts}
                   title={activeVideoTitle}
                 />

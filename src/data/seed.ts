@@ -5,6 +5,7 @@ import {
 import { generateAnswerHash } from "../utils/quizSecurity";
 import { sigmaWebDevLessons } from "./sigmaWebDevPlaylist";
 import { dsaLessons } from "./dsaPlaylist";
+import { sqlLessons } from "./sqlPlaylist";
 
 export const initialBadges: Badge[] = [
   { id: "b1", name: "Quick Starter", description: "Enrolled and completed first orientation module within 24 hours.", icon: "⚡", category: "milestone" },
@@ -97,6 +98,27 @@ export const initialUsers: User[] = [
       rating: 4.99,
       totalStudentsTaught: 500000,
       verifiedCredentials: ["take U forward Founder", "Competitive Programming Master"]
+    }
+  },
+  {
+    id: "u-trainer-carter",
+    name: "Carter Zenke",
+    email: "carter@cs50.harvard.edu",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Lecturer on Computer Science at Harvard University & Lead Instructor for CS50's Introduction to Databases with SQL.",
+      expertise: ["Relational Databases", "SQL", "Database Design", "PostgreSQL", "SQLite"],
+      competencies: ["Relational Algebra", "Schema Optimization", "Database Architecture"],
+      phone: "+1 617 495 1000",
+      department: "Harvard Division of Continuing Education & SEAS",
+      designation: "Harvard CS50 Lead Instructor",
+      experience: "7+ Years Academic Instruction",
+      rating: 4.99,
+      totalStudentsTaught: 750000,
+      verifiedCredentials: ["Harvard University Faculty", "CS50 Lead Instructor"]
     }
   }
 ];
@@ -285,6 +307,97 @@ export const initialCourses: Course[] = [
         ]
       }
     ]
+  },
+  {
+    id: "c-sql",
+    title: "Databases With SQL",
+    description: "Harvard CS50's comprehensive university course on Relational Databases and SQL taught by Carter Zenke. Master SQLite, PostgreSQL, and MySQL: learning schema design, normalization, complex multi-table JOINs, indexing with B-Trees, transactions with ACID guarantees, and distributed scaling.",
+    trainerId: "u-trainer-carter",
+    trainerName: "Carter Zenke (Harvard University)",
+    category: "Technical",
+    thumbnail: "/thumbnails/sql-course.jpg",
+    duration: "22+ Hours • 16 Lessons",
+    level: "Intermediate",
+    status: "active",
+    createdAt: "2026-03-02T10:00:00Z",
+    rating: 4.99,
+    totalRatings: 2890,
+    videoUrl: "https://youtu.be/WXk7yDqsKxs",
+    lessons: sqlLessons,
+    tags: ["Databases", "SQL", "SQLite", "PostgreSQL", "MySQL", "Database Design", "Indexing", "Transactions", "Harvard CS50"],
+    syllabus: [
+      "Lecture 0: Querying – SELECT, WHERE, ORDER BY, LIMIT, LIKE, Aggregate Functions",
+      "Lecture 1: Relating – Primary Keys, Foreign Keys, Entity Relationships & JOINs",
+      "Lecture 2: Designing – Database Normalization (1NF, 2NF, 3NF), Types & Constraints",
+      "Lecture 3: Writing – INSERT, UPDATE, DELETE, Triggers, and ACID Transactions",
+      "Lecture 4: Viewing – CREATE VIEW, CTEs, Materialized Views & Security",
+      "Lecture 5: Optimizing – Query Execution Plans, B-Trees, Indexes & Search Costs",
+      "Lecture 6: Scaling – PostgreSQL, MySQL, Distributed Systems, Replication & Sharding"
+    ],
+    prerequisites: ["Basic familiarity with computational thinking or any programming language"],
+    resources: [
+      {
+        id: "r-sql-01",
+        courseId: "c-sql",
+        title: "Harvard CS50 SQL Complete Handbook & Syntax Cheatsheet",
+        type: "presentation",
+        url: "#slides",
+        size: "24.2 MB",
+        uploadedAt: "2026-03-02T10:00:00Z",
+        uploadedBy: "Carter Zenke (Harvard University)",
+        version: "v2024.1",
+        summary: "Authoritative handbook on relational database theory, SQL queries, join conditions, schema normalization rules, transactions, and indexing.",
+        keyTakeaways: [
+          "Relational databases organize data into tables consisting of rows and columns with enforced data types.",
+          "Primary keys uniquely identify records, while foreign keys establish relationships across tables.",
+          "Database normalization (1NF, 2NF, 3NF) reduces data redundancy and prevents update anomalies.",
+          "Indexes utilize B-Tree structures to expedite query lookups from O(N) linear scans to O(log N) operations.",
+          "ACID properties (Atomicity, Consistency, Isolation, Durability) guarantee transactional reliability."
+        ],
+        flashcards: [
+          { id: "f-sql-1", front: "What is the difference between WHERE and HAVING in SQL?", back: "WHERE filters rows before any groupings are made, while HAVING filters groups created by the GROUP BY clause.", category: "SQL Querying" },
+          { id: "f-sql-2", front: "What is a Foreign Key constraint?", back: "A column or group of columns in a relational database table that provides a link between data in two tables, enforcing referential integrity.", category: "Schema Design" },
+          { id: "f-sql-3", front: "What are the ACID properties in database transactions?", back: "Atomicity (all or nothing), Consistency (preserves invariants), Isolation (concurrent execution transparency), and Durability (committed data survives crashes).", category: "Transactions" },
+          { id: "f-sql-4", front: "How does a B-Tree index accelerate SELECT queries?", back: "By maintaining a self-balancing sorted search tree, reducing disk lookups from O(N) full table scans to O(log N) page reads.", category: "Optimization" },
+          { id: "f-sql-5", front: "What is Third Normal Form (3NF)?", back: "A table is in 3NF if it is in 2NF and has no transitive dependencies (non-key attributes depend only on the primary key).", category: "Normalization" }
+        ],
+        slides: [
+          {
+            slideNumber: 1,
+            title: "Relational Modeling & Schema Foundations",
+            bullets: [
+              "Tables, attributes, tuples, and relational schemas",
+              "Primary key selection and natural vs surrogate keys",
+              "Foreign keys, cascade actions (CASCADE, SET NULL, RESTRICT)",
+              "One-to-One, One-to-Many, and Many-to-Many entity relationships"
+            ],
+            keyConcept: "Design clean schemas first to prevent redundancy and anomalous data states."
+          },
+          {
+            slideNumber: 2,
+            title: "Joins, Query Plans & Optimization",
+            bullets: [
+              "Inner Join vs Left/Right/Full Outer Joins",
+              "Cross joins and Cartesian product pitfalls",
+              "Analyzing queries with EXPLAIN QUERY PLAN",
+              "B-Tree index anatomy: root, branch, and leaf pages"
+            ],
+            keyConcept: "Understanding how the database engine executes queries is the key to writing fast SQL."
+          },
+          {
+            slideNumber: 3,
+            title: "Transactions, Concurrency & Scaling",
+            bullets: [
+              "Transaction control: BEGIN TRANSACTION, COMMIT, ROLLBACK",
+              "Isolation levels: Read Uncommitted, Read Committed, Repeatable Read, Serializable",
+              "Write-Ahead Logging (WAL) and crash recovery",
+              "Horizontal scaling: Read replicas, connection pooling, and sharding"
+            ],
+            keyConcept: "ACID guarantees preserve data integrity even in distributed, high-concurrency environments."
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -466,6 +579,95 @@ export const initialAssessments: Assessment[] = [
         topic: "Stacks & Queues"
       }
     ]
+  },
+  {
+    id: "a-sql-cs50",
+    courseId: "c-sql",
+    courseTitle: "Databases With SQL",
+    title: "Databases With SQL Certification Assessment",
+    description: "Proctored Harvard CS50 curriculum examination covering SQL querying, joins, schema normalization, indexing, and ACID transactions.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 25,
+    passingScore: 70,
+    createdBy: "Carter Zenke (Harvard University)",
+    createdAt: "2026-03-02T10:00:00Z",
+    questions: [
+      {
+        id: "q-sql-1",
+        text: "In SQL, which clause is specifically used to filter rows AFTER an aggregate function has grouped them?",
+        options: [
+          { id: "o1", text: "WHERE" },
+          { id: "o2", text: "HAVING" },
+          { id: "o3", text: "ORDER BY" },
+          { id: "o4", text: "GROUP BY" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-sql-1", 1),
+        points: 20,
+        explanation: "HAVING filters groups of rows based on aggregate conditions, whereas WHERE filters individual rows before grouping.",
+        topic: "SQL Querying"
+      },
+      {
+        id: "q-sql-2",
+        text: "Which type of JOIN returns all records from the left table and the matched records from the right table, filling with NULL for unmatched rows?",
+        options: [
+          { id: "o1", text: "INNER JOIN" },
+          { id: "o2", text: "LEFT JOIN" },
+          { id: "o3", text: "RIGHT JOIN" },
+          { id: "o4", text: "CROSS JOIN" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-sql-2", 1),
+        points: 20,
+        explanation: "LEFT JOIN (or LEFT OUTER JOIN) returns all records from the left table, and matching values from the right table, or NULL if no match.",
+        topic: "Relational Joins"
+      },
+      {
+        id: "q-sql-3",
+        text: "What rule must a table satisfy to be in Third Normal Form (3NF)?",
+        options: [
+          { id: "o1", text: "It must only contain integer column values" },
+          { id: "o2", text: "It must be in 2NF and have no transitive dependencies of non-key attributes on the primary key" },
+          { id: "o3", text: "It must have at least three distinct foreign keys" },
+          { id: "o4", text: "All rows must be indexed in ascending chronological order" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-sql-3", 1),
+        points: 20,
+        explanation: "3NF requires a table to be in 2NF and every non-key column must depend directly and only on the primary key (no transitive dependencies).",
+        topic: "Database Normalization"
+      },
+      {
+        id: "q-sql-4",
+        text: "What underlying data structure is commonly used by relational database management systems (RDBMS) to implement fast table indexes?",
+        options: [
+          { id: "o1", text: "Linked List" },
+          { id: "o2", text: "B-Tree (or B+ Tree)" },
+          { id: "o3", text: "Stack" },
+          { id: "o4", text: "Binary Min-Heap" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-sql-4", 1),
+        points: 20,
+        explanation: "B-Trees (and B+ Trees) are balanced search trees optimized for block storage, allowing O(log N) searches, insertions, and range queries.",
+        topic: "Query Optimization"
+      },
+      {
+        id: "q-sql-5",
+        text: "In database transaction theory, what does 'Durability' in ACID guarantee?",
+        options: [
+          { id: "o1", text: "Transactions are executed within 1 millisecond" },
+          { id: "o2", text: "Once a transaction commits, its changes survive power loss or system crashes" },
+          { id: "o3", text: "No two users can query the database at the same time" },
+          { id: "o4", text: "The database will never run out of disk space" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-sql-5", 1),
+        points: 20,
+        explanation: "Durability guarantees that once a transaction has been committed, its effects are permanently recorded (usually via WAL/disk persistence) even in the event of a crash.",
+        topic: "Transactions & ACID"
+      }
+    ]
   }
 ];
 
@@ -536,6 +738,17 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     priority: "Critical",
     suitableTrainers: [
       { id: "u-trainer-striver", name: "Raj Vikramaditya (Striver)", rating: 4.99, matchPercentage: 100, experienceYears: 10, competencies: ["DSA", "LeetCode", "Dynamic Programming", "Graphs", "Binary Search", "Trees"] }
+    ]
+  },
+  {
+    subject: "Databases With SQL",
+    category: "Technical",
+    organizationalDemandScore: 98,
+    internalCapacityScore: 94,
+    gapScore: 4,
+    priority: "High",
+    suitableTrainers: [
+      { id: "u-trainer-carter", name: "Carter Zenke (Harvard University)", rating: 4.99, matchPercentage: 100, experienceYears: 7, competencies: ["Relational Databases", "SQL", "Database Design", "PostgreSQL", "SQLite", "Indexing"] }
     ]
   }
 ];
@@ -618,6 +831,31 @@ export const initialDiscussions: DiscussionThread[] = [
         authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
         content: "Yes! Whenever you need the nearest greater/smaller element on the left or right, a monotonic stack maintains elements in sorted order and guarantees each index is pushed and popped at most once in O(N). Check video #300 and the Stack series!",
         createdAt: "2026-03-02T11:15:00Z",
+        isTrainerVerified: true
+      }
+    ]
+  },
+  {
+    id: "disc-sql-01",
+    courseId: "c-sql",
+    title: "When should we prefer B-Tree Index over Hash Index in PostgreSQL?",
+    content: "Is a B-Tree index always the default recommendation, or does a Hash index perform better for exact equality lookups?",
+    authorId: "u-trainee-official",
+    authorName: "Madhav Kumar",
+    authorRole: "trainee",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    createdAt: "2026-03-02T12:00:00Z",
+    upvotes: 24,
+    upvotedBy: ["u-trainee-official"],
+    replies: [
+      {
+        id: "rep-sql-01",
+        authorId: "u-trainer-carter",
+        authorName: "Carter Zenke",
+        authorRole: "trainer",
+        authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+        content: "B-Tree is the universal default because it supports equality (=), range comparisons (<, <=, >, >=), BETWEEN, and ORDER BY sorting. Hash indexes in PostgreSQL only support simple equality (=) lookups and cannot optimize range queries or sorting.",
+        createdAt: "2026-03-02T13:30:00Z",
         isTrainerVerified: true
       }
     ]

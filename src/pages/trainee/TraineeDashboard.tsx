@@ -302,12 +302,14 @@ export const TraineeDashboard: React.FC = () => {
                 <div key={c.id} className="glass-card p-4 space-y-3 flex flex-col justify-between">
                   <div className="flex items-start gap-3">
                     <img
-                      src={c.thumbnail || (c.id === "c-dsa" || c.title?.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
+                      src={c.thumbnail || (c.id === "c-sql" || c.title?.toLowerCase().includes("sql") ? "/thumbnails/sql-course.jpg" : c.id === "c-dsa" || c.title?.toLowerCase().includes("data structure") ? "/thumbnails/dsa-course.jpg" : "/thumbnails/webdev-course.jpg")}
                       alt={c.title}
                       className="w-20 h-16 rounded-xl object-cover border border-white/10 shrink-0"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        const fallback = (c.id === "c-dsa" || c.title?.toLowerCase().includes("data structure"))
+                        const fallback = (c.id === "c-sql" || c.title?.toLowerCase().includes("sql"))
+                          ? "/thumbnails/sql-course.jpg"
+                          : (c.id === "c-dsa" || c.title?.toLowerCase().includes("data structure"))
                           ? "/thumbnails/dsa-course.jpg"
                           : "/thumbnails/webdev-course.jpg";
                         if (!target.src.endsWith(fallback)) {
