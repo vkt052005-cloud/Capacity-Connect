@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   GraduationCap, BookOpen, Award, Users, ChevronRight, ChevronDown,
@@ -17,7 +17,11 @@ import { ToastContainer } from "../../components/common/ToastContainer";
 import { CertificateVerifierModal } from "../../components/assessment/CertificateVerifierModal";
 
 export const HomePage: React.FC = () => {
-  const { courses } = useCoursesStore();
+  const { courses, load } = useCoursesStore();
+
+  useEffect(() => {
+    load();
+  }, [load]);
   const { notifications } = useNotificationsStore();
   const { setCertificateVerifierOpen } = useAppStore();
   const [verifyHashInput, setVerifyHashInput] = useState("");

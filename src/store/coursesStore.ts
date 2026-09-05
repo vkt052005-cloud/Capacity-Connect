@@ -24,10 +24,10 @@ interface CoursesState {
 }
 
 export const useCoursesStore = create<CoursesState>((set, get) => ({
-  courses: [],
-  enrollments: [],
-  certificates: [],
-  feedbacks: [],
+  courses: getFromStorage<Course>(STORAGE_KEYS.COURSES),
+  enrollments: getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS),
+  certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
+  feedbacks: getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS),
 
   load: () => {
     set({

@@ -17,8 +17,8 @@ interface AssessmentsState {
 }
 
 export const useAssessmentsStore = create<AssessmentsState>((set, get) => ({
-  assessments: [],
-  attempts: [],
+  assessments: getFromStorage<Assessment>(STORAGE_KEYS.ASSESSMENTS),
+  attempts: getFromStorage<Attempt>(STORAGE_KEYS.ATTEMPTS),
 
   load: () => {
     set({
