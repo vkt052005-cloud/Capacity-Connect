@@ -180,7 +180,8 @@ export interface Question {
   id: string;
   text: string;
   options: Option[];
-  correctIndex: number;
+  correctIndex?: number;
+  answerHash?: string;
   points: number;
   explanation?: string;
   topic?: string;

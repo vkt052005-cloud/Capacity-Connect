@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Sparkles, Brain, CheckCircle2, X, Plus, Trash2 } from "lucide-react";
 import { Question } from "../../types";
 import { useAppStore } from "../../store/appStore";
+import { generateAnswerHash } from "../../utils/quizSecurity";
 
 interface AiQuizGeneratorModalProps {
   isOpen: boolean;
@@ -30,9 +31,13 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
     setGenerating(true);
 
     setTimeout(() => {
+      const q1Id = "gen-q1-" + Date.now();
+      const q2Id = "gen-q2-" + Date.now();
+      const q3Id = "gen-q3-" + Date.now();
+
       const sampleQuestions: Question[] = [
         {
-          id: "gen-q1-" + Date.now(),
+          id: q1Id,
           text: "What architectural trade-off is fundamental when choosing eventual consistency over strong consistency?",
           options: [
             { id: "o1", text: "Higher availability and lower write latency across distributed nodes" },
@@ -41,12 +46,13 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
             { id: "o4", text: "Zero network packets required between datacenters" }
           ],
           correctIndex: 0,
+          answerHash: generateAnswerHash(q1Id, 0),
           points: 20,
           explanation: "Eventual consistency allows nodes to respond to writes immediately without waiting for cross-region consensus, trading instant read uniformity for higher uptime.",
           topic: "Distributed Systems"
         },
         {
-          id: "gen-q2-" + Date.now(),
+          id: q2Id,
           text: "In Kubernetes, which component is responsible for assigning pods to healthy worker nodes based on resource constraints?",
           options: [
             { id: "o1", text: "kube-proxy" },
@@ -55,12 +61,13 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
             { id: "o4", text: "etcd" }
           ],
           correctIndex: 1,
+          answerHash: generateAnswerHash(q2Id, 1),
           points: 20,
           explanation: "The kube-scheduler watches for unassigned pods and filters/scores nodes to select the optimal host.",
           topic: "Kubernetes Core"
         },
         {
-          id: "gen-q3-" + Date.now(),
+          id: q3Id,
           text: "How does the Transactional Outbox pattern prevent distributed data inconsistency?",
           options: [
             { id: "o1", text: "By writing event payloads to the database inside the same local ACID transaction as the business entity" },
@@ -69,6 +76,7 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
             { id: "o4", text: "By forcing all microservices to share a single SQLite file" }
           ],
           correctIndex: 0,
+          answerHash: generateAnswerHash(q3Id, 0),
           points: 20,
           explanation: "Atomic local writes ensure the message record exists whenever the entity state changes, enabling guaranteed at-least-once message delivery.",
           topic: "Resilience Design"

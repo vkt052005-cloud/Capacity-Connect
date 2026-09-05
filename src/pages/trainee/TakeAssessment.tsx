@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Clock, CheckCircle2, ShieldAlert, Award, AlertTriangle,
@@ -12,6 +12,7 @@ import { useCoursesStore } from "../../store/coursesStore";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { Certificate } from "../../types";
+import { sanitizeAssessmentForTrainee, verifyAnswerHash } from "../../utils/quizSecurity";
 
 export const TakeAssessment: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +22,12 @@ export const TakeAssessment: React.FC = () => {
   const { addToast } = useAppStore();
   const navigate = useNavigate();
 
-  const assessment = assessments.find((a) => a.id === id);
+  const rawAssessment = assessments.find((a) => a.id === id);
+  // Obfuscate & strip answer keys so DevTools and state cannot leak correctIndex
+  const assessment = useMemo(
+    () => (rawAssessment ? sanitizeAssessmentForTrainee(rawAssessment) : undefined),
+    [rawAssessment]
+  );
   const questions = assessment?.questions || [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -91,7 +97,7 @@ export const TakeAssessment: React.FC = () => {
       const selected = selectedAnswers[idx];
       answerArr.push(selected !== undefined ? selected : -1);
       totalScore += q.points;
-      if (selected === q.correctIndex) {
+      if (verifyAnswerHash(q.id, selected, q.answerHash, q.correctIndex)) {
         earnedScore += q.points;
       }
     });

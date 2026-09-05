@@ -7,6 +7,7 @@ import { useCoursesStore } from "../../store/coursesStore";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { Question } from "../../types";
+import { generateAnswerHash } from "../../utils/quizSecurity";
 
 export const Questionnaires: React.FC = () => {
   const { assessments, addAssessment } = useAssessmentsStore();
@@ -50,6 +51,11 @@ export const Questionnaires: React.FC = () => {
       return;
     }
 
+    const securedQuestions = questions.map((q) => ({
+      ...q,
+      answerHash: generateAnswerHash(q.id, q.correctIndex ?? 0)
+    }));
+
     addAssessment({
       courseId: selectedCourseId,
       courseTitle: selectedCourse?.title || "Cloud Architecture",
@@ -59,7 +65,7 @@ export const Questionnaires: React.FC = () => {
       durationMinutes: duration,
       passingScore,
       createdBy: currentUser?.name || "Faculty Trainer",
-      questions
+      questions: securedQuestions
     });
 
     setAssessmentTitle("");
