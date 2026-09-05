@@ -31,13 +31,28 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
   const [savedNotes, setSavedNotes] = useState<{ time: string; note: string }[]>([]);
   const [noteInput, setNoteInput] = useState("");
 
-  // Helper to extract YouTube embed URL if applicable
+  // Helper to extract YouTube embed URL if applicable (supports individual videos, playlist series, and custom lists)
   const getYouTubeEmbedUrl = (url?: string) => {
     if (!url) return null;
     if (url.includes("youtube.com/embed/")) return url;
+
+    // Support YouTube Playlist URLs (e.g. https://youtube.com/playlist?list=PLu0W_9lII9agq5TrH9XLIKQvv0iaF2X3w)
+    if (url.includes("list=")) {
+      const listMatch = url.match(/[?&]list=([^#&?]+)/);
+      const listId = listMatch ? listMatch[1] : null;
+      if (listId) {
+        // If there's also a specific video ID attached
+        const videoMatch = url.match(/(?:youtu\.be\/|watch\?v=|embed\/)([^#&?]{11})/);
+        if (videoMatch && videoMatch[1]) {
+          return `https://www.youtube-nocookie.com/embed/${videoMatch[1]}?list=${listId}&rel=0`;
+        }
+        return `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&rel=0`;
+      }
+    }
+
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
-    return (match && match[2].length === 11) ? `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1` : null;
+    return (match && match[2].length === 11) ? `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1&rel=0` : null;
   };
 
   const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);

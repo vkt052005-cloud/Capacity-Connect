@@ -2,6 +2,7 @@ import {
   User, Course, Assessment, Notification, Certificate,
   SubjectCompetency, LiveSession, LeaderboardEntry, Badge, DiscussionThread, AuditLog
 } from "../types";
+import { generateAnswerHash } from "../utils/quizSecurity";
 
 export const initialBadges: Badge[] = [
   { id: "b1", name: "Quick Starter", description: "Enrolled and completed first orientation module within 24 hours.", icon: "⚡", category: "milestone" },
@@ -415,6 +416,97 @@ export const initialCourses: Course[] = [
       "Module 5: Optimizing Core Web Vitals (LCP, INP, CLS)"
     ],
     resources: []
+  },
+  {
+    id: "c7",
+    title: "Complete Sigma Web Development Course (HTML, CSS, JS, Node, React)",
+    description: "The complete hands-on roadmap to becoming a full stack web developer: learn semantic HTML5, modern CSS3 & Flexbox, vanilla JavaScript ES6+, DOM manipulation, Node.js runtime, Express backend, MongoDB database, and React & Next.js.",
+    trainerId: "u-trainer-official",
+    trainerName: "CodeWithHarry (Haris Khan)",
+    category: "Technical",
+    thumbnail: "https://images.unsplash.com/photo-1593720219276-0b1eacd0aef4?w=800&auto=format&fit=crop&q=80",
+    duration: "85+ Hours • 130+ Lessons",
+    level: "Beginner",
+    status: "active",
+    createdAt: "2026-02-15T10:00:00Z",
+    rating: 4.98,
+    totalRatings: 1840,
+    videoUrl: "https://youtube.com/playlist?list=PLu0W_9lII9agq5TrH9XLIKQvv0iaF2X3w",
+    tags: ["Web Development", "HTML5", "CSS3", "JavaScript", "React", "Next.js", "Node.js", "Express", "MongoDB", "Tailwind"],
+    syllabus: [
+      "Module 1: Internet Fundamentals, HTTP Protocol & Semantic HTML5",
+      "Module 2: Modern CSS3, Flexbox, Grid & Responsive Layouts",
+      "Module 3: JavaScript Core Fundamentals, Variables, Loops & Functions",
+      "Module 4: DOM Manipulation, Event Listeners & Interactive UI Projects",
+      "Module 5: Advanced JavaScript: Promises, Async/Await & Fetch API",
+      "Module 6: Backend Development with Node.js & Express.js REST APIs",
+      "Module 7: Database Design, MongoDB, Mongoose & CRUD Operations",
+      "Module 8: Modern Frontend Development with React & Next.js App Router"
+    ],
+    prerequisites: ["No prior programming experience required", "A computer with Chrome and VS Code installed"],
+    resources: [
+      {
+        id: "r701",
+        courseId: "c7",
+        title: "Full Stack Web Development Master Notes & Cheatsheet",
+        type: "presentation",
+        url: "#slides",
+        size: "18.5 MB",
+        uploadedAt: "2026-02-15T10:00:00Z",
+        uploadedBy: "CodeWithHarry (Haris Khan)",
+        version: "v3.0",
+        summary: "Comprehensive developer handbook covering HTML tags, CSS Flexbox cheatsheet, JavaScript DOM manipulation, Express routes, and React component lifecycles.",
+        keyTakeaways: [
+          "HTML provides the skeleton, CSS creates the visual layout, and JavaScript adds dynamic interactivity.",
+          "Modern responsive design relies on CSS Flexbox and Grid combined with media queries.",
+          "JavaScript uses single-threaded non-blocking event loops with Promises and Async/Await for asynchronous actions.",
+          "Node.js and Express allow developers to build scalable RESTful backend services using JavaScript.",
+          "React utilizes virtual DOM reconciliation and reusable component hooks for fast UI rendering."
+        ],
+        flashcards: [
+          { id: "f701", front: "What is the Box Model in CSS?", back: "The CSS box model consists of content, padding, border, and margin around every HTML element.", category: "CSS" },
+          { id: "f702", front: "What is Event Bubbling in the DOM?", back: "Event bubbling is when an event triggers on the innermost target element and then propagates upwards through its parent elements in the DOM tree.", category: "JavaScript" },
+          { id: "f703", front: "What is the difference between synchronous and asynchronous code?", back: "Synchronous code executes sequentially and blocks execution; asynchronous code executes in the background and resolves via callbacks, Promises, or async/await.", category: "JavaScript" },
+          { id: "f704", front: "What is Middleware in Express.js?", back: "Functions that have access to the request, response, and the next() function in the application's request-response cycle.", category: "Backend" },
+          { id: "f705", front: "What is JSX in React?", back: "JSX is a syntax extension for JavaScript that allows you to write HTML-like markup directly inside JavaScript code.", category: "React" }
+        ],
+        slides: [
+          {
+            slideNumber: 1,
+            title: "Roadmap to Full Stack Engineering",
+            bullets: [
+              "Frontend: Semantic HTML5, Modern CSS3, Vanilla JS",
+              "Advanced Frontend: React.js, Tailwind CSS, Next.js",
+              "Backend: Node.js runtime, Express framework, RESTful APIs",
+              "Database: MongoDB, Mongoose ODM, NoSQL indexing"
+            ],
+            keyConcept: "Mastering fundamentals first ensures long-term adaptability as web frameworks evolve."
+          },
+          {
+            slideNumber: 2,
+            title: "DOM & Event-Driven Interactivity",
+            bullets: [
+              "Selecting elements with document.querySelector",
+              "Attaching event listeners (click, change, submit)",
+              "Manipulating classes and styles dynamically",
+              "Preventing default form reloads with e.preventDefault()"
+            ],
+            keyConcept: "Interactive web pages respond to user actions by dynamically modifying the Document Object Model."
+          },
+          {
+            slideNumber: 3,
+            title: "Modern Asynchronous JavaScript",
+            bullets: [
+              "Call stack, Web APIs, and the Event Loop",
+              "Promises (Pending, Fulfilled, Rejected)",
+              "Clean asynchronous syntax with async/await",
+              "Fetching live data from REST APIs using fetch()"
+            ],
+            keyConcept: "Async programming enables web apps to fetch remote data without freezing the browser interface."
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -570,6 +662,95 @@ export const initialAssessments: Assessment[] = [
         points: 25,
         explanation: "Faithfulness measures what percentage of statements made in the generated answer can be mathematically grounded in the retrieved source context.",
         topic: "AI Evaluation"
+      }
+    ]
+  },
+  {
+    id: "a-webdev-sigma",
+    courseId: "c7",
+    courseTitle: "Complete Sigma Web Development Course (HTML, CSS, JS, Node, React)",
+    title: "Full Stack Web Development Certification Assessment",
+    description: "Proctored competency evaluation covering HTML5 semantics, CSS Flexbox/Grid, JavaScript asynchronous logic, REST APIs, and React component state.",
+    deadline: "2026-12-31T23:59:59Z",
+    durationMinutes: 20,
+    passingScore: 70,
+    createdBy: "CodeWithHarry (Haris Khan)",
+    createdAt: "2026-02-15T12:00:00Z",
+    questions: [
+      {
+        id: "q-wd-1",
+        text: "Which HTML5 semantic element should be used to wrap major navigation links on a website?",
+        options: [
+          { id: "o1", text: "<menu-bar>" },
+          { id: "o2", text: "<nav>" },
+          { id: "o3", text: "<navigate>" },
+          { id: "o4", text: "<links>" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-wd-1", 1),
+        points: 20,
+        explanation: "The <nav> element represents a section of a page whose purpose is to provide navigation links.",
+        topic: "Semantic HTML5"
+      },
+      {
+        id: "q-wd-2",
+        text: "In CSS Flexbox, which property aligns flex items along the cross axis (perpendicular to the main axis)?",
+        options: [
+          { id: "o1", text: "justify-content" },
+          { id: "o2", text: "align-items" },
+          { id: "o3", text: "flex-direction" },
+          { id: "o4", text: "space-between" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-wd-2", 1),
+        points: 20,
+        explanation: "align-items specifies the default alignment for items inside the flex container along the cross axis.",
+        topic: "CSS Flexbox"
+      },
+      {
+        id: "q-wd-3",
+        text: "In modern JavaScript (ES6+), what is the primary difference between 'let' and 'var'?",
+        options: [
+          { id: "o1", text: "'let' is block-scoped, while 'var' is function-scoped" },
+          { id: "o2", text: "'var' cannot be reassigned once declared" },
+          { id: "o3", text: "'let' variables are globally scoped across all scripts" },
+          { id: "o4", text: "'var' causes synchronous thread locking" }
+        ],
+        correctIndex: 0,
+        answerHash: generateAnswerHash("q-wd-3", 0),
+        points: 20,
+        explanation: "let allows you to declare variables that are limited to the scope of a block statement, whereas var defines a variable globally or locally to an entire function.",
+        topic: "JavaScript ES6+"
+      },
+      {
+        id: "q-wd-4",
+        text: "In Node.js Express applications, what is the role of middleware functions?",
+        options: [
+          { id: "o1", text: "They compile JavaScript directly into C++ bytecode" },
+          { id: "o2", text: "They have access to request (req) and response (res) objects to execute code, modify data, or terminate the cycle" },
+          { id: "o3", text: "They format the CSS styling before rendering to browser" },
+          { id: "o4", text: "They automatically restart the computer on errors" }
+        ],
+        correctIndex: 1,
+        answerHash: generateAnswerHash("q-wd-4", 1),
+        points: 20,
+        explanation: "Middleware functions are functions that have access to the request object, the response object, and the next middleware function in the application's request-response cycle.",
+        topic: "Backend & Express"
+      },
+      {
+        id: "q-wd-5",
+        text: "In React, which hook is used to perform side effects such as data fetching, subscriptions, or manual DOM manipulations?",
+        options: [
+          { id: "o1", text: "useState" },
+          { id: "o2", text: "useContext" },
+          { id: "o3", text: "useEffect" },
+          { id: "o4", text: "useReducer" }
+        ],
+        correctIndex: 2,
+        answerHash: generateAnswerHash("q-wd-5", 2),
+        points: 20,
+        explanation: "useEffect lets you synchronize a component with an external system and execute side effects after rendering.",
+        topic: "React Architecture"
       }
     ]
   }
@@ -834,6 +1015,32 @@ export function getFromStorage<T>(key: string): T[] {
           for (const initUser of initialUsers) {
             if (!existingEmails.has(initUser.email.toLowerCase())) {
               parsed.push(initUser);
+              modified = true;
+            }
+          }
+          if (modified) {
+            localStorage.setItem(key, JSON.stringify(parsed));
+          }
+        }
+        if (key === STORAGE_KEYS.COURSES) {
+          const existingIds = new Set(parsed.map((c: any) => c.id));
+          let modified = false;
+          for (const initCourse of initialCourses) {
+            if (!existingIds.has(initCourse.id)) {
+              parsed.push(initCourse);
+              modified = true;
+            }
+          }
+          if (modified) {
+            localStorage.setItem(key, JSON.stringify(parsed));
+          }
+        }
+        if (key === STORAGE_KEYS.ASSESSMENTS) {
+          const existingIds = new Set(parsed.map((a: any) => a.id));
+          let modified = false;
+          for (const initAssess of initialAssessments) {
+            if (!existingIds.has(initAssess.id)) {
+              parsed.push(initAssess);
               modified = true;
             }
           }
