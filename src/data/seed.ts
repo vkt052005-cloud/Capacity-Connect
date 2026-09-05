@@ -773,16 +773,55 @@ export const STORAGE_KEYS = {
   COMPETENCIES: "cc_competencies",
   DISCUSSIONS: "cc_discussions",
   LEADERBOARD: "cc_leaderboard",
+  BADGES: "cc_badges",
   AUDIT_LOGS: "cc_audit_logs"
 };
 
 export function getFromStorage<T>(key: string): T[] {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  if (key === STORAGE_KEYS.COURSES) {
+    saveToStorage(key, initialCourses);
+    return initialCourses as any;
   }
+  if (key === STORAGE_KEYS.USERS) {
+    saveToStorage(key, initialUsers);
+    return initialUsers as any;
+  }
+  if (key === STORAGE_KEYS.ASSESSMENTS) {
+    saveToStorage(key, initialAssessments);
+    return initialAssessments as any;
+  }
+  if (key === STORAGE_KEYS.NOTIFICATIONS) {
+    saveToStorage(key, initialNotifications);
+    return initialNotifications as any;
+  }
+  if (key === STORAGE_KEYS.LIVE_SESSIONS) {
+    saveToStorage(key, initialLiveSessions);
+    return initialLiveSessions as any;
+  }
+  if (key === STORAGE_KEYS.COMPETENCIES) {
+    saveToStorage(key, initialCompetencyMatrix);
+    return initialCompetencyMatrix as any;
+  }
+  if (key === STORAGE_KEYS.LEADERBOARD) {
+    saveToStorage(key, initialLeaderboard);
+    return initialLeaderboard as any;
+  }
+  if (key === STORAGE_KEYS.BADGES) {
+    saveToStorage(key, initialBadges);
+    return initialBadges as any;
+  }
+
+  return [];
 }
 
 export function saveToStorage<T>(key: string, data: T[]): void {

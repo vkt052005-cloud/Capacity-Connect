@@ -15,6 +15,7 @@ import { Header } from "../../components/layout/Header";
 import { Footer } from "../../components/layout/Footer";
 import { ToastContainer } from "../../components/common/ToastContainer";
 import { CertificateVerifierModal } from "../../components/assessment/CertificateVerifierModal";
+import { initialCourses } from "../../data/seed";
 
 export const HomePage: React.FC = () => {
   const { courses, load } = useCoursesStore();
@@ -31,7 +32,7 @@ export const HomePage: React.FC = () => {
   const [subscribeEmail, setSubscribeEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  const featuredCourses = courses.slice(0, 4);
+  const featuredCourses = (courses && courses.length > 0 ? courses : initialCourses).slice(0, 4);
   const pinned = notifications.filter((n) => n.pinned);
 
   const handleRoleQuickStart = (role: "trainee" | "trainer" | "admin") => {
