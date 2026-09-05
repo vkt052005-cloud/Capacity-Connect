@@ -2,6 +2,7 @@ import React from "react";
 import { User, Award, BookOpen, Star, ShieldCheck, Mail, Phone } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useAuthStore } from "../../store/authStore";
+import { DigitalIdCard } from "../../components/common/DigitalIdCard";
 
 export const TrainerProfile: React.FC = () => {
   const { currentUser } = useAuthStore();
@@ -21,13 +22,25 @@ export const TrainerProfile: React.FC = () => {
 
   return (
     <DashboardLayout
-      pageTitle="Faculty Expertise & Credentials Portfolio"
+      pageTitle="Faculty Expertise & Smart ID Portfolio"
       breadcrumbs={[
         { label: "Trainer Dashboard", to: "/trainer/dashboard" },
-        { label: "Trainer Portfolio" }
+        { label: "Faculty Smart ID" }
       ]}
     >
       <div className="max-w-3xl space-y-6">
+        {currentUser && (
+          <DigitalIdCard
+            user={{
+              id: currentUser.id,
+              name: currentUser.name,
+              email: currentUser.email,
+              role: "trainer",
+              department: profile?.department,
+              designation: profile?.designation
+            }}
+          />
+        )}
         <div className="glass-panel p-6 border border-white/15 space-y-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#0071e3] to-[#2997ff] flex items-center justify-center text-white font-bold text-xl shadow-xl shadow-blue-500/30">

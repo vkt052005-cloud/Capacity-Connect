@@ -4,7 +4,7 @@ import {
   Radio, X, Hand, PenTool, ExternalLink, Copy, Check,
   Download, Calendar, BookOpen, CheckSquare, Square,
   Sparkles, ShieldCheck, ArrowUpRight, HelpCircle, MessageSquare,
-  Users, Volume2, VolumeX, Monitor, Settings
+  Users, Volume2, VolumeX, Monitor, Settings, QrCode, KeyRound
 } from "lucide-react";
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
 import { useAuthStore } from "../../store/authStore";
@@ -17,11 +17,14 @@ export const LiveMeetClassroom: React.FC = () => {
   const { enrollments } = useCoursesStore();
   const { addToast } = useAppStore();
 
-  const [activeTab, setActiveTab] = useState<"meet" | "whiteboard" | "agenda" | "qa">("meet");
+  const [activeTab, setActiveTab] = useState<"meet" | "whiteboard" | "agenda" | "qa" | "attendance">("meet");
   const [copiedLink, setCopiedLink] = useState(false);
   const [syncedAttendance, setSyncedAttendance] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [handRaised, setHandRaised] = useState(false);
+  const [attendancePin] = useState("8942");
+  const [userEnteredPin, setUserEnteredPin] = useState("");
+  const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
 
   // Live Video & Audio WebRTC Engine
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -132,6 +135,14 @@ export const LiveMeetClassroom: React.FC = () => {
       }
     };
   }, [mediaStream]);
+
+  useEffect(() => {
+    if (!isClassroomOpen && mediaStream) {
+      mediaStream.getTracks().forEach((t) => t.stop());
+      setMediaStream(null);
+      setCameraActive(false);
+    }
+  }, [isClassroomOpen, mediaStream]);
 
   // Whiteboard Canvas
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -416,6 +427,12 @@ export const LiveMeetClassroom: React.FC = () => {
                 className={"px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer " + (activeTab === "qa" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white hover:bg-white/5")}
               >
                 <HelpCircle className="w-3.5 h-3.5" /> In-Class Q&A ({questions.length - 1})
+              </button>
+              <button
+                onClick={() => setActiveTab("attendance")}
+                className={"px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer " + (activeTab === "attendance" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white hover:bg-white/5")}
+              >
+                <QrCode className="w-3.5 h-3.5 text-amber-400" /> Live Attendance QR
               </button>
             </div>
 
@@ -748,6 +765,129 @@ export const LiveMeetClassroom: React.FC = () => {
                       Submit Doubt
                     </button>
                   </form>
+                </div>
+              )}
+
+              {/* TAB 5: Live Attendance QR & Check-In */}
+              {activeTab === "attendance" && (
+                <div className="max-w-3xl mx-auto space-y-6 py-2">
+                  <div className="glass-panel p-6 sm:p-8 border border-white/15 rounded-3xl bg-gradient-to-br from-[#0c101c] via-[#10162a] to-[#070910] shadow-2xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-[#2997ff] font-bold">
+                            Live Lecture Attendance System
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-white tracking-tight mt-1">
+                          {activeSession.title}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Faculty: <span className="text-slate-200 font-semibold">{activeSession.trainerName}</span> • Meeting Code: <span className="font-mono text-[#2997ff]">{activeSession.meetingCode}</span>
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="badge-blue text-xs px-3 py-1 font-mono">
+                          PIN: {attendancePin}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 items-center">
+                      {/* QR Display */}
+                      <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white/[0.02] border border-white/10 text-center space-y-3">
+                        <div className="p-3 bg-white rounded-2xl shadow-2xl shadow-blue-500/20 border-2 border-[#2997ff]">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&data=${encodeURIComponent(
+                              `${window.location.origin}/verify/id?session=${activeSession.id}&pin=${attendancePin}&title=${encodeURIComponent(activeSession.title)}`
+                            )}`}
+                            alt="Classroom Attendance QR Code"
+                            className="w-44 h-44 object-contain"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-white block">
+                            Scan with Phone Camera
+                          </span>
+                          <span className="text-[11px] text-slate-400 block mt-0.5">
+                            {isHost ? "Project on screen for classroom check-in" : "Scan to verify attendance on mobile"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Check-In Controls */}
+                      <div className="space-y-4">
+                        <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                            Attendance Status
+                          </span>
+                          {(syncedAttendance || isAttendanceMarked) ? (
+                            <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                              <CheckCircle2 className="w-5 h-5 shrink-0" />
+                              <span>Verified & Logged in LMS</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-amber-300 font-medium text-xs">
+                              <Sparkles className="w-4 h-4 shrink-0" />
+                              <span>Awaiting PIN or QR Check-In</span>
+                            </div>
+                          )}
+                          <p className="text-[11px] text-slate-400 leading-relaxed">
+                            {(syncedAttendance || isAttendanceMarked)
+                              ? `Verified attendance timestamp recorded for ${currentUser?.name || "Trainee"}. Full attendance credit awarded.`
+                              : "Enter the 4-digit PIN displayed on the instructor's screen or scan the QR code from your mobile camera."}
+                          </p>
+                        </div>
+
+                        {!(syncedAttendance || isAttendanceMarked) && (
+                          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+                            <label className="block text-xs font-semibold text-slate-300">
+                              Enter Classroom PIN
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                maxLength={4}
+                                placeholder="e.g. 8942"
+                                value={userEnteredPin}
+                                onChange={(e) => setUserEnteredPin(e.target.value.trim())}
+                                className="apple-input text-center text-sm font-mono tracking-widest uppercase font-bold"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (userEnteredPin === attendancePin) {
+                                    setIsAttendanceMarked(true);
+                                    addToast({
+                                      title: "Attendance Recorded",
+                                      message: `Verified attendance registered for ${currentUser?.name || "Trainee"}.`,
+                                      type: "success"
+                                    });
+                                  } else {
+                                    addToast({
+                                      title: "Invalid PIN",
+                                      message: "The entered PIN does not match the active classroom PIN.",
+                                      type: "error"
+                                    });
+                                  }
+                                }}
+                                className="apple-btn-primary text-xs px-4 py-2 font-bold shrink-0"
+                              >
+                                Check In
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="p-3 rounded-xl bg-[#0071e3]/10 border border-[#2997ff]/20 flex items-center justify-between text-xs text-slate-300">
+                          <span className="text-[11px] text-slate-400">Total Verified Attendees</span>
+                          <span className="font-bold text-white font-mono">{activeSession.attendeeCount || 1} Present</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 

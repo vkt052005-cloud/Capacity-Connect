@@ -13,7 +13,7 @@ import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { HomePage } from "./pages/public/HomePage";
 import { LoginPage } from "./pages/public/LoginPage";
 import { RegisterPage } from "./pages/public/RegisterPage";
-import { QrAuthPage } from "./pages/public/QrAuthPage";
+import { VerifyIdentityPage } from "./pages/public/VerifyIdentityPage";
 import { NotFoundPage } from "./pages/public/NotFoundPage";
 
 // Trainee Pages
@@ -70,7 +70,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/auth/qr" element={<QrAuthPage />} />
+        <Route path="/verify/id" element={<VerifyIdentityPage />} />
+        <Route path="/auth/qr" element={<VerifyIdentityPage />} />
 
         {/* Role Short Aliases */}
         <Route path="/trainee" element={<Navigate to="/trainee/dashboard" replace />} />

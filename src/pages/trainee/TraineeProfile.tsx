@@ -6,6 +6,7 @@ import {
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
+import { DigitalIdCard } from "../../components/common/DigitalIdCard";
 
 export const TraineeProfile: React.FC = () => {
   const { currentUser, updateProfile } = useAuthStore();
@@ -43,13 +44,27 @@ export const TraineeProfile: React.FC = () => {
 
   return (
     <DashboardLayout
-      pageTitle="Professional Trainee Profile"
+      pageTitle="Professional Trainee Profile & Digital ID"
       breadcrumbs={[
         { label: "Trainee Dashboard", to: "/trainee/dashboard" },
-        { label: "Profile Builder" }
+        { label: "Profile & Smart ID" }
       ]}
     >
-      <form onSubmit={handleSave} className="max-w-3xl space-y-6">
+      <div className="max-w-3xl space-y-6">
+        {currentUser && (
+          <DigitalIdCard
+            user={{
+              id: currentUser.id,
+              name: currentUser.name,
+              email: currentUser.email,
+              role: "trainee",
+              department: department || currentUser.traineeProfile?.department,
+              designation: designation || currentUser.traineeProfile?.designation
+            }}
+          />
+        )}
+
+        <form onSubmit={handleSave} className="space-y-6">
         <div className="glass-panel p-6 border border-white/15 space-y-5">
           <h3 className="text-base font-bold text-white tracking-tight">Personal & Organizational Details</h3>
 
@@ -135,6 +150,7 @@ export const TraineeProfile: React.FC = () => {
           </button>
         </div>
       </form>
-    </DashboardLayout>
-  );
+    </div>
+  </DashboardLayout>
+);
 };

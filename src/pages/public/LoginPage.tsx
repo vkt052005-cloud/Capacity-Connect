@@ -2,12 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Mail, Lock, Eye, EyeOff, Shield, Users, GraduationCap,
-  QrCode, ArrowRight, KeyRound, RotateCw, ArrowLeft, CheckCircle2
+  ArrowRight, KeyRound, RotateCw, ArrowLeft, CheckCircle2
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { CaptchaWidget } from "../../components/auth/CaptchaWidget";
-import { QrLoginModal } from "../../components/auth/QrLoginModal";
 import { ResetPasswordModal } from "../../components/auth/ResetPasswordModal";
 import { Header } from "../../components/layout/Header";
 import { Footer } from "../../components/layout/Footer";
@@ -22,7 +21,6 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
-  const [qrModalOpen, setQrModalOpen] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -364,16 +362,6 @@ export const LoginPage: React.FC = () => {
                 </button>
               </form>
 
-              <div className="pt-3 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setQrModalOpen(true)}
-                  className="w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 transition cursor-pointer"
-                >
-                  <QrCode className="w-4 h-4 text-[#2997ff]" /> Instant Passwordless QR Login
-                </button>
-              </div>
-
               {role !== "admin" && (
                 <div className="pt-2 text-center text-xs text-slate-400">
                   <span>New user? </span>
@@ -488,7 +476,6 @@ export const LoginPage: React.FC = () => {
 
       <Footer />
       <ToastContainer />
-      <QrLoginModal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} targetRole={role} />
       <ResetPasswordModal isOpen={resetModalOpen} onClose={() => setResetModalOpen(false)} />
     </div>
   );
