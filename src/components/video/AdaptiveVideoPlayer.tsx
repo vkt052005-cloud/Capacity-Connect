@@ -1,0 +1,262 @@
+import React, { useState, useRef } from "react";
+import {
+  Play, Pause, Volume2, VolumeX, Maximize2, Settings,
+  RotateCcw, Sparkles, MessageSquare, FileText, CheckCircle2, Bookmark
+} from "lucide-react";
+import { useAppStore } from "../../store/appStore";
+import { TranscriptItem } from "../../types";
+
+interface AdaptiveVideoPlayerProps {
+  videoUrl?: string;
+  thumbnail?: string;
+  transcripts?: TranscriptItem[];
+  title: string;
+}
+
+export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
+  videoUrl,
+  thumbnail,
+  transcripts = [],
+  title
+}) => {
+  const { activeVideoQuality, setVideoQuality, dataSaverMode, addToast } = useAppStore();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(900); // 15 mins default
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showTranscripts, setShowTranscripts] = useState(true);
+  const [savedNotes, setSavedNotes] = useState<{ time: string; note: string }[]>([]);
+  const [noteInput, setNoteInput] = useState("");
+
+  const handleTimeJump = (sec: number) => {
+    setCurrentTime(sec);
+    addToast({
+      title: "Jumped to Timestamp",
+      message: "Synchronized lecture playback to " + formatTime(sec),
+      type: "info"
+    });
+  };
+
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noteInput.trim()) return;
+    setSavedNotes([
+      ...savedNotes,
+      { time: formatTime(currentTime), note: noteInput.trim() }
+    ]);
+    setNoteInput("");
+    addToast({
+      title: "Timestamped Note Saved",
+      message: "Bookmark created at " + formatTime(currentTime),
+      type: "success"
+    });
+  };
+
+  function formatTime(secs: number) {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Video Container */}
+      <div className="relative rounded-2xl overflow-hidden glass-panel border border-white/15 bg-black shadow-2xl group">
+        <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden">
+          {videoUrl ? (
+            <video
+              src={videoUrl}
+              poster={thumbnail}
+              className="w-full h-full object-cover"
+              controls={false}
+              onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+              onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 900)}
+            />
+          ) : (
+            <img
+              src={thumbnail || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80"}
+              alt={title}
+              className="w-full h-full object-cover opacity-80"
+            />
+          )}
+
+          {/* Central Play Overlay if paused */}
+          {!isPlaying && (
+            <button
+              onClick={() => setIsPlaying(true)}
+              className="absolute w-16 h-16 rounded-full bg-[#0071e3]/80 hover:bg-[#0071e3] text-white flex items-center justify-center backdrop-blur-md shadow-2xl shadow-blue-500/40 border border-white/20 transition-transform hover:scale-110 cursor-pointer"
+            >
+              <Play className="w-7 h-7 fill-white ml-1" />
+            </button>
+          )}
+
+          {/* Quality badge overlay */}
+          <div className="absolute top-4 left-4 flex items-center gap-2">
+            <span className="badge-blue text-[10px] backdrop-blur-md bg-black/60 border border-white/20">
+              {activeVideoQuality}
+            </span>
+            {dataSaverMode && (
+              <span className="badge-green text-[10px] backdrop-blur-md bg-black/60">
+                Data-Saver Active
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Video Control Bar (Apple Glass Aesthetic) */}
+        <div className="p-3 bg-[#0d0e14]/90 border-t border-white/10 backdrop-blur-2xl flex flex-col gap-2">
+          {/* Progress Bar */}
+          <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer">
+            <div
+              className="h-full bg-gradient-to-r from-[#0071e3] to-[#2997ff]"
+              style={{ width: ((currentTime / duration) * 100) + "%" }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-slate-300">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="p-1 text-white hover:text-[#2997ff] transition"
+              >
+                {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white" />}
+              </button>
+
+              <button
+                onClick={() => handleTimeJump(Math.max(0, currentTime - 10))}
+                className="text-slate-400 hover:text-white p-1"
+                title="Rewind 10s"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+
+              <span className="font-mono text-[11px] text-slate-400">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 relative">
+              {/* Playback speed selector */}
+              <div className="flex items-center bg-black/40 rounded-lg p-0.5 border border-white/10 text-[10px]">
+                {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setPlaybackSpeed(s)}
+                    className={"px-1.5 py-0.5 rounded " + (playbackSpeed === s ? "bg-[#0071e3] text-white font-bold" : "text-slate-400 hover:text-white")}
+                  >
+                    {s}x
+                  </button>
+                ))}
+              </div>
+
+              {/* Resolution settings menu */}
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="p-1 text-slate-400 hover:text-white transition"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+
+              {showSettings && (
+                <div className="absolute bottom-10 right-0 w-44 p-2 rounded-xl glass-panel border border-white/15 shadow-2xl z-20 space-y-1 text-xs">
+                  <p className="text-[10px] font-bold text-slate-400 px-2 uppercase tracking-wider">Stream Quality</p>
+                  {(["4K", "1080p", "720p", "Data-Saver (480p)"] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => {
+                        setVideoQuality(q as any);
+                        setShowSettings(false);
+                      }}
+                      className={"w-full text-left px-2 py-1.5 rounded-lg flex items-center justify-between " + (activeVideoQuality === q ? "bg-[#0071e3]/30 text-[#2997ff] font-bold" : "text-slate-300 hover:bg-white/10")}
+                    >
+                      <span>{q}</span>
+                      {activeVideoQuality === q && <CheckCircle2 className="w-3.5 h-3.5 text-[#2997ff]" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Synchronized Transcript and Interactive Notes Tab */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Transcript Panel */}
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <h4 className="text-xs font-bold text-white flex items-center gap-2">
+              <FileText className="w-4 h-4 text-[#2997ff]" /> Synchronized Interactive Transcript
+            </h4>
+            <span className="text-[10px] text-slate-400 font-mono">Live Timecoded</span>
+          </div>
+
+          <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+            {transcripts.length > 0 ? (
+              transcripts.map((t, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleTimeJump(t.seconds)}
+                  className="p-2 rounded-xl bg-white/[0.03] hover:bg-[#0071e3]/20 border border-white/5 hover:border-[#2997ff]/40 transition cursor-pointer text-xs group"
+                >
+                  <div className="flex items-center justify-between text-[10px] text-[#2997ff] font-mono mb-0.5">
+                    <span className="font-semibold">{t.speaker}</span>
+                    <span className="group-hover:underline">[{t.timestamp}]</span>
+                  </div>
+                  <p className="text-slate-300 group-hover:text-white leading-relaxed">{t.text}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-500 italic">No automated transcripts available for this lesson.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Video Bookmarks & Notes */}
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <h4 className="text-xs font-bold text-white flex items-center gap-2">
+              <Bookmark className="w-4 h-4 text-emerald-400" /> Timestamped Study Notes ({savedNotes.length})
+            </h4>
+            <span className="text-[10px] text-slate-400 font-mono">Current: {formatTime(currentTime)}</span>
+          </div>
+
+          <form onSubmit={handleAddNote} className="flex gap-2">
+            <input
+              type="text"
+              placeholder={"Add note at " + formatTime(currentTime) + "..."}
+              className="apple-input text-xs py-1.5"
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+            />
+            <button type="submit" className="apple-btn-primary text-xs px-3 py-1.5">
+              Pin
+            </button>
+          </form>
+
+          <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
+            {savedNotes.length > 0 ? (
+              savedNotes.map((n, i) => (
+                <div key={i} className="flex items-start justify-between p-2 rounded-xl bg-white/[0.04] border border-white/5 text-xs">
+                  <span className="text-slate-200">{n.note}</span>
+                  <span className="text-[10px] font-mono text-[#2997ff] ml-2 shrink-0">{n.time}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-500 italic">Type a quick note above to pin it to this lecture timestamp.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
