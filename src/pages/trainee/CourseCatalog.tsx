@@ -14,12 +14,22 @@ export const CourseCatalog: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const categories = ["All", "Cloud Architecture", "Generative AI", "Leadership", "Cybersecurity"];
+  const availableCategories = ["All", ...Array.from(new Set(courses.map((c) => c.category).filter(Boolean)))];
 
   const filteredCourses = courses.filter((c) => {
-    const matchesCat = selectedCategory === "All" || c.category === selectedCategory;
-    const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.tags.some((t) => t.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCat =
+      selectedCategory === "All" ||
+      c.category === selectedCategory ||
+      c.tags?.some((t) => t.toLowerCase() === selectedCategory.toLowerCase());
+
+    const term = searchTerm.toLowerCase().trim();
+    const matchesSearch =
+      !term ||
+      c.title.toLowerCase().includes(term) ||
+      c.category.toLowerCase().includes(term) ||
+      c.description.toLowerCase().includes(term) ||
+      c.tags?.some((t) => t.toLowerCase().includes(term));
+
     return matchesCat && matchesSearch;
   });
 
@@ -49,7 +59,7 @@ export const CourseCatalog: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1">
-            {categories.map((cat) => (
+            {availableCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}

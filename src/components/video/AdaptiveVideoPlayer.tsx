@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Play, Pause, Volume2, VolumeX, Maximize2, Settings,
   RotateCcw, Sparkles, MessageSquare, FileText, CheckCircle2, Bookmark
@@ -20,6 +20,7 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
   title
 }) => {
   const { activeVideoQuality, setVideoQuality, dataSaverMode, addToast } = useAppStore();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(900); // 15 mins default
@@ -30,13 +31,56 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
   const [savedNotes, setSavedNotes] = useState<{ time: string; note: string }[]>([]);
   const [noteInput, setNoteInput] = useState("");
 
+  // Helper to extract YouTube embed URL if applicable
+  const getYouTubeEmbedUrl = (url?: string) => {
+    if (!url) return null;
+    if (url.includes("youtube.com/embed/")) return url;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1` : null;
+  };
+
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
+
+  // Synchronize playback state with DOM element
+  useEffect(() => {
+    if (youtubeEmbedUrl || !videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  }, [isPlaying, youtubeEmbedUrl]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed]);
+
   const handleTimeJump = (sec: number) => {
     setCurrentTime(sec);
+    if (videoRef.current) {
+      videoRef.current.currentTime = sec;
+    }
     addToast({
       title: "Jumped to Timestamp",
       message: "Synchronized lecture playback to " + formatTime(sec),
       type: "info"
     });
+  };
+
+  const handleScrubberClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickPos = (e.clientX - rect.left) / rect.width;
+    const newTime = Math.max(0, Math.min(duration, clickPos * duration));
+    handleTimeJump(newTime);
   };
 
   const handleAddNote = (e: React.FormEvent) => {
@@ -65,14 +109,24 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
       {/* Video Container */}
       <div className="relative rounded-2xl overflow-hidden glass-panel border border-white/15 bg-black shadow-2xl group">
         <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden">
-          {videoUrl ? (
+          {youtubeEmbedUrl ? (
+            <iframe
+              src={youtubeEmbedUrl}
+              title={title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full border-0"
+            />
+          ) : videoUrl ? (
             <video
+              ref={videoRef}
               src={videoUrl}
               poster={thumbnail}
               className="w-full h-full object-cover"
               controls={false}
               onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
               onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 900)}
+              onEnded={() => setIsPlaying(false)}
             />
           ) : (
             <img
@@ -82,8 +136,8 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
             />
           )}
 
-          {/* Central Play Overlay if paused */}
-          {!isPlaying && (
+          {/* Central Play Overlay if paused (for native videos) */}
+          {!isPlaying && !youtubeEmbedUrl && (
             <button
               onClick={() => setIsPlaying(true)}
               className="absolute w-16 h-16 rounded-full bg-[#0071e3]/80 hover:bg-[#0071e3] text-white flex items-center justify-center backdrop-blur-md shadow-2xl shadow-blue-500/40 border border-white/20 transition-transform hover:scale-110 cursor-pointer"
@@ -106,14 +160,18 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
         </div>
 
         {/* Video Control Bar (Apple Glass Aesthetic) */}
-        <div className="p-3 bg-[#0d0e14]/90 border-t border-white/10 backdrop-blur-2xl flex flex-col gap-2">
-          {/* Progress Bar */}
-          <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer">
+        {!youtubeEmbedUrl && (
+          <div className="p-3 bg-[#0d0e14]/90 border-t border-white/10 backdrop-blur-2xl flex flex-col gap-2">
+            {/* Progress Bar with seeking */}
             <div
-              className="h-full bg-gradient-to-r from-[#0071e3] to-[#2997ff]"
-              style={{ width: ((currentTime / duration) * 100) + "%" }}
-            />
-          </div>
+              onClick={handleScrubberClick}
+              className="relative w-full h-2 bg-white/10 rounded-full overflow-hidden cursor-pointer hover:h-2.5 transition-all"
+            >
+              <div
+                className="h-full bg-gradient-to-r from-[#0071e3] to-[#2997ff]"
+                style={{ width: `${Math.min(100, Math.max(0, (currentTime / (duration || 1)) * 100))}%` }}
+              />
+            </div>
 
           <div className="flex items-center justify-between text-xs text-slate-300">
             <div className="flex items-center gap-3">
@@ -187,6 +245,7 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Synchronized Transcript and Interactive Notes Tab */}

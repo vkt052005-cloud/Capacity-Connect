@@ -11,7 +11,13 @@ interface CoursesState {
   enroll: (traineeId: string, courseId: string) => void;
   unenroll: (traineeId: string, courseId: string) => void;
   updateProgress: (enrollmentId: string, progress: number) => void;
-  completeCourse: (traineeId: string, courseId: string) => void;
+  completeCourse: (
+    traineeId: string,
+    courseId: string,
+    grade?: string,
+    scorePercentage?: number,
+    certData?: Partial<Certificate>
+  ) => Certificate | undefined;
   addResource: (resource: Resource) => void;
   addCourse: (course: Course) => void;
   updateCourse: (courseId: string, updates: Partial<Course>) => void;
@@ -68,7 +74,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     set({ enrollments: updated });
   },
 
-  completeCourse: (traineeId, courseId) => {
+  completeCourse: (traineeId, courseId, grade, scorePercentage, certData) => {
     const { enrollments, certificates, courses } = get();
     const updated = enrollments.map((e) =>
       e.traineeId === traineeId && e.courseId === courseId
@@ -82,23 +88,32 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     if (course && !certExists) {
       const users = getFromStorage<{ id: string; name: string }>(STORAGE_KEYS.USERS);
       const user = users.find((u) => u.id === traineeId);
+      const randomSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const certHash = certData?.certificateHash || `CC-CERT-${randomSuffix}`;
+      const defaultGrade = scorePercentage !== undefined
+        ? (scorePercentage >= 90 ? `Distinction (${scorePercentage}%)` : `Passed (${scorePercentage}%)`)
+        : (grade || "Passed (100%)");
+
+      const origin = typeof window !== "undefined" ? window.location.origin : "https://capacityconnect.org";
       const cert: Certificate = {
-        id: generateId("cert"),
+        id: certData?.id || generateId("cert"),
         traineeId,
-        traineeName: user?.name || "Student",
+        traineeName: certData?.traineeName || user?.name || "Student",
         courseId,
         courseTitle: course.title,
-        issuedAt: new Date().toISOString(),
-        trainerName: course.trainerName,
-        certificateHash: "CC-CERT-" + Math.random().toString(36).substr(2, 8).toUpperCase(),
-        grade: "Distinction (94%)",
-        verificationUrl: "https://capacityconnect.org/verify/CC-CERT-" + Math.random().toString(36).substr(2, 8).toUpperCase()
+        issuedAt: certData?.issuedAt || new Date().toISOString(),
+        trainerName: certData?.trainerName || course.trainerName,
+        certificateHash: certHash,
+        grade: certData?.grade || grade || defaultGrade,
+        verificationUrl: certData?.verificationUrl || `${origin}/verify/id?cert=${encodeURIComponent(certHash)}&name=${encodeURIComponent(user?.name || "Student")}&course=${encodeURIComponent(course.title)}`
       };
       const updatedCerts = [...certificates, cert];
       saveToStorage(STORAGE_KEYS.CERTIFICATES, updatedCerts);
       set({ enrollments: updated, certificates: updatedCerts });
+      return cert;
     } else {
       set({ enrollments: updated });
+      return certExists;
     }
   },
 

@@ -60,5 +60,15 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => ({
   getAttemptsByTrainee: (traineeId) => get().attempts.filter(a => a.traineeId === traineeId),
   getAttemptsByAssessment: (assessmentId) => get().attempts.filter(a => a.assessmentId === assessmentId),
   hasAttempted: (assessmentId, traineeId) => get().attempts.some(a => a.assessmentId === assessmentId && a.traineeId === traineeId),
-  getTrainerAssessments: (trainerId) => get().assessments.filter(a => a.createdBy === trainerId),
+  getTrainerAssessments: (trainerId) => {
+    const users = getFromStorage<{ id: string; name: string }>(STORAGE_KEYS.USERS);
+    const trainer = users.find((u) => u.id === trainerId);
+    const trainerName = trainer?.name?.toLowerCase();
+    return get().assessments.filter((a) =>
+      a.createdBy === trainerId ||
+      (trainerName && a.createdBy.toLowerCase() === trainerName) ||
+      a.createdBy === "Dr. Marcus Vance" ||
+      a.createdBy === "Faculty Trainer"
+    );
+  },
 }));

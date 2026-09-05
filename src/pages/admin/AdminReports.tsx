@@ -7,9 +7,28 @@ export const AdminReports: React.FC = () => {
   const { addToast } = useAppStore();
 
   const handleExportCSV = () => {
+    const csvContent = [
+      ["Department", "Active Trainees", "Competency Index", "Avg Assessment Score", "Certifications Issued", "Compliance Status"].join(","),
+      ["National Capacity Building", "142", "94.2%", "88.6%", "128", "Fully Compliant"].join(","),
+      ["Meteorological Sciences & Analytics", "98", "91.8%", "84.2%", "85", "Fully Compliant"].join(","),
+      ["Cloud & Cyber Infrastructure", "76", "88.5%", "82.0%", "64", "Fully Compliant"].join(","),
+      ["Emergency Operations & Logistics", "112", "96.1%", "91.4%", "105", "Exceeds Benchmarks"].join(","),
+      ["Public Administration & Policy", "64", "89.0%", "83.5%", "58", "Fully Compliant"].join(",")
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Capacity_Connect_Competency_Digest_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     addToast({
-      title: "Exporting Scheduled Digest",
-      message: "Departmental competency CSV digest generated for HR administrators.",
+      title: "Export Complete",
+      message: "Competency digest CSV has been generated and downloaded.",
       type: "success"
     });
   };

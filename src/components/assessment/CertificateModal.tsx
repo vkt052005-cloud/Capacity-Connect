@@ -96,7 +96,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
             <div className="flex flex-col items-center justify-center space-y-1">
               <div className="w-16 h-16 bg-white p-1 rounded-xl shadow-lg border border-[#2997ff]/40">
                 <img
-                  src={"https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + (certificate.verificationUrl || ("https://capacityconnect.org/verify/" + certificate.certificateHash))}
+                  src={"https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(certificate.verificationUrl || ("https://capacityconnect.org/verify/" + certificate.certificateHash))}
                   alt="Verification QR"
                   className="w-full h-full object-contain"
                 />

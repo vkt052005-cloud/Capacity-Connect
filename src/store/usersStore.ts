@@ -84,11 +84,11 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   rejectUser: async (userId) => {
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
-    const updated = users.filter((u) => u.id !== userId);
+    const updated = users.map((u) => (u.id === userId ? { ...u, status: "rejected" as const } : u));
     saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
-    await dbService.remove('users', userId);
+    await dbService.update('users', userId, { status: 'rejected' });
     if (targetUser) {
       recordAuditEvent({
         actor: "Capacity Connect Admin",
@@ -171,7 +171,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
         role: "admin",
         action: "ACCOUNT_DELETED",
         target: `${targetUser.name} (${targetUser.email})`,
-        status: "FAILED"
+        status: "SUCCESS"
       });
     }
   },

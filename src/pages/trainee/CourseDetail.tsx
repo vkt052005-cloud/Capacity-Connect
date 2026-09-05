@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   BookOpen, Video, Presentation, Sparkles, MessageSquare, Award,
-  CheckCircle2, ArrowRight, Share2, Star, CheckSquare, Layers, Download
+  CheckCircle2, ArrowRight, Share2, Star, CheckSquare, Layers, Download, AlertTriangle
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
@@ -26,7 +26,36 @@ export const CourseDetail: React.FC = () => {
   const [newQuestion, setNewQuestion] = useState("");
   const [newQuestionTitle, setNewQuestionTitle] = useState("");
 
-  const course = courses.find((c) => c.id === id) || courses[0];
+  const course = courses.find((c) => c.id === id);
+
+  if (!course) {
+    return (
+      <DashboardLayout
+        pageTitle="Course Not Found"
+        breadcrumbs={[
+          { label: "Courses", to: "/trainee/courses" },
+          { label: "Not Found" }
+        ]}
+      >
+        <div className="max-w-md mx-auto my-16 p-8 glass-panel border border-white/15 rounded-3xl text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Course Not Found</h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            The requested course could not be located in the curriculum catalog.
+          </p>
+          <button
+            onClick={() => navigate("/trainee/courses")}
+            className="apple-btn-primary text-xs px-5 py-2.5 font-bold mx-auto flex items-center gap-2"
+          >
+            Return to Catalog
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const mainResource = course?.resources?.[0];
 
   const handleComplete = () => {

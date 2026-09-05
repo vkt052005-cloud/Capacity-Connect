@@ -14,9 +14,9 @@ export const AdminProfile: React.FC = () => {
   const [name, setName] = useState(currentUser?.name || "Dr. Rajeshwar Sharma");
   const [email, setEmail] = useState(currentUser?.email || "vkt052005@gmail.com");
   const [password, setPassword] = useState(currentUser?.password || "SRNNv@2005");
-  const [department, setDepartment] = useState("National Capacity Building Commission");
-  const [designation, setDesignation] = useState("Chief Director & Portal Administrator");
-  const [phone, setPhone] = useState("+91 98110 54321");
+  const [department, setDepartment] = useState(currentUser?.department || "National Capacity Building Commission");
+  const [designation, setDesignation] = useState(currentUser?.designation || "Chief Director & Portal Administrator");
+  const [phone, setPhone] = useState(currentUser?.phone || "+91 98110 54321");
   const [isSaved, setIsSaved] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -24,7 +24,10 @@ export const AdminProfile: React.FC = () => {
     updateProfile({
       name,
       email,
-      password
+      password,
+      department,
+      designation,
+      phone
     });
     setIsSaved(true);
     addToast({

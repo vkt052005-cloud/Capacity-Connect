@@ -21,13 +21,13 @@ export const TakeAssessment: React.FC = () => {
   const { addToast } = useAppStore();
   const navigate = useNavigate();
 
-  const assessment = assessments.find((a) => a.id === id) || assessments[0];
+  const assessment = assessments.find((a) => a.id === id);
   const questions = assessment?.questions || [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [markedForReview, setMarkedForReview] = useState<Record<number, boolean>>({});
-  const [timeLeft, setTimeLeft] = useState(assessment?.durationMinutes * 60 || 900);
+  const [timeLeft, setTimeLeft] = useState(assessment?.durationMinutes ? assessment.durationMinutes * 60 : 900);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [issuedCert, setIssuedCert] = useState<Certificate | null>(null);
@@ -35,9 +35,16 @@ export const TakeAssessment: React.FC = () => {
   const [proctorLogs, setProctorLogs] = useState<string[]>([]);
   const [tabViolations, setTabViolations] = useState(0);
 
+  // Synchronize timer when assessment loads
+  useEffect(() => {
+    if (assessment?.durationMinutes) {
+      setTimeLeft(assessment.durationMinutes * 60);
+    }
+  }, [assessment?.durationMinutes]);
+
   // Timer countdown
   useEffect(() => {
-    if (submitted) return;
+    if (submitted || !assessment) return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -73,7 +80,7 @@ export const TakeAssessment: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    if (submitted) return;
+    if (submitted || !assessment) return;
     setSubmitted(true);
 
     let earnedScore = 0;
@@ -89,7 +96,7 @@ export const TakeAssessment: React.FC = () => {
       }
     });
 
-    const pct = Math.round((earnedScore / totalScore) * 100);
+    const pct = totalScore > 0 ? Math.round((earnedScore / totalScore) * 100) : 0;
     const passed = pct >= assessment.passingScore;
 
     const traineeId = currentUser?.id || "u-trainee-1";
@@ -110,7 +117,12 @@ export const TakeAssessment: React.FC = () => {
     });
 
     if (passed) {
-      completeCourse(traineeId, assessment.courseId);
+      const randomSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const certHash = `CC-CERT-${randomSuffix}`;
+      const gradeText = pct >= 90 ? `Distinction (${pct}%)` : `Passed (${pct}%)`;
+      const origin = typeof window !== "undefined" ? window.location.origin : "https://capacityconnect.org";
+      const verificationUrl = `${origin}/verify/id?cert=${encodeURIComponent(certHash)}&name=${encodeURIComponent(traineeName)}&course=${encodeURIComponent(assessment.courseTitle)}&grade=${encodeURIComponent(gradeText)}`;
+
       const newCert: Certificate = {
         id: "cert-" + Date.now(),
         traineeId,
@@ -119,15 +131,45 @@ export const TakeAssessment: React.FC = () => {
         courseTitle: assessment.courseTitle,
         trainerName: assessment.createdBy,
         issuedAt: new Date().toISOString(),
-        certificateHash: "CC-CERT-" + Math.random().toString(36).substr(2, 8).toUpperCase(),
-        grade: pct >= 90 ? "Distinction (" + pct + "%)" : "Passed (" + pct + "%)",
-        verificationUrl: "https://capacityconnect.org/verify/CC-CERT-" + Math.random().toString(36).substr(2, 8).toUpperCase()
+        certificateHash: certHash,
+        grade: gradeText,
+        verificationUrl
       };
+
+      completeCourse(traineeId, assessment.courseId, gradeText, pct, newCert);
       setIssuedCert(newCert);
     }
 
     setResult({ score: earnedScore, total: totalScore, percentage: pct, passed });
   };
+
+  if (!assessment) {
+    return (
+      <DashboardLayout
+        pageTitle="Assessment Not Found"
+        breadcrumbs={[
+          { label: "Assessments", to: "/trainee/assessments" },
+          { label: "Not Found" }
+        ]}
+      >
+        <div className="max-w-md mx-auto my-16 p-8 glass-panel border border-white/15 rounded-3xl text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Assessment Not Found</h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            The requested assessment could not be located or may have been updated.
+          </p>
+          <button
+            onClick={() => navigate("/trainee/assessments")}
+            className="apple-btn-primary text-xs px-5 py-2.5 font-bold mx-auto flex items-center gap-2"
+          >
+            Return to Assessments
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;

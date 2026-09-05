@@ -1,6 +1,6 @@
 // ─── User & Role Types ────────────────────────────────────────────────────────
 export type UserRole = "trainee" | "trainer" | "admin";
-export type UserStatus = "pending" | "active" | "inactive" | "suspended";
+export type UserStatus = "pending" | "active" | "inactive" | "suspended" | "rejected";
 
 export interface TraineeProfile {
   qualifications: string[];
@@ -41,6 +41,9 @@ export interface User {
   role: UserRole;
   status: UserStatus;
   createdAt: string;
+  phone?: string;
+  department?: string;
+  designation?: string;
   traineeProfile?: TraineeProfile;
   trainerProfile?: TrainerProfile;
 }
