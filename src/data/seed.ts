@@ -1011,9 +1011,15 @@ export function getFromStorage<T>(key: string): T[] {
           }
           const c6 = parsed.find((c: any) => c.id === 'c6');
           const initC6 = initialCourses.find((c: any) => c.id === 'c6');
-          if (c6 && initC6 && (c6.title !== initC6.title || !c6.videoUrl)) {
-            Object.assign(c6, initC6);
-            modified = true;
+          if (c6 && initC6) {
+            if (!c6.lessons || c6.lessons.length !== (initC6.lessons?.length || 0) || c6.title !== initC6.title || c6.duration !== initC6.duration) {
+              c6.lessons = initC6.lessons;
+              c6.duration = initC6.duration;
+              c6.title = initC6.title;
+              c6.videoUrl = initC6.videoUrl;
+              c6.trainerName = initC6.trainerName;
+              modified = true;
+            }
           }
           if (modified) {
             localStorage.setItem(key, JSON.stringify(parsed));
