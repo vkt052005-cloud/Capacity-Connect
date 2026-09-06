@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FolderOpen, Upload, FileText, Presentation, Video, CheckCircle2, Trash2 } from "lucide-react";
+import { FolderOpen, Upload, FileText, Presentation, Video, CheckCircle2, Trash2, ShieldAlert, ShieldCheck, Lock } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useCoursesStore } from "../../store/coursesStore";
 import { useAuthStore } from "../../store/authStore";
@@ -9,6 +9,12 @@ export const TrainerLibrary: React.FC = () => {
   const { courses, addResource } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
+
+  const isVerifiedTrainer = Boolean(
+    currentUser?.role === "admin" ||
+    currentUser?.isVerifiedByAdmin ||
+    currentUser?.trainerProfile?.isVerifiedByAdmin
+  );
 
   const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "c6");
   const [resourceTitle, setResourceTitle] = useState("");
@@ -21,6 +27,15 @@ export const TrainerLibrary: React.FC = () => {
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!resourceTitle.trim()) return;
+
+    if (resourceType === "video" && !isVerifiedTrainer) {
+      addToast({
+        title: "Video Upload Restricted",
+        message: "Only teachers verified by an Administrator can upload and publish video lectures.",
+        type: "error"
+      });
+      return;
+    }
 
     addResource({
       id: "res-" + Date.now(),
@@ -110,8 +125,21 @@ export const TrainerLibrary: React.FC = () => {
               </div>
             </div>
 
-            <button type="submit" className="apple-btn-primary w-full py-2.5 text-xs font-bold mt-2">
-              Upload & Process
+            {resourceType === "video" && !isVerifiedTrainer && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-start gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                <span>
+                  <strong>Video Upload Locked:</strong> Only teachers verified by an Administrator can publish video recordings. Go to <em>Manage Courses</em> to request verification.
+                </span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={resourceType === "video" && !isVerifiedTrainer}
+              className="apple-btn-primary w-full py-2.5 text-xs font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resourceType === "video" && !isVerifiedTrainer ? "Video Upload Locked (Unverified)" : "Upload & Process"}
             </button>
           </form>
         </div>

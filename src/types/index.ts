@@ -31,6 +31,7 @@ export interface TrainerProfile {
   rating: number;
   totalStudentsTaught: number;
   verifiedCredentials: string[];
+  isVerifiedByAdmin?: boolean;
 }
 
 export interface User {
@@ -44,6 +45,7 @@ export interface User {
   phone?: string;
   department?: string;
   designation?: string;
+  isVerifiedByAdmin?: boolean;
   traineeProfile?: TraineeProfile;
   trainerProfile?: TrainerProfile;
 }
@@ -144,6 +146,8 @@ export interface CourseLesson {
   duration: string;
   youtubeUrl: string;
   videoId: string;
+  videoSource?: "youtube" | "url" | "file";
+  description?: string;
 }
 
 export interface Enrollment {

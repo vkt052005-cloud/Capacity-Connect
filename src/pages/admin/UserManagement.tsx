@@ -163,7 +163,7 @@ const generateStrongPasswordString = () => {
 };
 
 export const UserManagement: React.FC = () => {
-  const { users, load, approveUser, rejectUser, deleteUser, deactivateUser, activateUser, updateRole } = useUsersStore();
+  const { users, load, approveUser, rejectUser, deleteUser, deactivateUser, activateUser, updateRole, verifyTrainer } = useUsersStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
 
@@ -213,6 +213,7 @@ export const UserManagement: React.FC = () => {
   // Password & Security
   const [newUserPassword, setNewUserPassword] = useState(() => generateStrongPasswordString());
   const [showPassword, setShowPassword] = useState(false);
+  const [newUserVerifiedForVideo, setNewUserVerifiedForVideo] = useState(true);
 
   // Prevent background page from scrolling or walking over when modal is open
   useEffect(() => {
@@ -338,6 +339,7 @@ export const UserManagement: React.FC = () => {
           }
         : newUserRole === "trainer"
         ? {
+            isVerifiedByAdmin: newUserVerifiedForVideo,
             trainerProfile: {
               bio: newUserBio.trim() || "Faculty member provisioned by Administrator.",
               phone: newUserPhone.trim(),
@@ -350,7 +352,8 @@ export const UserManagement: React.FC = () => {
               totalStudentsTaught: 0,
               verifiedCredentials: newUserCredentials.trim()
                 ? newUserCredentials.split(",").map((s) => s.trim()).filter(Boolean)
-                : ["Verified Instructor"]
+                : ["Verified Instructor"],
+              isVerifiedByAdmin: newUserVerifiedForVideo
             }
           }
         : {})
@@ -535,6 +538,19 @@ export const UserManagement: React.FC = () => {
                             <option value="admin">Admin</option>
                           </select>
                         )}
+                        {u.role === "trainer" && (
+                          <div className="mt-1">
+                            {u.isVerifiedByAdmin || u.trainerProfile?.isVerifiedByAdmin ? (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                                <ShieldCheck className="w-3 h-3 text-emerald-400" /> Verified Instructor
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                                <ShieldAlert className="w-3 h-3 text-amber-400" /> Unverified (No Video Upload)
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </td>
 
                       {/* Status */}
@@ -594,6 +610,43 @@ export const UserManagement: React.FC = () => {
                             </>
                           ) : (
                             <>
+                              {/* Teacher Video Upload Verification Toggle */}
+                              {u.role === "trainer" && u.status === "active" && (
+                                u.isVerifiedByAdmin || u.trainerProfile?.isVerifiedByAdmin ? (
+                                  <button
+                                    onClick={() => {
+                                      verifyTrainer(u.id, false);
+                                      addToast({
+                                        title: "Video Upload Access Revoked",
+                                        message: `${u.name} can no longer upload video lessons until re-verified.`,
+                                        type: "warning"
+                                      });
+                                    }}
+                                    className="px-2 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-semibold transition cursor-pointer flex items-center gap-1"
+                                    title="Revoke video upload privileges"
+                                  >
+                                    <XCircle className="w-3 h-3 text-rose-400" />
+                                    <span>Revoke Video</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      verifyTrainer(u.id, true);
+                                      addToast({
+                                        title: "Instructor Verified for Videos",
+                                        message: `${u.name} is now verified and can publish video lessons.`,
+                                        type: "success"
+                                      });
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold transition cursor-pointer flex items-center gap-1 shadow-sm"
+                                    title="Verify teacher to unlock video uploading"
+                                  >
+                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>Verify Teacher</span>
+                                  </button>
+                                )
+                              )}
+
                               {/* Suspend / Activate toggle */}
                               {!isCurrentAdmin && (
                                 <>
@@ -1027,6 +1080,25 @@ export const UserManagement: React.FC = () => {
                         value={newUserBio}
                         onChange={(e) => setNewUserBio(e.target.value)}
                         className="apple-input text-xs w-full py-2 resize-none"
+                      />
+                    </div>
+                  )}
+
+                  {/* Teacher Video Upload Permission Toggle */}
+                  {newUserRole === "trainer" && (
+                    <div className="p-3 rounded-xl bg-[#0071e3]/10 border border-[#2997ff]/30 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <ShieldCheck className="w-4 h-4 text-[#2997ff] shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-white">Verify Instructor for Video Uploads</p>
+                          <p className="text-[10.5px] text-slate-300">Grant immediate authority to upload video lectures, playlists, and curriculum materials</p>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={newUserVerifiedForVideo}
+                        onChange={(e) => setNewUserVerifiedForVideo(e.target.checked)}
+                        className="w-4 h-4 rounded accent-[#2997ff] cursor-pointer"
                       />
                     </div>
                   )}

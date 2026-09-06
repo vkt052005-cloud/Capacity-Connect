@@ -14,6 +14,7 @@ interface UsersState {
   deactivateUser: (userId: string) => Promise<void>;
   activateUser: (userId: string) => Promise<void>;
   updateRole: (userId: string, role: User['role']) => Promise<void>;
+  verifyTrainer: (userId: string, isVerified: boolean) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   getTrainees: () => User[];
   getTrainers: () => User[];
@@ -152,6 +153,42 @@ export const useUsersStore = create<UsersState>((set, get) => ({
         role: "admin",
         action: "ROLE_PROMOTED",
         target: `${targetUser.name} -> ${role.toUpperCase()}`,
+        status: "SUCCESS"
+      });
+    }
+  },
+
+  verifyTrainer: async (userId, isVerified) => {
+    const { users } = get();
+    const targetUser = users.find((u) => u.id === userId);
+    const updated = users.map((u) => {
+      if (u.id === userId) {
+        return {
+          ...u,
+          isVerifiedByAdmin: isVerified,
+          trainerProfile: u.trainerProfile
+            ? { ...u.trainerProfile, isVerifiedByAdmin: isVerified }
+            : undefined
+        };
+      }
+      return u;
+    });
+    saveToStorage(STORAGE_KEYS.USERS, updated);
+    set({ users: updated });
+
+    await dbService.update('users', userId, {
+      isVerifiedByAdmin: isVerified,
+      trainerProfile: targetUser?.trainerProfile
+        ? { ...targetUser.trainerProfile, isVerifiedByAdmin: isVerified }
+        : undefined
+    });
+
+    if (targetUser) {
+      recordAuditEvent({
+        actor: "Capacity Connect Admin",
+        role: "admin",
+        action: isVerified ? "TRAINER_VERIFIED" : "TRAINER_VERIFICATION_REVOKED",
+        target: `${targetUser.name} (${targetUser.email}) - Video Upload ${isVerified ? "Unlocked" : "Revoked"}`,
         status: "SUCCESS"
       });
     }

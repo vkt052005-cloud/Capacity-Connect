@@ -48,6 +48,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
+    isVerifiedByAdmin: true,
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Master Software Educator, Creator of Sigma Web Development & Python 100 Days. Over 6M+ students trained globally.",
@@ -59,7 +60,8 @@ export const initialUsers: User[] = [
       experience: "10+ Years Technical Education",
       rating: 4.99,
       totalStudentsTaught: 6000000,
-      verifiedCredentials: ["CodeWithHarry Founder", "Top Developer Educator"]
+      verifiedCredentials: ["CodeWithHarry Founder", "Top Developer Educator"],
+      isVerifiedByAdmin: true
     }
   },
   {
@@ -93,6 +95,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
+    isVerifiedByAdmin: true,
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Ex-Google, Ex-Amazon Software Engineer. Founder of take U forward and creator of the A2Z DSA Course.",
@@ -104,7 +107,8 @@ export const initialUsers: User[] = [
       experience: "8+ Years Engineering & Mentorship",
       rating: 4.99,
       totalStudentsTaught: 500000,
-      verifiedCredentials: ["take U forward Founder", "Competitive Programming Master"]
+      verifiedCredentials: ["take U forward Founder", "Competitive Programming Master"],
+      isVerifiedByAdmin: true
     }
   },
   {
@@ -114,6 +118,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
+    isVerifiedByAdmin: true,
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Lecturer on Computer Science at Harvard University & Lead Instructor for CS50's Introduction to Databases with SQL.",
@@ -125,7 +130,8 @@ export const initialUsers: User[] = [
       experience: "7+ Years Academic Instruction",
       rating: 4.99,
       totalStudentsTaught: 750000,
-      verifiedCredentials: ["Harvard University Faculty", "CS50 Lead Instructor"]
+      verifiedCredentials: ["Harvard University Faculty", "CS50 Lead Instructor"],
+      isVerifiedByAdmin: true
     }
   },
   {
@@ -135,6 +141,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
+    isVerifiedByAdmin: true,
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Ex-Microsoft Software Engineer, Co-Founder of Apna College. One of India's most recognized programming educators.",
@@ -146,7 +153,8 @@ export const initialUsers: User[] = [
       experience: "6+ Years Tech Industry & Mentorship",
       rating: 4.98,
       totalStudentsTaught: 4500000,
-      verifiedCredentials: ["Ex-Microsoft Engineer", "Apna College Co-Founder"]
+      verifiedCredentials: ["Ex-Microsoft Engineer", "Apna College Co-Founder"],
+      isVerifiedByAdmin: true
     }
   },
   {
@@ -156,6 +164,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
+    isVerifiedByAdmin: true,
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Globally acclaimed engineering education platform delivering foundational computer science and electrical engineering courses.",
@@ -167,7 +176,8 @@ export const initialUsers: User[] = [
       experience: "12+ Years University Curriculum",
       rating: 4.97,
       totalStudentsTaught: 2200000,
-      verifiedCredentials: ["Neso Academy Academic Lead", "Global STEM Contributor"]
+      verifiedCredentials: ["Neso Academy Academic Lead", "Global STEM Contributor"],
+      isVerifiedByAdmin: true
     }
   },
   {
@@ -177,6 +187,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
+    isVerifiedByAdmin: true,
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Founder of Gate Smashers, India's most popular GATE CSE educator known for intuitive, high-yield conceptual explanations.",
@@ -188,7 +199,8 @@ export const initialUsers: User[] = [
       experience: "11+ Years GATE & University Training",
       rating: 4.99,
       totalStudentsTaught: 1800000,
-      verifiedCredentials: ["Gate Smashers Founder", "Master GATE Educator"]
+      verifiedCredentials: ["Gate Smashers Founder", "Master GATE Educator"],
+      isVerifiedByAdmin: true
     }
   },
   {
@@ -198,6 +210,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
+    isVerifiedByAdmin: true,
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Founder of KnowledgeGATE, renowned educator specializing in Algorithm Design, Theory of Computation, and GATE CS.",
@@ -209,7 +222,8 @@ export const initialUsers: User[] = [
       experience: "10+ Years Algorithm Mastery",
       rating: 4.96,
       totalStudentsTaught: 1200000,
-      verifiedCredentials: ["KnowledgeGATE Founder", "GATE CS Specialist"]
+      verifiedCredentials: ["KnowledgeGATE Founder", "GATE CS Specialist"],
+      isVerifiedByAdmin: true
     }
   },
   {
@@ -219,6 +233,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainer",
     status: "active",
+    isVerifiedByAdmin: true,
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Professor in the Department of Computer Science & Engineering at IIT Kharagpur. World-renowned authority and author on Software Engineering.",
@@ -230,7 +245,8 @@ export const initialUsers: User[] = [
       experience: "30+ Years Academic & Research Excellence",
       rating: 4.98,
       totalStudentsTaught: 950000,
-      verifiedCredentials: ["IIT Kharagpur Senior Faculty", "Author of Fundamentals of Software Engineering"]
+      verifiedCredentials: ["IIT Kharagpur Senior Faculty", "Author of Fundamentals of Software Engineering"],
+      isVerifiedByAdmin: true
     }
   }
 ];
@@ -2028,6 +2044,13 @@ export function getFromStorage<T>(key: string): T[] {
             if (!existingEmails.has(initUser.email.toLowerCase())) {
               parsed.push(initUser);
               modified = true;
+            } else if (initUser.role === "trainer" && initUser.isVerifiedByAdmin) {
+              const match = parsed.find((u: any) => u.email?.toLowerCase() === initUser.email.toLowerCase());
+              if (match && match.isVerifiedByAdmin === undefined) {
+                match.isVerifiedByAdmin = true;
+                if (match.trainerProfile) match.trainerProfile.isVerifiedByAdmin = true;
+                modified = true;
+              }
             }
           }
           if (modified) {

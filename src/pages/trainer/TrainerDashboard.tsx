@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   BookOpen, Users, Award, Video, Plus, CheckSquare,
   BarChart3, Sparkles, FolderOpen, Calendar, Clock, Radio,
-  ExternalLink, X
+  ExternalLink, X, ShieldCheck, ShieldAlert
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useAuthStore } from "../../store/authStore";
@@ -28,8 +28,14 @@ export const TrainerDashboard: React.FC = () => {
   } = useLiveSessionsStore();
   const { addToast } = useAppStore();
   const trainerId = currentUser?.id || "";
-  const myCourses = courses.filter((c) => c.trainerId === trainerId);
+  const myCourses = courses.filter((c) => c.trainerId === trainerId || (currentUser?.name && c.trainerName === currentUser.name));
   const mySessions = sessions.filter((s) => s.trainerId === trainerId || s.trainerName === currentUser?.name);
+
+  const isVerifiedTrainer = Boolean(
+    currentUser?.role === "admin" ||
+    currentUser?.isVerifiedByAdmin ||
+    currentUser?.trainerProfile?.isVerifiedByAdmin
+  );
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showInstantModal, setShowInstantModal] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState(STANDARD_SUBJECTS[0].id);
@@ -175,6 +181,50 @@ export const TrainerDashboard: React.FC = () => {
                 Create Assessment
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Verification Status Quick Bar */}
+        <div className={"p-3.5 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 " + (isVerifiedTrainer ? "bg-emerald-500/10 border-emerald-500/25" : "bg-amber-500/10 border-amber-500/30")}>
+          <div className="flex items-center gap-3">
+            {isVerifiedTrainer ? (
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs font-bold text-white">
+                  {isVerifiedTrainer ? "Admin-Verified Faculty Instructor" : "Unverified Instructor (Video Publishing Pending)"}
+                </h4>
+                <span className={"badge text-[8px] font-bold " + (isVerifiedTrainer ? "badge-green" : "badge-yellow")}>
+                  {isVerifiedTrainer ? "VERIFIED FOR VIDEO UPLOADS" : "ADMIN REVIEW REQUIRED"}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                {isVerifiedTrainer
+                  ? "You have full authorization to author, upload, and embed video lectures into course curricula."
+                  : "Only admin-verified teachers can upload videos. You can author syllabi or request admin verification in the Course Studio."}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to="/trainer/courses"
+              className={isVerifiedTrainer ? "apple-btn-primary text-xs px-3.5 py-1.5 font-bold flex items-center gap-1.5 shadow-sm" : "apple-btn-secondary text-xs px-3.5 py-1.5 font-semibold text-amber-300 border-amber-500/40 hover:bg-amber-500/20"}
+            >
+              {isVerifiedTrainer ? (
+                <>
+                  <Video className="w-3.5 h-3.5" /> Video Studio
+                </>
+              ) : (
+                "Video Studio & Verification →"
+              )}
+            </Link>
           </div>
         </div>
 
