@@ -1,4 +1,5 @@
 import { getCourseThumbnail } from "../../utils/courseThumbnail";
+import { formatCourseDuration } from "../../utils/courseDuration";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -319,7 +320,7 @@ export const HomePage: React.FC = () => {
                     </div>
 
                     <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-                      <span className="text-xs text-slate-400 font-mono">⏱ {c.duration}</span>
+                      <span className="text-xs text-slate-400 font-mono">⏱ {formatCourseDuration(c)}</span>
                       <Link
                         to={`/trainee/course/${c.id}`}
                         className="apple-btn-primary text-xs px-4 py-2 font-bold flex items-center gap-1.5"
@@ -360,7 +361,7 @@ export const HomePage: React.FC = () => {
                     </div>
                   </div>
                   <div className="p-4 pt-0 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500 font-mono">{c.duration}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{formatCourseDuration(c)}</span>
                     <Link
                       to={`/trainee/course/${c.id}`}
                       className="text-xs text-[#2997ff] font-semibold hover:underline flex items-center gap-0.5"

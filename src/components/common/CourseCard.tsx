@@ -1,4 +1,5 @@
 import { getCourseThumbnail } from "../../utils/courseThumbnail";
+import { formatCourseDuration } from "../../utils/courseDuration";
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, BookOpen } from 'lucide-react';
@@ -77,7 +78,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
 
         {/* Meta */}
         <div className="flex items-center gap-4 mt-3 text-[11px] text-slate-400">
-          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-500" />{course.duration}</span>
+          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-500" />{formatCourseDuration(course)}</span>
           <span className="flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5 text-slate-500" />{course.resources.length} resources</span>
         </div>
 

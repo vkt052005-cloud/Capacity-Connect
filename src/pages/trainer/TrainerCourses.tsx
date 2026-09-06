@@ -10,6 +10,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { useNotificationsStore } from "../../store/notificationsStore";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
+import { formatCourseDuration, extractMediaDuration } from "../../utils/courseDuration";
 import type { CourseCategory, CourseLesson, Resource } from "../../types";
 
 export const TrainerCourses: React.FC = () => {
@@ -33,7 +34,8 @@ export const TrainerCourses: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<CourseCategory>("Technical");
-  const [duration, setDuration] = useState("12 Hours • 4 Modules");
+  const [duration, setDuration] = useState("0 Mins");
+  const [modulesCount, setModulesCount] = useState<number | "">("");
   const [level, setLevel] = useState<"Beginner" | "Intermediate" | "Advanced">("Intermediate");
 
   // Video Upload Modal State
@@ -41,6 +43,7 @@ export const TrainerCourses: React.FC = () => {
   const [targetCourseId, setTargetCourseId] = useState("");
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonDuration, setLessonDuration] = useState("20 Mins");
+  const [isCalculatingDuration, setIsCalculatingDuration] = useState(false);
   const [videoSourceType, setVideoSourceType] = useState<"youtube" | "url" | "file">("youtube");
   const [videoUrlInput, setVideoUrlInput] = useState("");
   const [videoDescription, setVideoDescription] = useState("");
@@ -108,8 +111,8 @@ export const TrainerCourses: React.FC = () => {
     setShowVideoModal(true);
   };
 
-  // Handle Local File Selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Local File Selection with automatic duration calculation
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setLocalVideoFileName(file.name);
@@ -119,6 +122,38 @@ export const TrainerCourses: React.FC = () => {
       if (!lessonTitle || lessonTitle.endsWith(": ")) {
         setLessonTitle(file.name.replace(/\.[^/.]+$/, ""));
       }
+
+      // Automatically calculate duration of the selected video
+      setIsCalculatingDuration(true);
+      try {
+        const calculated = await extractMediaDuration(file);
+        setLessonDuration(calculated);
+        addToast({
+          title: "Video Duration Detected",
+          message: `Calculated length: ${calculated}`,
+          type: "info"
+        });
+      } catch (err) {
+        console.error("Failed to extract duration", err);
+      } finally {
+        setIsCalculatingDuration(false);
+      }
+    }
+  };
+
+  // Handle URL Change with automatic duration probe if direct video
+  const handleUrlChange = async (url: string) => {
+    setVideoUrlInput(url);
+    if (videoSourceType === "url" && (url.endsWith(".mp4") || url.endsWith(".webm") || url.includes("commondatastorage"))) {
+      setIsCalculatingDuration(true);
+      try {
+        const calculated = await extractMediaDuration(url);
+        setLessonDuration(calculated);
+      } catch {
+        // Keep current duration
+      } finally {
+        setIsCalculatingDuration(false);
+      }
     }
   };
 
@@ -127,12 +162,16 @@ export const TrainerCourses: React.FC = () => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    const modNum = typeof modulesCount === "number" && modulesCount > 0 ? modulesCount : undefined;
+    const initialDuration = modNum ? `0 Mins • ${modNum} Modules` : "0 Mins";
+
     addCourse({
       id: "c-" + Date.now(),
       title,
       description,
       category,
-      duration,
+      duration: initialDuration,
+      modules: modNum,
       level,
       status: "active",
       trainerId,
@@ -147,6 +186,7 @@ export const TrainerCourses: React.FC = () => {
     setShowAddModal(false);
     setTitle("");
     setDescription("");
+    setModulesCount("");
     addToast({
       title: "Course Created Successfully",
       message: "New curriculum published to catalog.",
@@ -210,16 +250,24 @@ export const TrainerCourses: React.FC = () => {
     const updatedLessons = [...existingLessons, newLesson];
     const updatedResources = [...(course.resources || []), newResource];
 
+    // Recalculate dynamic course duration
+    const courseWithNewLesson: typeof course = {
+      ...course,
+      lessons: updatedLessons
+    };
+    const updatedDuration = formatCourseDuration(courseWithNewLesson);
+
     updateCourse(course.id, {
       lessons: updatedLessons,
-      resources: updatedResources
+      resources: updatedResources,
+      duration: updatedDuration
     });
 
     setShowVideoModal(false);
     setExpandedCourseId(course.id);
     addToast({
       title: "Video Lesson Uploaded & Published",
-      message: `"${newLesson.title}" has been appended to ${course.title} and is immediately accessible to trainees.`,
+      message: `"${newLesson.title}" (${newLesson.duration}) has been appended to ${course.title}. Total course length: ${updatedDuration}.`,
       type: "success"
     });
   };
@@ -233,10 +281,20 @@ export const TrainerCourses: React.FC = () => {
       .filter((l) => l.id !== lessonId)
       .map((l, idx) => ({ ...l, lessonNumber: idx + 1 }));
 
-    updateCourse(courseId, { lessons: filteredLessons });
+    const updatedCourse: typeof course = {
+      ...course,
+      lessons: filteredLessons
+    };
+    const updatedDuration = formatCourseDuration(updatedCourse);
+
+    updateCourse(courseId, {
+      lessons: filteredLessons,
+      duration: updatedDuration
+    });
+
     addToast({
       title: "Video Lesson Removed",
-      message: "Lesson removed from course curriculum.",
+      message: "Lesson removed and course duration recalculated.",
       type: "info"
     });
   };
@@ -422,7 +480,7 @@ export const TrainerCourses: React.FC = () => {
                   </div>
 
                   <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                    <span className="text-slate-400 font-mono text-[11px]">{c.duration}</span>
+                    <span className="text-slate-400 font-mono text-[11px]">{formatCourseDuration(c)}</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleOpenVideoModal(c.id)}
@@ -504,10 +562,17 @@ export const TrainerCourses: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Duration</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                    <span>Duration</span>
+                    {isCalculatingDuration && (
+                      <span className="text-[10px] text-[#2997ff] flex items-center gap-1 animate-pulse">
+                        <Sparkles className="w-2.5 h-2.5" /> Calculating...
+                      </span>
+                    )}
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g. 25:40 or 30 Mins"
+                    placeholder="e.g. 25:40 or 20 Mins"
                     value={lessonDuration}
                     onChange={(e) => setLessonDuration(e.target.value)}
                     className="apple-input text-xs w-full"
@@ -602,7 +667,7 @@ export const TrainerCourses: React.FC = () => {
                     required
                     placeholder="e.g. https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
                     value={videoUrlInput}
-                    onChange={(e) => setVideoUrlInput(e.target.value)}
+                    onChange={(e) => handleUrlChange(e.target.value)}
                     className="apple-input text-xs w-full"
                   />
                   <p className="text-[10.5px] text-slate-400 mt-1">
@@ -807,6 +872,24 @@ export const TrainerCourses: React.FC = () => {
                     <option value="Advanced">Advanced</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Number of Modules <span className="text-slate-500 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  placeholder="Leave empty if course has no distinct modules"
+                  className="apple-input text-xs w-full"
+                  value={modulesCount}
+                  onChange={(e) => setModulesCount(e.target.value ? parseInt(e.target.value, 10) : "")}
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Duration is calculated dynamically as video lessons are added. Modules are only displayed if specified.
+                </p>
               </div>
 
               <div className="flex gap-2 pt-2">

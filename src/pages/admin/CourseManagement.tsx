@@ -2,6 +2,7 @@ import React from "react";
 import { BookOpen, CheckCircle2, Shield, Trash2 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useCoursesStore } from "../../store/coursesStore";
+import { formatCourseDuration } from "../../utils/courseDuration";
 
 export const CourseManagement: React.FC = () => {
   const { courses, deleteCourse } = useCoursesStore();
@@ -24,7 +25,7 @@ export const CourseManagement: React.FC = () => {
                   <h4 className="text-sm font-bold text-white">{c.title}</h4>
                   <span className="badge-blue text-[9px]">{c.category}</span>
                 </div>
-                <p className="text-xs text-slate-400">Faculty: {c.trainerName} • Level: {c.level} • Duration: {c.duration}</p>
+                <p className="text-xs text-slate-400">Faculty: {c.trainerName} • Level: {c.level} • Duration: {formatCourseDuration(c)}</p>
               </div>
 
               <div className="flex items-center gap-2">

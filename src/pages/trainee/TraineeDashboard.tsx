@@ -1,4 +1,5 @@
 import { getCourseThumbnail } from "../../utils/courseThumbnail";
+import { formatCourseDuration } from "../../utils/courseDuration";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -338,7 +339,7 @@ export const TraineeDashboard: React.FC = () => {
                   </div>
 
                   <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">{c.duration} total</span>
+                    <span className="text-[10px] text-slate-400">{formatCourseDuration(c)} total</span>
                     <Link
                       to={`/trainee/course/${c.id}`}
                       className="apple-btn-primary text-xs px-3 py-1 font-semibold"

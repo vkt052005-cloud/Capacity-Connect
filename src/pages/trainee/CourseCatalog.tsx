@@ -1,4 +1,5 @@
 import { getCourseThumbnail } from "../../utils/courseThumbnail";
+import { formatCourseDuration } from "../../utils/courseDuration";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Search, Filter, Play, CheckCircle2, ArrowRight } from "lucide-react";
@@ -99,7 +100,7 @@ export const CourseCatalog: React.FC = () => {
                   <div className="p-4 space-y-2">
                     <h3 className="text-sm font-bold text-white line-clamp-2">{c.title}</h3>
                     <p className="text-xs text-slate-400 line-clamp-2">{c.description}</p>
-                    <p className="text-[10px] text-slate-400">Instructor: {c.trainerName} • {c.duration}</p>
+                    <p className="text-[10px] text-slate-400">Instructor: {c.trainerName} • {formatCourseDuration(c)}</p>
                   </div>
                 </div>
 

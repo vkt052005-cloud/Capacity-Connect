@@ -2058,8 +2058,18 @@ export function getFromStorage<T>(key: string): T[] {
           }
         }
         if (key === STORAGE_KEYS.COURSES) {
-          localStorage.setItem(key, JSON.stringify(initialCourses));
-          return initialCourses as any;
+          // Merge initial courses and any trainer-created courses, sanitizing fake durations
+          const initialIds = new Set(initialCourses.map((c) => c.id));
+          const trainerCreated = parsed.filter((c: any) => !initialIds.has(c.id));
+          const cleanedTrainerCreated = trainerCreated.map((c: any) => {
+            if (c.duration && c.duration.includes("12 Hours • 4 Modules")) {
+              return { ...c, duration: c.lessons?.length ? `${c.lessons.length * 20} Mins` : "0 Mins" };
+            }
+            return c;
+          });
+          const mergedCourses = [...initialCourses, ...cleanedTrainerCreated];
+          localStorage.setItem(key, JSON.stringify(mergedCourses));
+          return mergedCourses as any;
         }
         if (key === STORAGE_KEYS.ASSESSMENTS) {
           localStorage.setItem(key, JSON.stringify(initialAssessments));

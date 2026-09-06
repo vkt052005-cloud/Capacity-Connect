@@ -137,6 +137,7 @@ export interface Course {
   prerequisites?: string[];
   videoUrl?: string;
   lessons?: CourseLesson[];
+  modules?: number | string[];
 }
 
 export interface CourseLesson {
