@@ -4,7 +4,7 @@ import {
   Video, Presentation, Sparkles, MessageSquare, Award,
   CheckCircle2, AlertTriangle, ListVideo, Search, ChevronLeft,
   ChevronRight, Play, ExternalLink, Star, LogOut, BookOpen,
-  FolderOpen, Download, FileText
+  FolderOpen, Download, FileText, Radio, ShieldCheck, Clock, Calendar
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
@@ -14,6 +14,8 @@ import { AiDoubtSolverChat } from "../../components/ai/AiDoubtSolverChat";
 import { useCoursesStore } from "../../store/coursesStore";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
+import { useLiveSessionsStore } from "../../store/liveSessionsStore";
+import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment";
 import { initialDiscussions, initialCourses } from "../../data/seed";
 import { sigmaWebDevLessons } from "../../data/sigmaWebDevPlaylist";
 import { dsaLessons } from "../../data/dsaPlaylist";
@@ -141,12 +143,13 @@ const COURSE_ASSESSMENT_MAP: Record<string, string> = {
 export const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { courses, enrollments, enroll, unenroll, completeCourse, feedbacks } = useCoursesStore();
+  const { sessions, launchGoogleMeet, openClassroom } = useLiveSessionsStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
   const playerRef = useRef<HTMLDivElement>(null);
 
-  const [activeTab, setActiveTab] = useState<"video" | "slides" | "resources" | "ai" | "discussions" | "reviews">("video");
+  const [activeTab, setActiveTab] = useState<"video" | "slides" | "resources" | "ai" | "discussions" | "reviews" | "live">("video");
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
   const [lessonSearch, setLessonSearch] = useState("");
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("");
@@ -337,6 +340,20 @@ export const CourseDetail: React.FC = () => {
       ? course.rating.toFixed(1)
       : null;
 
+  // Google Meet Sessions connected directly to this course or teacher
+  const courseSessions = sessions.filter((s) => {
+    return (
+      s.courseId === course.id ||
+      s.courseId === id ||
+      (s.trainerId && course.trainerId && s.trainerId === course.trainerId) ||
+      (s.trainerName && course.trainerName && s.trainerName.toLowerCase().includes(course.trainerName.toLowerCase())) ||
+      (s.courseTitle && course.title && s.courseTitle.toLowerCase().includes(course.title.toLowerCase()))
+    );
+  });
+
+  const courseLiveSession = courseSessions.find((s) => s.status === "live");
+  const courseUpcomingSessions = courseSessions.filter((s) => s.status === "upcoming");
+
   return (
     <DashboardLayout
       pageTitle={course.title}
@@ -346,6 +363,81 @@ export const CourseDetail: React.FC = () => {
       ]}
     >
       <div className="space-y-6">
+        {/* Course-Specific Live Meet Alert (If teacher is live right now for this course) */}
+        {courseLiveSession && (
+          <div className="glass-card p-5 border-2 border-rose-500/60 bg-gradient-to-r from-rose-950/70 via-[#1a0818] to-[#0c0f1c] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_0_35px_rgba(244,63,94,0.3)] relative overflow-hidden animate-pulse">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/25 border border-rose-500/60 text-rose-300 flex items-center justify-center shrink-0">
+                <Radio className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="badge-red text-[9px] uppercase font-black tracking-wider animate-pulse">
+                    🔴 YOUR INSTRUCTOR IS LIVE NOW
+                  </span>
+                  {isEnrolled ? (
+                    <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-emerald-400" /> Enrolled Access Granted
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-amber-400 font-mono">
+                      Enrollment unlocks access
+                    </span>
+                  )}
+                </div>
+                <h4 className="text-base font-extrabold text-white">
+                  {courseLiveSession.title}
+                </h4>
+                <p className="text-xs text-slate-300">
+                  Instructor: <span className="text-white font-semibold">{courseLiveSession.trainerName}</span> • Google Meet Room: <span className="text-emerald-400 font-mono font-bold">{courseLiveSession.meetingCode}</span> (Auto-connected)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {isEnrolled ? (
+                <button
+                  onClick={() => {
+                    launchGoogleMeet(courseLiveSession.id, currentUser?.id, currentUser?.name, true);
+                    addToast({
+                      title: "Connecting to Google Meet",
+                      message: `Opening ${courseLiveSession.title} with ${courseLiveSession.trainerName}.`,
+                      type: "success"
+                    });
+                  }}
+                  className="apple-btn-primary text-xs px-5 py-2.5 font-extrabold flex items-center gap-2 shadow-xl shadow-rose-600/40 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110 cursor-pointer text-white transform hover:scale-[1.02] transition-all"
+                >
+                  <Video className="w-4 h-4" /> Join Google Meet (1-Click) ↗
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (!currentUser) {
+                      navigate("/login");
+                      return;
+                    }
+                    enroll(currentUser.id, id || "");
+                    addToast({
+                      title: "Enrolled in Course",
+                      message: "You can now join the teacher's live Google Meet class!",
+                      type: "success"
+                    });
+                  }}
+                  className="apple-btn-primary text-xs px-5 py-2.5 font-bold flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600"
+                >
+                  Enroll to Join Live Class ↗
+                </button>
+              )}
+              <button
+                onClick={() => setActiveTab("live")}
+                className="apple-btn-secondary text-xs px-3.5 py-2.5 font-semibold text-slate-300 hover:text-white cursor-pointer"
+              >
+                Classroom Details →
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Navigation Tabs Pill (Apple Style) */}
         <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-3">
           <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-black/50 border border-white/10">
@@ -402,6 +494,27 @@ export const CourseDetail: React.FC = () => {
               }
             >
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Student Reviews ({courseFeedbacks.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("live")}
+              className={
+                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer relative " +
+                (activeTab === "live"
+                  ? "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30"
+                  : courseLiveSession
+                  ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30"
+                  : "text-slate-400 hover:text-white")
+              }
+            >
+              {courseLiveSession ? (
+                <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+              ) : (
+                <Video className="w-3.5 h-3.5 text-emerald-400" />
+              )}
+              <span>Live Meet ({courseSessions.length})</span>
+              {courseLiveSession && (
+                <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping absolute -top-0.5 -right-0.5" />
+              )}
             </button>
           </div>
 
@@ -1026,6 +1139,204 @@ export const CourseDetail: React.FC = () => {
                     <p className="text-xs text-slate-300 leading-relaxed">{fb.comment}</p>
                   </div>
                 ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 6: Live Google Meet Classroom & Schedule */}
+        {activeTab === "live" && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Live Now Card if Active */}
+            {courseLiveSession ? (
+              <div className="glass-card p-6 border-2 border-rose-500/60 bg-gradient-to-r from-rose-950/60 via-[#120816] to-[#0a0d18] rounded-2xl space-y-4 shadow-2xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-300 flex items-center justify-center shrink-0">
+                      <Radio className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <div>
+                      <span className="badge-red text-[9px] uppercase font-bold tracking-wider animate-pulse">
+                        TEACHER IS LIVE RIGHT NOW
+                      </span>
+                      <h3 className="text-lg font-extrabold text-white mt-0.5">{courseLiveSession.title}</h3>
+                      <p className="text-xs text-slate-300">
+                        Conducted by <strong className="text-white">{courseLiveSession.trainerName}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    {isEnrolled ? (
+                      <button
+                        onClick={() => {
+                          launchGoogleMeet(courseLiveSession.id, currentUser?.id, currentUser?.name, true);
+                          addToast({
+                            title: "Opening Google Meet",
+                            message: `Launching "${courseLiveSession.title}". Attendance verified.`,
+                            type: "success"
+                          });
+                        }}
+                        className="apple-btn-primary px-6 py-3 font-bold text-xs bg-gradient-to-r from-rose-600 to-red-600 hover:brightness-110 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-rose-600/30 transform hover:scale-[1.02] transition"
+                      >
+                        <Video className="w-4 h-4" />
+                        <span>Join Live Google Meet (1-Click) ↗</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (!currentUser) {
+                            navigate("/login");
+                            return;
+                          }
+                          enroll(currentUser.id, id || "");
+                          addToast({
+                            title: "Enrolled in Course",
+                            message: "Live class unlocked! Click to join.",
+                            type: "success"
+                          });
+                        }}
+                        className="apple-btn-primary px-6 py-3 font-bold text-xs bg-gradient-to-r from-amber-600 to-orange-600 cursor-pointer"
+                      >
+                        Enroll in Course to Join ↗
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => openClassroom(courseLiveSession)}
+                      className="apple-btn-secondary px-4 py-3 font-semibold text-xs text-slate-300 hover:text-white cursor-pointer"
+                      title="Open in-portal companion hub"
+                    >
+                      In-Portal Hub ↗
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+                    <span className="text-[10px] text-slate-400 uppercase font-mono">Google Meet Code</span>
+                    <p className="font-mono text-xs font-bold text-emerald-400">
+                      {isEnrolled ? courseLiveSession.meetingCode : "••••-•••• (enroll to view)"}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+                    <span className="text-[10px] text-slate-400 uppercase font-mono">Attendance Status</span>
+                    <p className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Auto-Certified in LMS
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+                    <span className="text-[10px] text-slate-400 uppercase font-mono">Lecture Duration</span>
+                    <p className="text-xs font-bold text-white font-mono flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" /> {courseLiveSession.durationMinutes || 60} Minutes
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Upcoming Classes Section */}
+            <div className="card p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div>
+                  <h4 className="text-sm font-bold text-white">Live Classes & Google Meet Schedule</h4>
+                  <p className="text-xs text-slate-400">
+                    Interactive faculty lectures, real-time code reviews, and problem sessions for {course.title}
+                  </p>
+                </div>
+                <Link
+                  to="/trainee/live-classes"
+                  className="text-xs text-[#2997ff] hover:underline font-semibold"
+                >
+                  All Campus Live Classes →
+                </Link>
+              </div>
+
+              {courseUpcomingSessions.length === 0 && !courseLiveSession ? (
+                <div className="p-8 text-center space-y-2 rounded-xl bg-white/[0.02] border border-white/5">
+                  <Video className="w-8 h-8 text-slate-500 mx-auto" />
+                  <p className="text-xs text-slate-300 font-medium">No Live Google Meet Sessions Active Right Now</p>
+                  <p className="text-[11px] text-slate-500 max-w-md mx-auto">
+                    When {course.trainerName} schedules or starts a live Google Meet class for this course, you will receive an automatic announcement alert, and the 1-click join link will be placed right here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {courseUpcomingSessions.map((session) => {
+                    const formattedDate = new Date(session.scheduledAt).toLocaleString([], {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    });
+
+                    return (
+                      <div
+                        key={session.id}
+                        className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="badge-purple text-[8px] font-bold">UPCOMING GOOGLE MEET</span>
+                            <span className="text-[10px] text-slate-400 font-mono">{formattedDate}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">• {session.durationMinutes}m</span>
+                          </div>
+                          <h5 className="text-xs font-bold text-white">{session.title}</h5>
+                          <p className="text-[11px] text-slate-400 line-clamp-1">{session.description}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">
+                            Room Code: {isEnrolled ? session.meetingCode : "••••-••••"} • Faculty: {session.trainerName}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {isEnrolled ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  launchGoogleMeet(session.id, currentUser?.id, currentUser?.name, true);
+                                  addToast({
+                                    title: "Opening Google Meet",
+                                    message: `Connecting to room ${session.meetingCode}.`,
+                                    type: "success"
+                                  });
+                                }}
+                                className="apple-btn-primary text-xs px-3.5 py-1.5 font-bold flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Video className="w-3.5 h-3.5" />
+                                <span>Join Meet ↗</span>
+                              </button>
+                              {session.calendarUrl && (
+                                <a
+                                  href={session.calendarUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="apple-btn-secondary text-xs p-1.5 text-amber-400"
+                                  title="Add to Google Calendar"
+                                >
+                                  <Calendar className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                enroll(currentUser?.id || "", id || "");
+                                addToast({
+                                  title: "Enrolled in Course",
+                                  message: "You can now attend this class.",
+                                  type: "success"
+                                });
+                              }}
+                              className="apple-btn-secondary text-xs px-3 py-1.5 text-amber-300 border-amber-500/30 hover:bg-amber-500/10"
+                            >
+                              Enroll to Join
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>

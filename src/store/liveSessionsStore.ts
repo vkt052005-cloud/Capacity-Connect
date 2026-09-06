@@ -133,6 +133,11 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     let saved = getFromStorage<LiveSession>(STORAGE_KEYS.LIVE_SESSIONS);
     if (saved && saved.length > 0) {
       saved = sanitizeLiveSessions(saved);
+      // If none of the initial seed sessions exist, merge them
+      const hasLiveSeed = saved.some(s => s.id === "meet-seed-live-1" || s.status === "live");
+      if (!hasLiveSeed && initialLiveSessions.length > 0) {
+        saved = [...initialLiveSessions, ...saved];
+      }
       saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
     } else {
       saved = initialLiveSessions;
@@ -217,6 +222,23 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     set({ sessions: updated });
     dbService.create("live_sessions", newSession).catch(() => {});
 
+    // Auto-dispatch LMS Notification so enrolled students see the announcement immediately
+    try {
+      const existingNotifs = getFromStorage<any>(STORAGE_KEYS.NOTIFICATIONS) || [];
+      const newNotif = {
+        id: "notif-" + Date.now(),
+        type: "announcement",
+        title: `📅 Scheduled Google Meet: ${data.title}`,
+        content: `${data.trainerName} scheduled a live Google Meet lecture for "${data.courseTitle}". Room Code: ${meetDetails.code}. Click to view schedule and join.`,
+        createdAt: new Date().toISOString(),
+        pinned: true,
+        author: data.trainerName,
+        link: "/trainee/live-classes"
+      };
+      const updatedNotifs = [newNotif, ...existingNotifs];
+      saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updatedNotifs);
+    } catch {}
+
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
@@ -266,6 +288,23 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated, activeSession: newSession, isClassroomOpen: false });
     dbService.create("live_sessions", newSession).catch(() => {});
+
+    // Auto-dispatch urgent Live Alert Notification so enrolled students are alerted instantly
+    try {
+      const existingNotifs = getFromStorage<any>(STORAGE_KEYS.NOTIFICATIONS) || [];
+      const newNotif = {
+        id: "notif-live-" + Date.now(),
+        type: "alert",
+        title: `🔴 TEACHER IS LIVE: ${data.courseTitle}`,
+        content: `${data.trainerName} is live right now on Google Meet for "${data.courseTitle}". Room Code: ${meetDetails.code}. 1-Click join link is active!`,
+        createdAt: new Date().toISOString(),
+        pinned: true,
+        author: data.trainerName,
+        link: "/trainee/live-classes"
+      };
+      const updatedNotifs = [newNotif, ...existingNotifs];
+      saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updatedNotifs);
+    } catch {}
     
     // Automatically launch Official Google Meet directly in a dedicated tab for the instructor
     if (typeof window !== "undefined") {

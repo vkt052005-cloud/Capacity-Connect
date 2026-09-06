@@ -339,9 +339,42 @@ export const TraineeDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                  <div className="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
                     <span className="text-[10px] text-slate-400">{formatCourseDuration(c)} total</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {(() => {
+                        const courseLive = sessions.find(
+                          (s) => s.status === "live" && (s.courseId === c.id || (s.trainerId && s.trainerId === c.trainerId))
+                        );
+                        if (courseLive) {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => handleJoinGoogleMeet(courseLive)}
+                              className="apple-btn-primary text-[11px] px-2.5 py-1 font-bold flex items-center gap-1 bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30 animate-pulse cursor-pointer"
+                              title="Teacher is live right now! Click to join Google Meet"
+                            >
+                              <Radio className="w-3 h-3" /> Live Meet ↗
+                            </button>
+                          );
+                        }
+                        const courseUpcoming = sessions.find(
+                          (s) => s.status === "upcoming" && (s.courseId === c.id || (s.trainerId && s.trainerId === c.trainerId))
+                        );
+                        if (courseUpcoming) {
+                          return (
+                            <Link
+                              to="/trainee/live-classes"
+                              className="px-2 py-0.5 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-semibold flex items-center gap-1"
+                              title={`Upcoming Google Meet: ${courseUpcoming.title}`}
+                            >
+                              <Calendar className="w-2.5 h-2.5" /> Meet Scheduled
+                            </Link>
+                          );
+                        }
+                        return null;
+                      })()}
+
                       <button
                         type="button"
                         onClick={() => {
@@ -354,7 +387,7 @@ export const TraineeDashboard: React.FC = () => {
                             });
                           }
                         }}
-                        className="text-[11px] text-slate-400 hover:text-rose-400 px-2.5 py-1 rounded-lg border border-white/10 hover:border-rose-500/30 transition cursor-pointer"
+                        className="text-[11px] text-slate-400 hover:text-rose-400 px-2 py-1 rounded-lg border border-white/10 hover:border-rose-500/30 transition cursor-pointer"
                         title="Unenroll from this course"
                       >
                         Unenroll
@@ -363,7 +396,7 @@ export const TraineeDashboard: React.FC = () => {
                         to={`/trainee/course/${c.id}`}
                         className="apple-btn-primary text-xs px-3 py-1 font-semibold"
                       >
-                        <Play className="w-3 h-3 fill-white" /> Resume Learning
+                        <Play className="w-3 h-3 fill-white" /> Resume
                       </Link>
                     </div>
                   </div>
