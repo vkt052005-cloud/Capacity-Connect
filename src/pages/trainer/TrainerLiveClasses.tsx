@@ -227,11 +227,26 @@ export const TrainerLiveClasses: React.FC = () => {
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => openClassroom(session)}
-                        className="apple-btn-primary text-xs px-4 py-1.5 font-bold flex items-center gap-1.5 shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:brightness-110 cursor-pointer"
-                        title="Enter live video classroom inside the portal"
+                        onClick={() => {
+                          launchGoogleMeet(session.id, currentUser?.id, currentUser?.name, true);
+                          addToast({
+                            title: "Launching Official Google Meet",
+                            message: `Opening meet.google.com/${session.meetingCode}.`,
+                            type: "success"
+                          });
+                        }}
+                        className="apple-btn-primary text-xs px-4 py-1.5 font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:brightness-110 cursor-pointer"
+                        title="Launch official Google Meet room"
                       >
-                        <Video className="w-3.5 h-3.5" /> Enter Live Classroom
+                        <Video className="w-3.5 h-3.5" /> Launch Official Google Meet ↗
+                      </button>
+
+                      <button
+                        onClick={() => openClassroom(session)}
+                        className="apple-btn-secondary text-xs px-2.5 py-1.5 font-semibold cursor-pointer"
+                        title="Classroom whiteboard, notes & Q&A"
+                      >
+                        LMS Hub
                       </button>
 
                       <button
@@ -333,18 +348,17 @@ export const TrainerLiveClasses: React.FC = () => {
                       <button
                         onClick={() => {
                           startSession(session.id);
-                          launchGoogleMeet(session.id, trainerId, trainerName);
-                          openClassroom(session);
+                          launchGoogleMeet(session.id, trainerId, trainerName, true);
                           addToast({
-                            title: "Google Meet Class Started",
-                            message: `Broadcasting "${session.title}". Real Google Meet window opened.`,
+                            title: "Official Google Meet Started",
+                            message: `Broadcasting "${session.title}". Official Google Meet opened.`,
                             type: "success"
                           });
                         }}
-                        className="apple-btn-primary text-xs px-3.5 py-2 flex-1 font-bold flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
-                        title="Start class and launch Google Meet"
+                        className="apple-btn-primary text-xs px-3.5 py-2 flex-1 font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 bg-gradient-to-r from-emerald-600 to-teal-600"
+                        title="Start class and launch Official Google Meet"
                       >
-                        <Video className="w-3.5 h-3.5" /> Start Google Meet
+                        <Video className="w-3.5 h-3.5" /> Start Official Google Meet ↗
                       </button>
 
                       {session.calendarUrl && (

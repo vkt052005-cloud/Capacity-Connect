@@ -63,13 +63,10 @@ export const TraineeDashboard: React.FC = () => {
     const query = quickMeetInput.trim();
     if (!query) return;
 
-    const result = joinByMeetUrlOrCode(query, currentUser?.id, currentUser?.name);
-    if (result.session) {
-      openClassroom(result.session);
-    }
+    joinByMeetUrlOrCode(query, currentUser?.id, currentUser?.name);
     addToast({
-      title: "Connecting to Google Meet",
-      message: `Opening meeting suite. Attendance logged for ${currentUser?.name || "Trainee"}.`,
+      title: "Opening Official Google Meet",
+      message: `Connecting to official Google Meet. Attendance logged for ${currentUser?.name || "Trainee"}.`,
       type: "success"
     });
     setQuickMeetInput("");

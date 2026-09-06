@@ -289,11 +289,11 @@ export const TrainerDashboard: React.FC = () => {
                       <button
                         onClick={() => {
                           if (sess.status !== "live") startSession(sess.id);
-                          launchGoogleMeet(sess.id, trainerId, currentUser?.name);
+                          launchGoogleMeet(sess.id, trainerId, currentUser?.name, true);
                         }}
-                        className="apple-btn-primary text-xs px-3.5 py-2 font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20"
+                        className="apple-btn-primary text-xs px-3.5 py-2 font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 bg-gradient-to-r from-emerald-600 to-teal-600"
                       >
-                        <Video className="w-3.5 h-3.5" /> Join Meet Call
+                        <Video className="w-3.5 h-3.5" /> Launch Official Google Meet ↗
                       </button>
                       <button
                         onClick={() => openClassroom(sess)}

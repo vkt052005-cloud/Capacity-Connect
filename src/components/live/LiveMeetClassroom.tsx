@@ -316,17 +316,78 @@ export const LiveMeetClassroom: React.FC = () => {
             {/* Stage Body */}
             <div className="flex-1 p-4 sm:p-6">
               
-              {/* TAB 1: Embedded Live Google Meet Video Conference Suite (100% In-Portal) */}
+              {/* TAB 1: Official Google Meet Live Launchpad & Control Deck */}
               {activeTab === "meet" && (
-                <div className="w-full h-full flex flex-col space-y-3">
-                  {/* Google Meet Embedded Video Viewport */}
-                  <div className="relative w-full h-[520px] sm:h-[580px] md:h-[640px] rounded-2xl overflow-hidden bg-black border-2 border-[#2997ff]/40 shadow-[0_0_40px_rgba(41,151,255,0.25)] flex flex-col">
-                    <iframe
-                      src={`https://meet.jit.si/CapacityConnect-${(activeSession.meetingCode || activeSession.id || "live").replace(/[^a-zA-Z0-9]/g, "")}#userInfo.displayName="${encodeURIComponent(currentUser?.name || "Participant")}"&config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&interfaceConfig.SHOW_JITSI_WATERMARK=false&interfaceConfig.SHOW_BRAND_WATERMARK=false&interfaceConfig.DISABLE_JOIN_LEAVE_NOTIFICATIONS=false`}
-                      allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
-                      className="w-full h-full border-0 rounded-2xl"
-                      title="Google Meet Classroom"
-                    />
+                <div className="w-full h-full flex flex-col space-y-4">
+                  {/* Google Meet Console Card */}
+                  <div className="relative w-full h-[460px] sm:h-[520px] rounded-2xl overflow-hidden bg-gradient-to-b from-[#131722] via-[#0b0e14] to-[#07090d] border-2 border-emerald-500/40 shadow-[0_0_50px_rgba(16,185,129,0.15)] flex flex-col items-center justify-center p-6 sm:p-10 text-center space-y-6">
+                    {/* Official Google Meet Badge */}
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 shadow-inner">
+                      <div className="flex items-center gap-1">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#4285F4]" title="Google Blue" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#EA4335]" title="Google Red" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#FBBC05]" title="Google Yellow" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#34A853]" title="Google Green" />
+                      </div>
+                      <span className="text-xs font-bold text-white tracking-wide uppercase">Official Google Meet</span>
+                    </div>
+
+                    {/* Room Info */}
+                    <div className="max-w-xl space-y-2">
+                      <div className="inline-flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider animate-pulse">
+                        <Radio className="w-3.5 h-3.5" /> Live Video Conference Active
+                      </div>
+                      <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                        {activeSession.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-300">
+                        {activeSession.courseTitle} • Conducted by <strong className="text-white">{activeSession.trainerName}</strong>
+                      </p>
+                    </div>
+
+                    {/* Meeting Code Display */}
+                    <div className="p-4 rounded-xl bg-white/[0.04] border border-white/10 max-w-md w-full space-y-2">
+                      <span className="text-[11px] text-slate-400 font-medium">Google Meet Room Code</span>
+                      <div className="flex items-center justify-between gap-3 bg-black/40 px-4 py-2.5 rounded-lg border border-white/10">
+                        <span className="font-mono text-base sm:text-lg font-bold text-emerald-400 tracking-wider">
+                          {activeSession.meetingCode}
+                        </span>
+                        <button
+                          onClick={copyMeetUrl}
+                          className="apple-btn-secondary text-xs px-2.5 py-1 flex items-center gap-1 text-slate-300 hover:text-white cursor-pointer"
+                          title="Copy Link"
+                        >
+                          {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                          <span>{copiedLink ? "Copied" : "Copy"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Big Action Button: Open Official Google Meet */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      <button
+                        onClick={handleLaunchMeet}
+                        className="apple-btn-primary px-8 py-3.5 text-sm sm:text-base font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:brightness-110 shadow-xl shadow-emerald-600/30 flex items-center gap-2 transform hover:scale-[1.02] transition cursor-pointer"
+                      >
+                        <Video className="w-5 h-5 text-white" />
+                        Launch Official Google Meet (1-Click) ↗
+                      </button>
+
+                      <button
+                        onClick={() => setActiveTab("whiteboard")}
+                        className="apple-btn-secondary px-5 py-3.5 text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                      >
+                        <PenTool className="w-4 h-4 text-[#2997ff]" /> Open Interactive Whiteboard
+                      </button>
+                    </div>
+
+                    {/* Compliance & Security Notice */}
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400 max-w-lg">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>
+                        Official Google Meet runs on <strong className="text-white">meet.google.com</strong> with native camera, mic, and screen-sharing security. Your attendance is tracked and verified in Capacity Connect LMS.
+                      </span>
+                    </div>
                   </div>
 
                   {/* Room Info & Verification Details */}
@@ -355,7 +416,7 @@ export const LiveMeetClassroom: React.FC = () => {
 
                     <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Google Meet Code</span>
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Official Meet URL</span>
                         <button
                           onClick={copyMeetUrl}
                           className="text-xs text-[#2997ff] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
@@ -364,16 +425,16 @@ export const LiveMeetClassroom: React.FC = () => {
                           <span>{copiedLink ? "Copied" : "Copy Code"}</span>
                         </button>
                       </div>
-                      <p className="font-mono text-sm text-emerald-400 font-bold">{activeSession.meetingCode}</p>
+                      <p className="font-mono text-xs text-emerald-400 font-bold truncate">https://meet.google.com/{activeSession.meetingCode}</p>
                       <div className="flex items-center justify-between pt-0.5 text-[11px]">
-                        <span className="text-slate-400">100% Embedded In-Portal</span>
+                        <span className="text-slate-400">Official Google Room</span>
                         <a
                           href={meetUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#2997ff] hover:underline flex items-center gap-1"
+                          className="text-[#2997ff] hover:underline flex items-center gap-1 font-semibold"
                         >
-                          <span>Pop-out ↗</span>
+                          <span>Open Meet ↗</span>
                         </a>
                       </div>
                     </div>

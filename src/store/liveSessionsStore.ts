@@ -185,10 +185,11 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
 
     const updated = [newSession, ...get().sessions];
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
-    // Open in-portal live video classroom directly on the website without opening any external Meet tab
-    set({ sessions: updated, activeSession: newSession, isClassroomOpen: true });
+    set({ sessions: updated, activeSession: newSession, isClassroomOpen: false });
     
+    // Automatically launch Official Google Meet directly in a dedicated tab for the instructor
     if (typeof window !== "undefined") {
+      window.open(meetDetails.url, "_blank", "noopener,noreferrer");
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
       try {
@@ -200,7 +201,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     return newSession;
   },
 
-  launchGoogleMeet: (sessionId: string, userId?: string, _userName?: string, openExternal: boolean = true) => {
+  launchGoogleMeet: (sessionId: string, userId?: string, _userName?: string, _openExternal: boolean = true) => {
     const session = get().sessions.find((s) => s.id === sessionId);
     if (!session) return;
 
@@ -226,7 +227,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       targetUrl = `https://meet.google.com/${targetUrl}`;
     }
 
-    // Directly launch Google Meet in a dedicated window/tab
+    // Directly launch Official Google Meet in a dedicated window/tab
     if (typeof window !== "undefined") {
       window.open(targetUrl, "_blank", "noopener,noreferrer");
     }
@@ -261,6 +262,9 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     });
 
     if (typeof window !== "undefined") {
+      if (targetMeetUrl) {
+        window.open(targetMeetUrl, "_blank", "noopener,noreferrer");
+      }
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
       try {
