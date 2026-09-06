@@ -16,10 +16,14 @@ import { storeVideoBlob } from "../../utils/videoStorage";
 import type { CourseCategory, CourseLesson, Resource } from "../../types";
 
 export const TrainerCourses: React.FC = () => {
-  const { courses, addCourse, updateCourse, deleteCourse, feedbacks } = useCoursesStore();
+  const { courses, addCourse, updateCourse, deleteCourse, feedbacks, enrollments } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const { addNotification } = useNotificationsStore();
+
+  // Permanent Delete Confirmation State
+  const [courseToDelete, setCourseToDelete] = useState<any | null>(null);
+  const [isDeletingCourse, setIsDeletingCourse] = useState(false);
 
   // Selected Course for reviews modal
   const [reviewsModalCourseId, setReviewsModalCourseId] = useState<string | null>(null);
@@ -86,6 +90,29 @@ export const TrainerCourses: React.FC = () => {
     });
 
     setShowUnverifiedModal(false);
+  };
+
+  // Permanent course deletion handler
+  const handleConfirmDeleteCourse = async () => {
+    if (!courseToDelete) return;
+    setIsDeletingCourse(true);
+    try {
+      deleteCourse(courseToDelete.id);
+      addToast({
+        title: "Course Permanently Deleted",
+        message: `"${courseToDelete.title}" and all attached lessons, student records, and enrollments have been permanently deleted.`,
+        type: "success"
+      });
+      setCourseToDelete(null);
+    } catch (e) {
+      addToast({
+        title: "Deletion Error",
+        message: "Failed to delete course. Please try again.",
+        type: "error"
+      });
+    } finally {
+      setIsDeletingCourse(false);
+    }
   };
 
   // Open Video Upload Modal with Gate Check
@@ -563,9 +590,9 @@ export const TrainerCourses: React.FC = () => {
                         <Video className="w-3.5 h-3.5" /> +Video
                       </button>
                       <button
-                        onClick={() => deleteCourse(c.id)}
+                        onClick={() => setCourseToDelete(c)}
                         className="text-rose-400 hover:text-rose-300 transition p-1 cursor-pointer"
-                        title="Delete Course"
+                        title="Permanently Delete Course"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1118,6 +1145,85 @@ export const TrainerCourses: React.FC = () => {
           </div>
         );
       })()}
+
+      {/* ─── Modal 4: Permanent Course Deletion Confirmation ──────────────────────── */}
+      {courseToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-2xl animate-fadeIn overflow-y-auto">
+          <div className="glass-panel p-6 sm:p-7 max-w-lg w-full border border-rose-500/30 shadow-2xl space-y-5 my-auto">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400 shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white">Permanently Delete Course?</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  This action is irreversible. The course will be permanently wiped across all student dashboards, cloud databases, and portal records.
+                </p>
+              </div>
+            </div>
+
+            {/* Course Summary Card */}
+            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white truncate max-w-[280px]">
+                  {courseToDelete.title}
+                </span>
+                <span className="badge-blue text-[9px]">{courseToDelete.category}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5 text-[11px] text-slate-400">
+                <div>
+                  <span className="block text-[10px] text-slate-500">Lessons</span>
+                  <span className="font-semibold text-white">{courseToDelete.lessons?.length || 0}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-slate-500">Enrolled Students</span>
+                  <span className="font-semibold text-white">
+                    {enrollments.filter((e) => e.courseId === courseToDelete.id).length}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-slate-500">Student Reviews</span>
+                  <span className="font-semibold text-white">
+                    {feedbacks.filter((f) => f.courseId === courseToDelete.id).length}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Warning Checklist */}
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-200/90 space-y-1.5">
+              <p className="font-semibold text-rose-300">The following data will be permanently erased:</p>
+              <ul className="list-disc pl-4 space-y-1 text-[11px] text-rose-300/80">
+                <li>All uploaded video lectures, transcripts, and media files</li>
+                <li>All active student enrollments, progress markers, and certificates</li>
+                <li>All student quality ratings and feedback reviews</li>
+                <li>All linked course quizzes, questionnaires, and student test results</li>
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setCourseToDelete(null)}
+                disabled={isDeletingCourse}
+                className="apple-btn-secondary text-xs px-4 py-2 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteCourse}
+                disabled={isDeletingCourse}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {isDeletingCourse ? "Deleting Permanently..." : "Permanently Delete Course"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

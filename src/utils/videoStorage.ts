@@ -49,6 +49,24 @@ export async function storeVideoBlob(key: string, blob: Blob): Promise<string> {
 }
 
 /**
+ * Permanently removes a stored video Blob from IndexedDB.
+ */
+export async function deleteVideoBlob(key: string): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.delete(key);
+      req.onsuccess = () => resolve();
+      req.onerror = () => resolve();
+    });
+  } catch (err) {
+    // Ignore error
+  }
+}
+
+/**
  * Retrieves a stored video Blob from IndexedDB and returns a playable Object URL.
  */
 export async function getVideoBlobUrl(key: string): Promise<string | null> {

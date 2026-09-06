@@ -2201,7 +2201,8 @@ export const STORAGE_KEYS = {
   LEADERBOARD: "cc_leaderboard",
   BADGES: "cc_badges",
   AUDIT_LOGS: "cc_audit_logs",
-  REMOVED_USERS: "cc_removed_users"
+  REMOVED_USERS: "cc_removed_users",
+  DELETED_COURSES: "cc_deleted_courses"
 };
 
 export function getFromStorage<T>(key: string): T[] {
@@ -2277,9 +2278,21 @@ export function getFromStorage<T>(key: string): T[] {
           }
         }
         if (key === STORAGE_KEYS.COURSES) {
-          // Filter out any legacy mock courses (c1-c5, Marcus Vance, Sarah Chen, Rajesh Kumar)
+          const deletedRaw = localStorage.getItem(STORAGE_KEYS.DELETED_COURSES);
+          let deletedCourseIds = new Set<string>();
+          if (deletedRaw) {
+            try {
+              const parsedDeleted = JSON.parse(deletedRaw);
+              if (Array.isArray(parsedDeleted)) {
+                deletedCourseIds = new Set(parsedDeleted);
+              }
+            } catch (e) {}
+          }
+
+          // Filter out any legacy mock courses (c1-c5, Marcus Vance, Sarah Chen, Rajesh Kumar) and permanently deleted courses
           const validExisting = parsed.filter((c: any) => {
-            if (!c) return false;
+            if (!c || !c.id) return false;
+            if (deletedCourseIds.has(c.id)) return false;
             if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
             const trainer = (c.trainerName || "").toLowerCase();
             if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
@@ -2294,8 +2307,9 @@ export function getFromStorage<T>(key: string): T[] {
             return true;
           });
 
-          // Merge initial courses and any real trainer-created courses, sanitizing fake durations
-          const initialIds = new Set(initialCourses.map((c) => c.id));
+          // Filter initial courses so permanently deleted courses are NEVER resurrected
+          const filteredInitialCourses = initialCourses.filter((c) => !deletedCourseIds.has(c.id));
+          const initialIds = new Set(filteredInitialCourses.map((c) => c.id));
           const trainerCreated = validExisting.filter((c: any) => !initialIds.has(c.id));
           const cleanedTrainerCreated = trainerCreated.map((c: any) => {
             if (c.duration && c.duration.includes("12 Hours • 4 Modules")) {
@@ -2303,15 +2317,27 @@ export function getFromStorage<T>(key: string): T[] {
             }
             return c;
           });
-          const mergedCourses = [...initialCourses, ...cleanedTrainerCreated];
+          const mergedCourses = [...filteredInitialCourses, ...cleanedTrainerCreated];
           localStorage.setItem(key, JSON.stringify(mergedCourses));
           return mergedCourses as any;
         }
         if (key === STORAGE_KEYS.ENROLLMENTS) {
-          // Remove enrollments in legacy mock courses c1-c5
+          const deletedRaw = localStorage.getItem(STORAGE_KEYS.DELETED_COURSES);
+          let deletedCourseIds = new Set<string>();
+          if (deletedRaw) {
+            try {
+              const parsedDeleted = JSON.parse(deletedRaw);
+              if (Array.isArray(parsedDeleted)) {
+                deletedCourseIds = new Set(parsedDeleted);
+              }
+            } catch (e) {}
+          }
+
+          // Remove enrollments in legacy mock courses c1-c5 and permanently deleted courses
           const validEnrollments = parsed.filter((e: any) => {
             if (!e || !e.courseId) return false;
             if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
+            if (deletedCourseIds.has(e.courseId)) return false;
             return true;
           });
           if (validEnrollments.length !== parsed.length) {
@@ -2351,8 +2377,20 @@ export function getFromStorage<T>(key: string): T[] {
         }
         if (key === STORAGE_KEYS.FEEDBACKS) {
           // Remove seed/fake reviews that were not given by real students
+          const deletedRaw = localStorage.getItem(STORAGE_KEYS.DELETED_COURSES);
+          let deletedCourseIds = new Set<string>();
+          if (deletedRaw) {
+            try {
+              const parsedDeleted = JSON.parse(deletedRaw);
+              if (Array.isArray(parsedDeleted)) {
+                deletedCourseIds = new Set(parsedDeleted);
+              }
+            } catch (e) {}
+          }
+
           const realStudentFeedbacks = (parsed || []).filter((f: any) => {
             if (!f || !f.id) return false;
+            if (f.courseId && deletedCourseIds.has(f.courseId)) return false;
             // Filter out seed IDs or pre-filled reviews
             if (["fb-1", "fb-2", "fb-3", "fb-4"].includes(f.id)) return false;
             const comment = (f.comment || "").toLowerCase();
@@ -2375,8 +2413,19 @@ export function getFromStorage<T>(key: string): T[] {
   } catch (e) {}
 
   if (key === STORAGE_KEYS.COURSES) {
-    saveToStorage(key, initialCourses);
-    return initialCourses as any;
+    const deletedRaw = localStorage.getItem(STORAGE_KEYS.DELETED_COURSES);
+    let deletedCourseIds = new Set<string>();
+    if (deletedRaw) {
+      try {
+        const parsedDeleted = JSON.parse(deletedRaw);
+        if (Array.isArray(parsedDeleted)) {
+          deletedCourseIds = new Set(parsedDeleted);
+        }
+      } catch (e) {}
+    }
+    const filteredInitial = initialCourses.filter((c) => !deletedCourseIds.has(c.id));
+    saveToStorage(key, filteredInitial);
+    return filteredInitial as any;
   }
   if (key === STORAGE_KEYS.USERS) {
     saveToStorage(key, initialUsers);

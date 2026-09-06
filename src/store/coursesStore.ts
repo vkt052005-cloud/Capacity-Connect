@@ -2,6 +2,18 @@ import { create } from "zustand";
 import type { Course, Enrollment, Certificate, Resource, Feedback } from "../types";
 import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId } from "../data/seed";
 import { dbService } from "../services/db";
+import { deleteVideoBlob } from "../utils/videoStorage";
+
+const getDeletedCourseIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.DELETED_COURSES);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return new Set(parsed);
+    }
+  } catch (e) {}
+  return new Set();
+};
 
 interface CoursesState {
   courses: Course[];
@@ -36,9 +48,11 @@ interface CoursesState {
 }
 
 const sanitizeCourses = (courses: Course[], feedbacks: Feedback[] = []): Course[] => {
+  const deletedIds = getDeletedCourseIds();
   return (courses || [])
     .filter((c) => {
-      if (!c) return false;
+      if (!c || !c.id) return false;
+      if (deletedIds.has(c.id)) return false;
       if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
       const trainer = (c.trainerName || "").toLowerCase();
       if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
@@ -71,16 +85,20 @@ const sanitizeCourses = (courses: Course[], feedbacks: Feedback[] = []): Course[
 };
 
 const sanitizeEnrollments = (enrollments: Enrollment[]): Enrollment[] => {
+  const deletedIds = getDeletedCourseIds();
   return (enrollments || []).filter((e) => {
     if (!e || !e.courseId) return false;
+    if (deletedIds.has(e.courseId)) return false;
     if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
     return true;
   });
 };
 
 const sanitizeFeedbacks = (feedbacks: Feedback[]): Feedback[] => {
+  const deletedIds = getDeletedCourseIds();
   return (feedbacks || []).filter((f) => {
     if (!f || !f.id) return false;
+    if (f.courseId && deletedIds.has(f.courseId)) return false;
     if (["fb-1", "fb-2", "fb-3", "fb-4"].includes(f.id)) return false;
     const comment = (f.comment || "").toLowerCase();
     if (
@@ -95,13 +113,23 @@ const sanitizeFeedbacks = (feedbacks: Feedback[]): Feedback[] => {
   });
 };
 
+const sanitizeCertificates = (certificates: Certificate[]): Certificate[] => {
+  const deletedIds = getDeletedCourseIds();
+  return (certificates || []).filter((c) => {
+    if (!c || !c.courseId) return false;
+    if (deletedIds.has(c.courseId)) return false;
+    return true;
+  });
+};
+
 const initialFeedbacks = sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
 const initialCoursesList = sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES), initialFeedbacks);
+const initialCertificatesList = sanitizeCertificates(getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES));
 
 export const useCoursesStore = create<CoursesState>((set, get) => ({
   courses: initialCoursesList,
   enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
-  certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
+  certificates: initialCertificatesList,
   feedbacks: initialFeedbacks,
   isSubscribed: false,
 
@@ -122,7 +150,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
         const validFeedbacks = sanitizeFeedbacks(cloudFeedbacks && cloudFeedbacks.length > 0 ? cloudFeedbacks : getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
         const validCourses = sanitizeCourses(cloudCourses && cloudCourses.length > 0 ? cloudCourses : getFromStorage<Course>(STORAGE_KEYS.COURSES), validFeedbacks);
         const validEnrollments = sanitizeEnrollments(cloudEnrollments && cloudEnrollments.length > 0 ? cloudEnrollments : getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS));
-        const validCertificates = cloudCertificates && cloudCertificates.length > 0 ? cloudCertificates : getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES);
+        const validCertificates = sanitizeCertificates(cloudCertificates && cloudCertificates.length > 0 ? cloudCertificates : getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES));
 
         saveToStorage(STORAGE_KEYS.COURSES, validCourses);
         saveToStorage(STORAGE_KEYS.ENROLLMENTS, validEnrollments);
@@ -152,7 +180,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     set({
       courses: freshCourses,
       enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
-      certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
+      certificates: sanitizeCertificates(getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES)),
       feedbacks: freshFeedbacks
     });
 
@@ -169,7 +197,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       const activeFeedbacks = srvFeedbacks && srvFeedbacks.length > 0 ? sanitizeFeedbacks(srvFeedbacks) : freshFeedbacks;
       const activeCourses = srvCourses && srvCourses.length > 0 ? sanitizeCourses(srvCourses, activeFeedbacks) : freshCourses;
       const activeEnrollments = srvEnrollments && srvEnrollments.length > 0 ? sanitizeEnrollments(srvEnrollments) : get().enrollments;
-      const activeCertificates = srvCertificates && srvCertificates.length > 0 ? srvCertificates : get().certificates;
+      const activeCertificates = srvCertificates && srvCertificates.length > 0 ? sanitizeCertificates(srvCertificates) : get().certificates;
 
       saveToStorage(STORAGE_KEYS.COURSES, activeCourses);
       saveToStorage(STORAGE_KEYS.ENROLLMENTS, activeEnrollments);
@@ -300,11 +328,91 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   },
 
   deleteCourse: (courseId) => {
-    const { courses } = get();
-    const updated = courses.filter((c) => c.id !== courseId);
-    saveToStorage(STORAGE_KEYS.COURSES, updated);
-    set({ courses: updated });
+    const { courses, enrollments, feedbacks, certificates } = get();
+    const courseToDelete = courses.find((c) => c.id === courseId);
+
+    // 1. Mark in permanent DELETED_COURSES tombstone so seed logic and remote sync will NEVER resurrect it
+    const deletedIds = getDeletedCourseIds();
+    deletedIds.add(courseId);
+    try {
+      localStorage.setItem(STORAGE_KEYS.DELETED_COURSES, JSON.stringify(Array.from(deletedIds)));
+    } catch (e) {}
+
+    // 2. Remove course from state and localStorage
+    const updatedCourses = courses.filter((c) => c.id !== courseId);
+    saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
+
+    // 3. Cascade remove enrollments
+    const enrollmentsToRemove = enrollments.filter((e) => e.courseId === courseId);
+    const updatedEnrollments = enrollments.filter((e) => e.courseId !== courseId);
+    saveToStorage(STORAGE_KEYS.ENROLLMENTS, updatedEnrollments);
+
+    // 4. Cascade remove feedbacks
+    const feedbacksToRemove = feedbacks.filter((f) => f.courseId === courseId);
+    const updatedFeedbacks = feedbacks.filter((f) => f.courseId !== courseId);
+    saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
+
+    // 5. Cascade remove certificates
+    const certsToRemove = certificates.filter((c) => c.courseId === courseId);
+    const updatedCertificates = certificates.filter((c) => c.courseId !== courseId);
+    saveToStorage(STORAGE_KEYS.CERTIFICATES, updatedCertificates);
+
+    set({
+      courses: updatedCourses,
+      enrollments: updatedEnrollments,
+      feedbacks: updatedFeedbacks,
+      certificates: updatedCertificates
+    });
+
+    // 6. Clean up stored video blobs from IndexedDB if any
+    if (courseToDelete?.lessons) {
+      for (const lesson of courseToDelete.lessons) {
+        if (lesson.id) deleteVideoBlob(lesson.id).catch(() => {});
+        if (lesson.videoId) deleteVideoBlob(lesson.videoId).catch(() => {});
+      }
+    }
+
+    // 7. Cascade remove assessments and attempts for this course
+    try {
+      const allAssessments = getFromStorage<any>(STORAGE_KEYS.ASSESSMENTS);
+      const assessmentsForCourse = allAssessments.filter((a: any) => a.courseId === courseId);
+      const assessIdsToRemove = new Set(assessmentsForCourse.map((a: any) => a.id));
+      const remainingAssessments = allAssessments.filter((a: any) => a.courseId !== courseId);
+      saveToStorage(STORAGE_KEYS.ASSESSMENTS, remainingAssessments);
+
+      const allAttempts = getFromStorage<any>(STORAGE_KEYS.ATTEMPTS);
+      const remainingAttempts = allAttempts.filter((att: any) => !assessIdsToRemove.has(att.assessmentId));
+      saveToStorage(STORAGE_KEYS.ATTEMPTS, remainingAttempts);
+
+      assessmentsForCourse.forEach((a: any) => {
+        dbService.remove("assessments", a.id).catch(() => {});
+      });
+    } catch (e) {}
+
+    // 8. Cascade remove live sessions
+    try {
+      const allLiveSessions = getFromStorage<any>(STORAGE_KEYS.LIVE_SESSIONS);
+      const liveSessionsForCourse = allLiveSessions.filter((ls: any) => ls.courseId === courseId);
+      const remainingLiveSessions = allLiveSessions.filter((ls: any) => ls.courseId !== courseId);
+      saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, remainingLiveSessions);
+
+      liveSessionsForCourse.forEach((ls: any) => {
+        dbService.remove("live_sessions", ls.id).catch(() => {});
+      });
+    } catch (e) {}
+
+    // 9. Cascade remove discussions
+    try {
+      const allDiscussions = getFromStorage<any>(STORAGE_KEYS.DISCUSSIONS);
+      const remainingDiscussions = allDiscussions.filter((d: any) => d.courseId !== courseId);
+      saveToStorage(STORAGE_KEYS.DISCUSSIONS, remainingDiscussions);
+    } catch (e) {}
+
+    // 10. Permanently remove from central DB & cloud Supabase
     dbService.remove("courses", courseId).catch(() => {});
+    enrollmentsToRemove.forEach((e) => dbService.remove("enrollments", e.id).catch(() => {}));
+    feedbacksToRemove.forEach((f) => dbService.remove("feedbacks", f.id).catch(() => {}));
+    certsToRemove.forEach((c) => dbService.remove("certificates", c.id).catch(() => {}));
   },
 
   addFeedback: (fb) => {
