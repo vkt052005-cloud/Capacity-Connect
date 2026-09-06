@@ -304,13 +304,15 @@ export const LoginPage: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-slate-300">Password</label>
-                    <button
-                      type="button"
-                      onClick={() => setResetModalOpen(true)}
-                      className="text-[11px] text-[#2997ff] hover:underline cursor-pointer font-medium"
-                    >
-                      Forgot Password?
-                    </button>
+                    {role !== "admin" && (
+                      <button
+                        type="button"
+                        onClick={() => setResetModalOpen(true)}
+                        className="text-[11px] text-[#2997ff] hover:underline cursor-pointer font-medium"
+                      >
+                        Forgot Password?
+                      </button>
+                    )}
                   </div>
                   <div className="relative flex items-center">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none z-10" />

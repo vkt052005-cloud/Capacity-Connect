@@ -297,6 +297,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     const user = users[userIndex];
+    if (user.role === "admin") {
+      return {
+        success: false,
+        message: "Administrative accounts cannot be reset via self-service recovery. Please contact a Super Administrator."
+      };
+    }
+
     if (requiredRole && user.role !== requiredRole) {
       return {
         success: false,

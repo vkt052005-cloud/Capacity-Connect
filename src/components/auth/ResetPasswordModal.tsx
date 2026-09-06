@@ -7,7 +7,8 @@ import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { PasswordStrengthMeter, checkPasswordStrength } from "./PasswordStrengthMeter";
 import { sendOtpEmail, verifyOtpCode } from "../../services/emailService";
-import type { UserRole } from "../../types";
+import type { UserRole, User } from "../../types";
+import { STORAGE_KEYS, getFromStorage } from "../../data/seed";
 
 export interface ResetPasswordModalProps {
   isOpen: boolean;
@@ -26,8 +27,10 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   const { resetUserPassword, submitRecoveryTicket } = useAuthStore();
   const { addToast } = useAppStore();
 
-  // Reset Password State (Exclusively using registered email ID)
-  const [resetRole, setResetRole] = useState<UserRole>(defaultRole);
+  const safeDefaultRole: "trainee" | "trainer" = defaultRole === "admin" ? "trainee" : (defaultRole as "trainee" | "trainer") || "trainee";
+
+  // Reset Password State (Exclusively using registered email ID - Admin excluded for security)
+  const [resetRole, setResetRole] = useState<"trainee" | "trainer">(safeDefaultRole);
   const [resetEmail, setResetEmail] = useState("");
   const [resetStep, setResetStep] = useState<"email" | "otp_password" | "success">("email");
   const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
@@ -44,17 +47,18 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   // Helpdesk State
   const [ticketName, setTicketName] = useState("");
   const [ticketContact, setTicketContact] = useState("");
-  const [ticketRole, setTicketRole] = useState<UserRole>(defaultRole);
+  const [ticketRole, setTicketRole] = useState<"trainee" | "trainer">(safeDefaultRole);
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketSubmitted, setTicketSubmitted] = useState(false);
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      const initialRole: "trainee" | "trainer" = defaultRole === "admin" ? "trainee" : (defaultRole as "trainee" | "trainer") || "trainee";
       setActiveView("reset");
       setResetStep("email");
-      setResetRole(defaultRole);
-      setTicketRole(defaultRole);
+      setResetRole(initialRole);
+      setTicketRole(initialRole);
       setResetError("");
       setNewPassword("");
       setConfirmPassword("");
@@ -86,12 +90,40 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
     setIsResetting(true);
     try {
+      // Security Pre-check: Ensure account is valid and reject admin self-reset
+      const users = getFromStorage<User>(STORAGE_KEYS.USERS);
+      const matchedUser = users.find((u: User) => u.email.toLowerCase() === emailToVerify);
+
+      if (matchedUser && matchedUser.role === "admin") {
+        setIsResetting(false);
+        setResetError("Administrative accounts cannot be reset via self-service recovery. Please contact platform engineering or a Super Administrator.");
+        return;
+      }
+
+      if (matchedUser && matchedUser.role !== resetRole) {
+        setIsResetting(false);
+        setResetError(`Account role mismatch: This email is registered as a ${matchedUser.role.toUpperCase()}, not a ${resetRole.toUpperCase()}.`);
+        return;
+      }
+
+      if (!matchedUser) {
+        setIsResetting(false);
+        setResetError(`No ${resetRole} account found with this email address.`);
+        return;
+      }
+
+      if (matchedUser.status === "suspended" || matchedUser.status === "inactive") {
+        setIsResetting(false);
+        setResetError("This account is inactive or suspended. Please contact an administrator.");
+        return;
+      }
+
       const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(randomOtp);
 
       const dispatchRes = await sendOtpEmail({
         email: emailToVerify,
-        name: "Valued User",
+        name: matchedUser.name || "Valued User",
         otp: randomOtp,
         purpose: "reset_password"
       });
@@ -271,20 +303,20 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
                     Your Account Role
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["trainee", "trainer", "admin"] as UserRole[]).map((r) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["trainee", "trainer"] as const).map((r) => (
                       <button
                         key={r}
                         type="button"
                         onClick={() => setResetRole(r)}
                         className={
-                          "py-1.5 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer capitalize " +
+                          "py-2 px-3 rounded-xl text-xs font-semibold border transition cursor-pointer capitalize " +
                           (resetRole === r
                             ? "bg-[#0071e3]/20 border-[#2997ff] text-white ring-1 ring-[#2997ff]"
                             : "bg-white/[0.04] border-white/10 text-slate-400 hover:text-white")
                         }
                       >
-                        {r}
+                        {r === "trainee" ? "Student / Trainee" : "Trainer / Faculty"}
                       </button>
                     ))}
                   </div>
@@ -552,12 +584,11 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                     </label>
                     <select
                       value={ticketRole}
-                      onChange={(e) => setTicketRole(e.target.value as UserRole)}
+                      onChange={(e) => setTicketRole(e.target.value as "trainee" | "trainer")}
                       className="apple-input text-xs"
                     >
                       <option value="trainee">Student / Trainee</option>
                       <option value="trainer">Trainer / Faculty</option>
-                      <option value="admin">Administrator</option>
                     </select>
                   </div>
                   <div>
