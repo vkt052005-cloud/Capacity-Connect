@@ -168,9 +168,12 @@ export const TrainerCourses: React.FC = () => {
     const modNum = typeof modulesCount === "number" && modulesCount > 0 ? modulesCount : undefined;
     const initialDuration = modNum ? `0 Mins • ${modNum} Modules` : "0 Mins";
 
+    const trainerDisplayName = currentUser?.name || "Faculty Trainer";
+    const courseTitle = title.trim();
+
     addCourse({
       id: "c-" + Date.now(),
-      title,
+      title: courseTitle,
       description,
       category,
       duration: initialDuration,
@@ -178,12 +181,21 @@ export const TrainerCourses: React.FC = () => {
       level,
       status: "active",
       trainerId,
-      trainerName: currentUser?.name || "Faculty Trainer",
+      trainerName: trainerDisplayName,
       thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
       createdAt: new Date().toISOString(),
       tags: [category, level, "Capacity Building"],
       resources: [],
       lessons: []
+    });
+
+    // Automatically broadcast notification: 'A teacher uploaded a course'
+    addNotification({
+      title: `A teacher uploaded a course: ${courseTitle}`,
+      content: `${trainerDisplayName} has published a new ${category} curriculum: "${courseTitle}". Trainees can now enroll and start learning.`,
+      type: "new_content",
+      pinned: true,
+      author: trainerDisplayName
     });
 
     setShowAddModal(false);
@@ -192,7 +204,7 @@ export const TrainerCourses: React.FC = () => {
     setModulesCount("");
     addToast({
       title: "Course Created Successfully",
-      message: "New curriculum published to catalog.",
+      message: "New curriculum published to catalog and trainees notified.",
       type: "success"
     });
   };

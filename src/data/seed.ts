@@ -1935,39 +1935,39 @@ export const initialDiscussions: DiscussionThread[] = [
 export const initialNotifications: Notification[] = [
   {
     id: "n1",
-    type: "announcement",
-    title: "Annual Capacity Building Calendar & Exam Schedule 2026-2027",
-    content: "The Central Capacity Building Framework has published the new annual schedule for technical specializations, proctored exams, and faculty masterclasses.",
-    createdAt: "2026-09-01T08:00:00Z",
+    type: "new_content",
+    title: "A teacher uploaded a course: Web Development Course (Full Stack)",
+    content: "CodeWithHarry (Haris Khan) has published the complete Web Development Course with 139 interactive video lessons, projects, and exercises.",
+    createdAt: "2026-09-06T10:00:00Z",
     pinned: true,
-    author: "Capacity Connect Admin"
+    author: "CodeWithHarry (Haris Khan)"
   },
   {
     id: "n2",
-    type: "achievement",
-    title: "Organizational Milestone: 10,000+ Certified Professionals",
-    content: "Our organization has officially crossed 10,000 completed and cryptographically verified technical and leadership competencies across all engineering teams.",
-    createdAt: "2026-08-28T14:30:00Z",
+    type: "new_content",
+    title: "A teacher uploaded a course: Complete C Programming",
+    content: "CodeWithHarry (Haris Khan) uploaded a comprehensive 73-lesson C programming masterclass covering pointers, memory structures, and file operations.",
+    createdAt: "2026-09-06T09:30:00Z",
     pinned: true,
-    author: "Executive Governance Board"
+    author: "CodeWithHarry (Haris Khan)"
   },
   {
     id: "n3",
     type: "new_content",
-    title: "New Courses Added: C, Python, C++ DSA, DBMS, Computer Networks, DAA & Software Engineering",
-    content: "7 comprehensive new curriculums are now available with full YouTube playlists, interactive chapter navigation, slide decks, and proctored certification assessments.",
-    createdAt: "2026-09-03T10:00:00Z",
-    pinned: false,
-    author: "Capacity Connect Academic Council"
+    title: "A teacher uploaded a course: Python for Automation & Systems",
+    content: "CodeWithHarry (Haris Khan) uploaded the 100 Days of Python curriculum complete with modular exercises and proctored assessments.",
+    createdAt: "2026-09-06T09:00:00Z",
+    pinned: true,
+    author: "CodeWithHarry (Haris Khan)"
   },
   {
     id: "n4",
-    type: "alert",
-    title: "Scheduled System Maintenance: Saturday 02:00 UTC",
-    content: "Routine database and security ledger backup snapshot. Active sessions and test submissions will remain uninterrupted.",
-    createdAt: "2026-08-20T09:00:00Z",
+    type: "new_content",
+    title: "A teacher uploaded a course: Data Structures & Algorithms",
+    content: "Raj Tiwari published the complete Data Structures & Algorithms curriculum with problem-solving roadmaps and proctored module quizzes.",
+    createdAt: "2026-09-06T08:30:00Z",
     pinned: false,
-    author: "Infrastructure Security Team"
+    author: "Raj Tiwari"
   }
 ];
 
@@ -1976,7 +1976,7 @@ export const initialAuditLogs: AuditLog[] = [];
 export function initializeStorage() {
   try {
     const existingNotifs = localStorage.getItem("cc_notifications");
-    if (existingNotifs && (existingNotifs.includes("Apple Glass") || existingNotifs.includes("2.0") || existingNotifs.includes("📢") || existingNotifs.includes("🏆"))) {
+    if (!existingNotifs || existingNotifs.includes("Annual Capacity Building Calendar") || existingNotifs.includes("Organizational Milestone") || existingNotifs.includes("Apple Glass") || existingNotifs.includes("📢")) {
       localStorage.setItem("cc_notifications", JSON.stringify(initialNotifications));
     }
 
@@ -2258,6 +2258,28 @@ export function getFromStorage<T>(key: string): T[] {
         if (key === STORAGE_KEYS.ASSESSMENTS) {
           localStorage.setItem(key, JSON.stringify(initialAssessments));
           return initialAssessments as any;
+        }
+        if (key === STORAGE_KEYS.NOTIFICATIONS) {
+          // Remove fake organizational announcements if found in legacy cache
+          const cleanedNotifs = parsed.filter((n: any) => {
+            if (!n || !n.title) return false;
+            const t = n.title.toLowerCase();
+            if (t.includes("annual capacity building calendar") || t.includes("organizational milestone: 10,000+") || t.includes("apple glass")) {
+              return false;
+            }
+            return true;
+          });
+          // Ensure real course upload notifications exist
+          const existingTitles = new Set(cleanedNotifs.map((n: any) => n.title));
+          for (const initN of initialNotifications) {
+            if (!existingTitles.has(initN.title)) {
+              cleanedNotifs.push(initN);
+            }
+          }
+          if (cleanedNotifs.length !== parsed.length) {
+            localStorage.setItem(key, JSON.stringify(cleanedNotifs));
+          }
+          return cleanedNotifs as any;
         }
         if (key === STORAGE_KEYS.COMPETENCIES) {
           localStorage.setItem(key, JSON.stringify(initialCompetencyMatrix));

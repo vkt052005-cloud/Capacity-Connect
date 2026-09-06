@@ -119,11 +119,8 @@ export const HomePage: React.FC = () => {
               {/* Trainee */}
               <div
                 onClick={() => handleRoleQuickStart("trainee")}
-                className="glass-card p-5 text-left space-y-3 cursor-pointer group hover:border-[#2997ff]/60 transition"
+                className="glass-card p-5 text-left space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
               >
-                <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                  <GraduationCap className="w-5 h-5" />
-                </div>
                 <div>
                   <h3 className="text-sm font-bold text-white group-hover:text-[#2997ff] transition flex items-center justify-between">
                     <span>Trainee</span>
@@ -138,11 +135,8 @@ export const HomePage: React.FC = () => {
               {/* Trainer */}
               <div
                 onClick={() => handleRoleQuickStart("trainer")}
-                className="glass-card p-5 text-left space-y-3 cursor-pointer group hover:border-[#2997ff]/60 transition"
+                className="glass-card p-5 text-left space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
               >
-                <div className="w-9 h-9 rounded-2xl bg-[#0071e3]/20 text-[#2997ff] flex items-center justify-center font-bold">
-                  <Users className="w-5 h-5" />
-                </div>
                 <div>
                   <h3 className="text-sm font-bold text-white group-hover:text-[#2997ff] transition flex items-center justify-between">
                     <span>Trainer</span>
@@ -157,11 +151,8 @@ export const HomePage: React.FC = () => {
               {/* Administrator */}
               <div
                 onClick={() => handleRoleQuickStart("admin")}
-                className="glass-card p-5 text-left space-y-3 cursor-pointer group hover:border-[#2997ff]/60 transition"
+                className="glass-card p-5 text-left space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
               >
-                <div className="w-9 h-9 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
-                  <Shield className="w-5 h-5" />
-                </div>
                 <div>
                   <h3 className="text-sm font-bold text-white group-hover:text-[#2997ff] transition flex items-center justify-between">
                     <span>Administrator</span>
@@ -180,21 +171,17 @@ export const HomePage: React.FC = () => {
         {pinned.length > 0 && (
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="card p-4 sm:p-5 border-[#2997ff]/30 bg-gradient-to-r from-blue-950/20 via-slate-900/30 to-purple-950/20 space-y-3">
-              <h2 className="text-[11px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Bell className="w-3.5 h-3.5 text-[#2997ff]" /> Organizational Announcements & Notices
+              <h2 className="text-[11px] font-bold text-white uppercase tracking-wider">
+                Organizational Announcements & Notices
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {pinned.map((n) => (
-                  <div key={n.id} className="card p-3 space-y-1 border-white/10 hover:border-[#2997ff]/40 transition">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
-                        {n.type === "announcement" && <Bell className="w-3.5 h-3.5 text-[#2997ff] shrink-0" />}
-                        {n.type === "achievement" && <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-                        {n.type === "new_content" && <BookOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
-                        {n.type === "alert" && <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />}
+                  <div key={n.id} className="card p-3.5 space-y-1.5 border-white/10 hover:border-[#2997ff]/40 transition">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-xs font-bold text-white">
                         <span>{n.title}</span>
                       </h3>
-                      <span className="badge-blue text-[8px] py-0.5 uppercase">{n.type}</span>
+                      <span className="badge-blue text-[8px] py-0.5 uppercase shrink-0">{n.type}</span>
                     </div>
                     <p className="text-[11px] text-slate-300 leading-relaxed">{n.content}</p>
                     <p className="text-[9px] text-slate-500 pt-0.5 font-mono">Published by {n.author}</p>
