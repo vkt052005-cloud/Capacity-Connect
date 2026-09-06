@@ -2,12 +2,22 @@ import { create } from "zustand";
 import type { LiveSession } from "../types";
 import { STORAGE_KEYS, getFromStorage, saveToStorage, initialLiveSessions } from "../data/seed";
 
+// Helper to generate a genuine 3-4-3 Google Meet room code e.g. "abc-defg-hij"
+export const generateMeetCode = (): string => {
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const p1 = Array.from({ length: 3 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
+  const p2 = Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
+  const p3 = Array.from({ length: 3 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
+  return `${p1}-${p2}-${p3}`;
+};
+
 // Helper to normalize or generate genuine Google Meet URLs and 10-character room codes
 export const formatGoogleMeet = (input?: string): { url: string; code: string } => {
   const trimmed = (input || "").trim();
-  if (!trimmed || trimmed.toLowerCase() === "new") {
-    // Official Google Meet instant room allocator URL
-    return { url: "https://meet.google.com/new", code: "meet.google.com/new" };
+  if (!trimmed || trimmed.toLowerCase() === "new" || trimmed.toLowerCase() === "meet.google.com/new") {
+    // Generate a dedicated, persistent 3-4-3 room code so teacher and students always join the exact same Google Meet room
+    const code = generateMeetCode();
+    return { url: `https://meet.google.com/${code}`, code };
   }
 
   // Already a full URL
@@ -137,6 +147,17 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     const updated = [newSession, ...get().sessions];
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
+      try {
+        const bc = new BroadcastChannel("capacity_live_channel");
+        bc.postMessage({ type: "LIVE_UPDATE" });
+        bc.close();
+      } catch {}
+    }
+
     return newSession;
   },
 
@@ -166,9 +187,16 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated, activeSession: newSession, isClassroomOpen: true });
     
-    // Only open external window if custom genuine meeting URL was provided
-    if (data.customMeetUrl && !data.customMeetUrl.includes("new")) {
+    // Automatically launch Google Meet in a new tab for the teacher
+    if (typeof window !== "undefined") {
       window.open(meetDetails.url, "_blank", "noopener,noreferrer");
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
+      try {
+        const bc = new BroadcastChannel("capacity_live_channel");
+        bc.postMessage({ type: "LIVE_STARTED", session: newSession });
+        bc.close();
+      } catch {}
     }
     return newSession;
   },
@@ -181,34 +209,57 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       get().joinSession(sessionId, userId);
     }
 
-    // Always launch the running classroom video suite
+    // Always launch the running classroom video suite in LMS
     get().openClassroom(session);
 
-    // If an authentic external Google Meet room URL is specified, open it
-    const targetUrl = session.googleMeetUrl || session.joinUrl;
-    if (
-      targetUrl &&
-      !targetUrl.includes("xxx-yyyy-zzz") &&
-      !targetUrl.endsWith("/new") &&
-      !targetUrl.includes("meet.google.com/new") &&
-      targetUrl.startsWith("https://meet.google.com/") &&
-      targetUrl.length > "https://meet.google.com/".length + 3
-    ) {
-      window.open(targetUrl, "_blank", "noopener,noreferrer");
+    // Open real Google Meet room in new tab for participant
+    let targetUrl = session.googleMeetUrl || session.joinUrl;
+    if (!targetUrl || targetUrl.includes("xxx-yyyy-zzz") || targetUrl.endsWith("/new")) {
+      targetUrl = `https://meet.google.com/${session.meetingCode || "cck-live-meet"}`;
     }
+    if (!targetUrl.startsWith("http")) {
+      targetUrl = `https://meet.google.com/${targetUrl}`;
+    }
+    window.open(targetUrl, "_blank", "noopener,noreferrer");
   },
 
   startSession: (id: string) => {
+    const session = get().sessions.find((s) => s.id === id);
+    let targetMeetUrl = session?.googleMeetUrl;
+    let targetCode = session?.meetingCode;
+    if (!targetMeetUrl || targetMeetUrl.includes("meet.google.com/new")) {
+      const generated = formatGoogleMeet();
+      targetMeetUrl = generated.url;
+      targetCode = generated.code;
+    }
+
     const updated = get().sessions.map((s) =>
-      s.id === id ? { ...s, status: "live" as const } : s
+      s.id === id
+        ? {
+            ...s,
+            status: "live" as const,
+            googleMeetUrl: targetMeetUrl,
+            joinUrl: targetMeetUrl,
+            meetingCode: targetCode
+          }
+        : s
     );
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
-    const currentActive = get().activeSession;
     const targetSession = updated.find((s) => s.id === id);
     set({
       sessions: updated,
-      activeSession: currentActive?.id === id ? { ...currentActive, status: "live" } : targetSession || currentActive
+      activeSession: targetSession || get().activeSession
     });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
+      try {
+        const bc = new BroadcastChannel("capacity_live_channel");
+        bc.postMessage({ type: "LIVE_STARTED", sessionId: id });
+        bc.close();
+      } catch {}
+    }
   },
 
   endSession: (id: string) => {
@@ -221,6 +272,16 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       activeSession: get().activeSession?.id === id ? null : get().activeSession,
       isClassroomOpen: get().activeSession?.id === id ? false : get().isClassroomOpen
     });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
+      try {
+        const bc = new BroadcastChannel("capacity_live_channel");
+        bc.postMessage({ type: "LIVE_ENDED", sessionId: id });
+        bc.close();
+      } catch {}
+    }
   },
 
   cancelSession: (id: string) => {
@@ -229,6 +290,16 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     );
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
+      try {
+        const bc = new BroadcastChannel("capacity_live_channel");
+        bc.postMessage({ type: "LIVE_UPDATE" });
+        bc.close();
+      } catch {}
+    }
   },
 
   openClassroom: (session: LiveSession) => {
@@ -298,14 +369,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
 
 // Real-time multi-tab & multi-window event synchronization
 if (typeof window !== "undefined") {
-  window.addEventListener("storage", (event) => {
-    if (event.key === STORAGE_KEYS.LIVE_SESSIONS) {
-      useLiveSessionsStore.getState().load();
-    }
-  });
-
-  // Background polling heartbeat (every 2.5s) to guarantee live class status sync across tabs
-  setInterval(() => {
+  const syncFromStorage = () => {
     try {
       const fromStorage = getFromStorage<LiveSession>(STORAGE_KEYS.LIVE_SESSIONS);
       if (fromStorage) {
@@ -317,7 +381,29 @@ if (typeof window !== "undefined") {
     } catch {
       // ignore
     }
-  }, 2500);
+  };
+
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORAGE_KEYS.LIVE_SESSIONS || !event.key) {
+      useLiveSessionsStore.getState().load();
+    }
+  });
+
+  window.addEventListener("capacity_live_session_update", () => {
+    useLiveSessionsStore.getState().load();
+  });
+
+  try {
+    const bc = new BroadcastChannel("capacity_live_channel");
+    bc.onmessage = () => {
+      useLiveSessionsStore.getState().load();
+    };
+  } catch {
+    // ignore
+  }
+
+  // Fast 1.5s background polling heartbeat to guarantee live class status sync across tabs without refreshing
+  setInterval(syncFromStorage, 1500);
 }
 
 

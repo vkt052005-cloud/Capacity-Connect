@@ -15,7 +15,7 @@ export const Header: React.FC = () => {
     addToast, zoomLevel, setZoomLevel,
     increaseZoom, decreaseZoom, resetZoom
   } = useAppStore();
-  const { sessions, openClassroom } = useLiveSessionsStore();
+  const { sessions, openClassroom, launchGoogleMeet } = useLiveSessionsStore();
   const [zoomMenuOpen, setZoomMenuOpen] = useState(false);
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [customZoomInput, setCustomZoomInput] = useState("");
@@ -79,9 +79,16 @@ export const Header: React.FC = () => {
           {currentUser && (
             activeLiveClass ? (
               <button
-                onClick={() => openClassroom(activeLiveClass)}
+                onClick={() => {
+                  launchGoogleMeet(activeLiveClass.id, currentUser?.id, currentUser?.name);
+                  addToast({
+                    title: "Connecting to Google Meet",
+                    message: `Joined "${activeLiveClass.title}". Attendance certified.`,
+                    type: "success"
+                  });
+                }}
                 className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-xs text-rose-300 transition whitespace-nowrap shrink-0 cursor-pointer animate-pulse"
-                title={`Join Live Class: ${activeLiveClass.title}`}
+                title={`Click to Join Live Class: ${activeLiveClass.title} (No Code Needed)`}
               >
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
                 <span className="text-[10px] font-bold text-white">🔴 Live Class</span>

@@ -425,55 +425,34 @@ export const TrainerDashboard: React.FC = () => {
                 />
               </div>
 
-              {/* Step 1: Open Google Meet Room */}
-              <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-2">
+              {/* Google Meet Room Link / Code */}
+              <div className="p-3.5 rounded-xl bg-blue-950/25 border border-blue-500/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-white flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-blue-500/20 text-[#2997ff] flex items-center justify-center text-[10px]">1</span>
-                    Create Room on Google Cloud
+                  <span className="font-bold text-white flex items-center gap-1.5 text-xs">
+                    <Video className="w-3.5 h-3.5 text-[#2997ff]" /> Google Meet Room Link (Optional)
                   </span>
-                  <span className="badge-blue text-[8px]">REQUIRED ONCE</span>
+                  <span className="badge-blue text-[8px]">AUTO-ALLOCATED IF BLANK</span>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Click below to open Google's official meeting allocator. Google will create a live video room and copy its link to your clipboard.
-                </p>
-                <a
-                  href="https://meet.google.com/new"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="apple-btn-secondary w-full text-xs py-2 font-bold flex items-center justify-center gap-2 border border-[#2997ff]/40 text-[#2997ff] hover:bg-[#2997ff]/10 cursor-pointer"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open meet.google.com/new in New Tab ↗</span>
-                </a>
-              </div>
-
-              {/* Step 2: Paste Room Code */}
-              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
-                <span className="font-bold text-white flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-white/10 text-white flex items-center justify-center text-[10px]">2</span>
-                  Paste Room Link or 10-Letter Code
-                </span>
                 <input
                   type="text"
-                  placeholder="e.g. meet.google.com/abc-defg-hij or abc-defg-hij"
+                  placeholder="e.g. meet.google.com/abc-defg-hij or leave blank"
                   value={instantMeetUrl}
                   onChange={(e) => setInstantMeetUrl(e.target.value)}
                   className="apple-input text-xs font-mono"
                 />
-                <p className="text-[10px] text-slate-400">
-                  (Or leave blank to launch directly with meet.google.com/new)
+                <p className="text-[10px] text-slate-300">
+                  Leave blank to automatically create a dedicated Google Meet room, or paste a link from Google Calendar. All students will see this live class on their portal and join with 1-click without typing any link!
                 </p>
               </div>
 
-              {/* Step 3: Broadcast */}
+              {/* Broadcast CTA */}
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="apple-btn-primary w-full text-xs py-3 font-bold flex items-center justify-center gap-2 shadow-xl shadow-blue-500/30 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:brightness-110 cursor-pointer text-sm"
+                  className="apple-btn-primary w-full text-xs py-3.5 font-bold flex items-center justify-center gap-2 shadow-xl shadow-blue-500/30 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:brightness-110 cursor-pointer text-sm"
                 >
                   <Radio className="w-4 h-4 text-rose-300 animate-pulse" />
-                  <span>3. Broadcast Live Class to All Students</span>
+                  <span>Broadcast Live Class to All Students ↗</span>
                 </button>
               </div>
             </form>

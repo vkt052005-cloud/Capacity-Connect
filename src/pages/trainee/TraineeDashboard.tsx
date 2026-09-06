@@ -130,24 +130,23 @@ export const TraineeDashboard: React.FC = () => {
 
         {/* ─── LIVE GOOGLE MEET ALERT BANNER (If a class is currently Live) ─── */}
         {liveSession && (
-          <div className="glass-card p-4 border-rose-500/40 bg-gradient-to-r from-rose-950/40 via-[#120a16] to-[#0c0f1c] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xl relative overflow-hidden animate-pulse">
+          <div className="glass-card p-5 border-2 border-rose-500/60 bg-gradient-to-r from-rose-950/60 via-[#18081a] to-[#0c0f1c] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_0_35px_rgba(244,63,94,0.25)] relative overflow-hidden animate-pulse">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/50 text-rose-400 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/25 border border-rose-500/60 text-rose-300 flex items-center justify-center shrink-0">
                 <Radio className="w-6 h-6 animate-pulse" />
               </div>
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="badge-red text-[9px] uppercase font-extrabold tracking-wider animate-pulse">
-                    🔴 LIVE CLASS IN PROGRESS
+                  <span className="badge-red text-[9px] uppercase font-black tracking-wider animate-pulse">
+                    🔴 TEACHER IS LIVE NOW
                   </span>
-                  <span className="text-[11px] text-slate-300 font-medium">{liveSession.courseTitle}</span>
+                  <span className="text-[11px] text-rose-300 font-semibold">{liveSession.courseTitle}</span>
                 </div>
-                <h4 className="text-sm sm:text-base font-bold text-white">
+                <h4 className="text-base font-extrabold text-white">
                   {liveSession.title}
                 </h4>
-                <p className="text-[11px] text-slate-400">
-                  Instructor: <span className="text-white font-semibold">{liveSession.trainerName}</span> • Room Code:{" "}
-                  <span className="font-mono text-[#2997ff] font-bold">{liveSession.meetingCode}</span>
+                <p className="text-xs text-slate-300">
+                  Instructor: <span className="text-white font-semibold">{liveSession.trainerName}</span> • <span className="text-emerald-400 font-mono">No meeting link or code needed to join</span>
                 </p>
               </div>
             </div>
@@ -155,20 +154,21 @@ export const TraineeDashboard: React.FC = () => {
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => handleJoinGoogleMeet(liveSession)}
-                className="apple-btn-primary text-xs px-4 py-2.5 font-bold flex items-center gap-2 shadow-xl shadow-rose-500/20 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110 cursor-pointer"
+                className="apple-btn-primary text-xs px-5 py-2.5 font-extrabold flex items-center gap-2 shadow-xl shadow-rose-600/30 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110 cursor-pointer text-white transform hover:scale-[1.02] transition-all"
+                title="Connect directly to Google Meet (No code or link needed)"
               >
-                <Video className="w-4 h-4" /> Join Google Meet Call ↗
+                <Video className="w-4 h-4" /> Join Live Meet (1-Click) ↗
               </button>
               <button
                 onClick={() => openClassroom(liveSession)}
-                className="apple-btn-secondary text-xs px-3.5 py-2.5 font-semibold cursor-pointer border border-white/20"
+                className="apple-btn-secondary text-xs px-3.5 py-2.5 font-semibold cursor-pointer border border-white/20 hover:bg-white/10"
                 title="Open whiteboard notes and LMS attendance logger"
               >
                 Classroom Hub
               </button>
               <Link
                 to="/trainee/live-classes"
-                className="apple-btn-secondary text-xs px-3 py-2.5 font-semibold text-slate-300"
+                className="apple-btn-secondary text-xs px-3 py-2.5 font-semibold text-slate-300 hover:text-white"
               >
                 All Classes →
               </Link>
@@ -176,7 +176,7 @@ export const TraineeDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* ─── PERMANENT GOOGLE MEET HUB & QUICK JOIN (Always Visible) ─── */}
+        {/* ─── PERMANENT GOOGLE MEET HUB & STATUS (Always Visible) ─── */}
         <div className="glass-panel p-5 border border-white/15 bg-gradient-to-r from-[#0c1020] via-[#0e1428] to-[#0a0d16] rounded-2xl shadow-xl space-y-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="space-y-1">
@@ -189,57 +189,77 @@ export const TraineeDashboard: React.FC = () => {
                 </span>
                 <span className="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Service Connected
+                  Live Sync Active
                 </span>
               </div>
               <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                Live Video Lectures & Interactive Problem Solving
+                Faculty Live Video Lectures & Labs
               </h3>
               <p className="text-xs text-slate-300 max-w-xl">
-                Attend faculty-led Google Meet lectures, participate in proctored coding labs, and get attendance certified in real-time.
+                Attend faculty-led Google Meet lectures with 1-click automatic joining, participate in proctored coding labs, and verify your attendance.
               </p>
             </div>
 
-            {/* In-Place Quick Join Form */}
-            <div className="w-full lg:w-auto lg:min-w-[420px] bg-white/[0.04] p-3 rounded-xl border border-white/10 space-y-2 shrink-0">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-300 font-medium flex items-center gap-1.5">
-                  <Video className="w-3.5 h-3.5 text-[#2997ff]" /> Quick Join Any Meeting
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">Meet Code or URL</span>
+            {/* In-Place Status / 1-Click Action */}
+            {liveSession ? (
+              <div className="w-full lg:w-auto lg:min-w-[420px] bg-rose-950/30 p-3.5 rounded-xl border border-rose-500/40 space-y-2 shrink-0">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-rose-300 font-bold flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" /> Active Class Ready to Join
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-mono">No Code Required</span>
+                </div>
+                <p className="text-xs text-white font-semibold truncate">
+                  {liveSession.title} ({liveSession.trainerName})
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => handleJoinGoogleMeet(liveSession)}
+                    className="apple-btn-primary text-xs px-4 py-2 font-bold flex-1 flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110 shadow-lg cursor-pointer"
+                  >
+                    <Video className="w-3.5 h-3.5" /> Join Live Google Meet Now ↗
+                  </button>
+                  <button
+                    onClick={() => openClassroom(liveSession)}
+                    className="apple-btn-secondary text-xs px-3 py-2 font-semibold border-white/20"
+                  >
+                    Hub
+                  </button>
+                </div>
               </div>
+            ) : (
+              <div className="w-full lg:w-auto lg:min-w-[420px] bg-white/[0.04] p-3 rounded-xl border border-white/10 space-y-2 shrink-0">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-300 font-medium flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 text-emerald-400" /> Faculty Broadcast Radar
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-mono">Listening for Teacher</span>
+                </div>
 
-              <form onSubmit={handleQuickMeetJoin} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Enter Meet code (e.g. abc-defg-hij) or URL"
-                  value={quickMeetInput}
-                  onChange={(e) => setQuickMeetInput(e.target.value)}
-                  className="apple-input text-xs py-2 px-3 font-mono placeholder:text-slate-500 flex-1"
-                />
-                <button
-                  type="submit"
-                  className="apple-btn-primary text-xs px-4 py-2 font-bold shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
-                >
-                  <Video className="w-3.5 h-3.5" /> Join Call
-                </button>
-              </form>
+                <form onSubmit={handleQuickMeetJoin} className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter private Meet code or URL (optional)"
+                    value={quickMeetInput}
+                    onChange={(e) => setQuickMeetInput(e.target.value)}
+                    className="apple-input text-xs py-2 px-3 font-mono placeholder:text-slate-500 flex-1"
+                  />
+                  <button
+                    type="submit"
+                    className="apple-btn-primary text-xs px-4 py-2 font-bold shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                  >
+                    <Video className="w-3.5 h-3.5" /> Join Call
+                  </button>
+                </form>
 
-              <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
-                <Link to="/trainee/live-classes" className="text-[#2997ff] hover:underline font-semibold flex items-center gap-0.5">
-                  View Full Schedule & Classes ({sessions.length}) →
-                </Link>
-                <a
-                  href="https://meet.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-slate-300 flex items-center gap-1"
-                >
-                  <span>meet.google.com</span>
-                  <ExternalLink className="w-2.5 h-2.5" />
-                </a>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+                  <Link to="/trainee/live-classes" className="text-[#2997ff] hover:underline font-semibold flex items-center gap-0.5">
+                    View Live Classes Schedule ({sessions.length}) →
+                  </Link>
+                  <span className="text-slate-400">Auto-detects live classes</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Upcoming Class Quick Card (if scheduled) */}

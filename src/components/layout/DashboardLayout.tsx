@@ -4,6 +4,7 @@ import { Sidebar } from "./Sidebar";
 import { Footer } from "./Footer";
 import { ToastContainer } from "../common/ToastContainer";
 import { LiveMeetClassroom } from "../live/LiveMeetClassroom";
+import { GlobalLiveClassBanner } from "./GlobalLiveClassBanner";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -23,6 +24,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <div className="glow-orb-secondary" />
 
       <Header />
+      <GlobalLiveClassBanner />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto relative z-10">
         <Sidebar />
