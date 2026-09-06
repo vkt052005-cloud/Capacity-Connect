@@ -13,7 +13,7 @@ interface AuthState {
   register: (data: Omit<User, "id" | "createdAt" | "status">) => { success: boolean; message: string };
   updateProfile: (updates: Partial<User>) => void;
   loadFromStorage: () => void;
-  findUserForRecovery: (query: { phone?: string; name?: string; department?: string; role?: User["role"] }) => {
+  findUserForRecovery: (query: { name: string; department?: string; designation?: string; role?: User["role"] }) => {
     success: boolean;
     message: string;
     accounts: Array<{
@@ -23,8 +23,8 @@ interface AuthState {
       rawEmail: string;
       role: User["role"];
       department: string;
+      designation: string;
       status: User["status"];
-      phone?: string;
     }>;
   };
   resetUserPassword: (email: string, newPassword: string, requiredRole?: User["role"]) => {
@@ -218,41 +218,44 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   findUserForRecovery: (query) => {
     const users = getFromStorage<User>(STORAGE_KEYS.USERS);
-    const cleanPhone = (p?: string) => (p || "").replace(/\D/g, "").slice(-10);
-    const targetPhoneDigits = cleanPhone(query.phone);
+    const searchName = (query.name || "").trim().toLowerCase();
+
+    if (!searchName || searchName.length < 2) {
+      return {
+        success: false,
+        message: "Please enter at least 2 characters of your registered name.",
+        accounts: []
+      };
+    }
+
+    const searchDept = (query.department || "").trim().toLowerCase();
+    const searchDesig = (query.designation || "").trim().toLowerCase();
 
     const matches = users.filter((u) => {
       if (query.role && u.role !== query.role) {
         return false;
       }
 
-      // Check phone if provided (match last 10 or partial digits)
-      if (targetPhoneDigits && targetPhoneDigits.length >= 6) {
-        const uPhone = cleanPhone(u.phone || u.traineeProfile?.phone || u.trainerProfile?.phone);
-        if (uPhone && uPhone.includes(targetPhoneDigits)) {
-          return true;
-        }
+      const nameMatch = u.name.toLowerCase().includes(searchName);
+      if (!nameMatch) return false;
+
+      const uDept = (u.department || u.traineeProfile?.department || u.trainerProfile?.department || "").toLowerCase();
+      if (searchDept && searchDept !== "all" && !uDept.includes(searchDept)) {
+        return false;
       }
 
-      // Check name + department if provided
-      if (query.name && query.name.trim().length >= 2) {
-        const nameMatch = u.name.toLowerCase().includes(query.name.trim().toLowerCase());
-        const uDept = (u.department || u.traineeProfile?.department || u.trainerProfile?.department || "").toLowerCase();
-        const deptMatch = query.department && query.department.trim().length > 0
-          ? uDept.includes(query.department.trim().toLowerCase())
-          : true;
-        if (nameMatch && deptMatch) {
-          return true;
-        }
+      const uDesig = (u.designation || u.traineeProfile?.designation || u.trainerProfile?.designation || "").toLowerCase();
+      if (searchDesig && searchDesig !== "all" && !uDesig.includes(searchDesig)) {
+        return false;
       }
 
-      return false;
+      return true;
     });
 
     if (matches.length === 0) {
       return {
         success: false,
-        message: "No registered account matches the provided criteria. Please verify your details or file an admin ticket.",
+        message: "No registered account matched the provided name and department. Please verify spelling or contact support.",
         accounts: []
       };
     }
@@ -274,14 +277,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         rawEmail: u.email,
         role: u.role,
         department: u.department || u.traineeProfile?.department || u.trainerProfile?.department || "Computer Science & Engineering",
-        status: u.status,
-        phone: u.phone || u.traineeProfile?.phone || u.trainerProfile?.phone
+        designation: u.designation || u.traineeProfile?.designation || u.trainerProfile?.designation || (u.role === "trainee" ? "Undergraduate Student" : "Faculty Trainer"),
+        status: u.status
       };
     });
 
     return {
       success: true,
-      message: `Found ${accounts.length} verified account(s).`,
+      message: `Found ${accounts.length} verified account(s) matching "${query.name}".`,
       accounts
     };
   },

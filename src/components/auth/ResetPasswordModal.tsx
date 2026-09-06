@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   X, KeyRound, CheckCircle2, ArrowRight, Shield,
-  Search, Phone, User as UserIcon, Building, HelpCircle,
-  Eye, EyeOff, RotateCw, Copy, Check, AlertTriangle
+  Search, User as UserIcon, Building, HelpCircle,
+  Eye, EyeOff, RotateCw, Copy, Check, AlertTriangle, GraduationCap
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
@@ -17,6 +17,22 @@ export interface ResetPasswordModalProps {
   defaultRole?: UserRole;
   onSelectRecoveredEmail?: (email: string, role: UserRole) => void;
 }
+
+const COMMON_DEPARTMENTS = [
+  "All Departments",
+  "Computer Science & Engineering",
+  "Information Technology",
+  "Artificial Intelligence & Machine Learning",
+  "Data Science & Big Data",
+  "Cybersecurity & Digital Forensics",
+  "Electronics & Communication",
+  "Electrical & Electronics",
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Business Administration & Management",
+  "Executive Governance & Strategy",
+  "Other"
+];
 
 export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   isOpen,
@@ -44,12 +60,10 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   const [resetError, setResetError] = useState("");
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Find Login ID State
-  const [lookupMode, setLookupMode] = useState<"phone" | "name_dept">("phone");
+  // Find Login ID State (No phone numbers)
   const [lookupRole, setLookupRole] = useState<UserRole>(defaultRole);
-  const [searchPhone, setSearchPhone] = useState("");
   const [searchName, setSearchName] = useState("");
-  const [searchDept, setSearchDept] = useState("");
+  const [searchDept, setSearchDept] = useState("All Departments");
   const [foundAccounts, setFoundAccounts] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [lookupError, setLookupError] = useState("");
@@ -103,13 +117,9 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
     setIsResetting(true);
     try {
-      // 1. Check if user exists for recovery
-      const res = findUserForRecovery({ name: "", phone: "" });
-      // We can also check directly via authStore
       const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(randomOtp);
 
-      // Dispatch real email OTP via Capacity Connect mailer
       const dispatchRes = await sendOtpEmail({
         email: emailToVerify,
         name: "Valued User",
@@ -124,13 +134,13 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
       setOtpDigits(["", "", "", "", "", ""]);
 
       addToast({
-        title: dispatchRes.success ? "Security Code Sent" : "Security Code Ready",
+        title: dispatchRes.success ? "Security Code Dispatched" : "Security Code Ready",
         message: dispatchRes.message || `A 6-digit recovery code has been sent to ${emailToVerify}.`,
         type: dispatchRes.success ? "info" : "warning"
       });
     } catch (err: any) {
       setIsResetting(false);
-      setResetError(err.message || "Failed to dispatch recovery code. Please verify the email address.");
+      setResetError(err.message || "Failed to dispatch recovery code. Please verify your email address.");
     }
   };
 
@@ -224,7 +234,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   };
 
   // ─────────────────────────────────────────────────────────────
-  // Track 2: Find Login ID Handlers
+  // Track 2: Find Login ID Handlers (By Name & Department)
   // ─────────────────────────────────────────────────────────────
   const handleSearchLoginId = (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,9 +242,11 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     setHasSearched(false);
     setIsSearching(true);
 
-    const query = lookupMode === "phone"
-      ? { phone: searchPhone.trim(), role: lookupRole }
-      : { name: searchName.trim(), department: searchDept.trim(), role: lookupRole };
+    const query = {
+      name: searchName.trim(),
+      department: searchDept === "All Departments" ? "" : searchDept.trim(),
+      role: lookupRole
+    };
 
     const result = findUserForRecovery(query);
     setIsSearching(false);
@@ -263,8 +275,8 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     }
 
     addToast({
-      title: "Login ID Copied & Autofilled",
-      message: `${account.rawEmail} ready for sign-in.`,
+      title: "Login ID Applied",
+      message: `${account.rawEmail} populated in sign-in form.`,
       type: "success"
     });
     onClose();
@@ -325,7 +337,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                 Account & Credential Recovery
               </h3>
               <p className="text-xs text-slate-400">
-                Self-service assistance for Trainees & Trainers
+                Self-service credential assistance for Trainees & Faculty
               </p>
             </div>
           </div>
@@ -379,13 +391,13 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             {resetStep === "email" && (
               <form onSubmit={handleSendResetOtp} className="space-y-3.5">
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Enter your registered official email address. We will dispatch a 6-digit cryptographic security code to verify your identity.
+                  Enter your registered official email address (Login ID). We will dispatch a 6-digit cryptographic security code to verify your identity.
                 </p>
 
                 {/* Role Switcher */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Your Registered Role
+                    Account Role
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {(["trainee", "trainer", "admin"] as UserRole[]).map((r) => (
@@ -433,7 +445,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                     onClick={() => setActiveTab("recover_id")}
                     className="text-[#2997ff] hover:underline flex items-center gap-1 font-medium"
                   >
-                    Forgot your Login ID/Email? →
+                    Don't remember your Login ID/Email? Find it here →
                   </button>
                 </div>
 
@@ -464,7 +476,6 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                   <p className="text-[11px] text-slate-400">
                     Enter the 6-digit code sent to your inbox. It will expire in 10 minutes.
                   </p>
-                  {/* Offline Emergency Fallback Badge so testers/devs never get stuck */}
                   {generatedOtp && (
                     <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
                       <span className="text-slate-400">Security Token (Offline / Demo):</span>
@@ -619,39 +630,15 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         )}
 
         {/* ─────────────────────────────────────────────────────────────
-            TAB 2: FIND LOGIN ID
+            TAB 2: FIND LOGIN ID (BY NAME & DEPARTMENT — NO PHONE NUMBER)
             ───────────────────────────────────────────────────────────── */}
         {activeTab === "recover_id" && (
           <div className="space-y-4">
             <p className="text-xs text-slate-300 leading-relaxed">
-              If you have forgotten which email address is registered with your account, look up your profile using your phone number or name:
+              If you forgot which email address you registered with, search your account using your <strong>Full Legal Name</strong> and <strong>Department</strong>:
             </p>
 
-            {/* Sub-toggle: By Phone vs By Name & Dept */}
-            <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 text-xs">
-              <button
-                type="button"
-                onClick={() => { setLookupMode("phone"); setHasSearched(false); }}
-                className={
-                  "flex-1 py-1 px-2 rounded-lg font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 " +
-                  (lookupMode === "phone" ? "bg-white/15 text-white" : "text-slate-400 hover:text-white")
-                }
-              >
-                <Phone className="w-3 h-3" /> By Mobile Number
-              </button>
-              <button
-                type="button"
-                onClick={() => { setLookupMode("name_dept"); setHasSearched(false); }}
-                className={
-                  "flex-1 py-1 px-2 rounded-lg font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 " +
-                  (lookupMode === "name_dept" ? "bg-white/15 text-white" : "text-slate-400 hover:text-white")
-                }
-              >
-                <Building className="w-3 h-3" /> By Name & Dept
-              </button>
-            </div>
-
-            <form onSubmit={handleSearchLoginId} className="space-y-3">
+            <form onSubmit={handleSearchLoginId} className="space-y-3.5">
               {/* Role filter */}
               <div>
                 <label className="block text-[11px] font-semibold text-slate-400 mb-1">
@@ -662,78 +649,67 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                     type="button"
                     onClick={() => setLookupRole("trainee")}
                     className={
-                      "py-1 px-2 rounded-lg text-xs font-semibold border transition cursor-pointer " +
+                      "py-1.5 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center justify-center gap-1.5 " +
                       (lookupRole === "trainee"
-                        ? "bg-[#0071e3]/20 border-[#2997ff] text-white"
+                        ? "bg-[#0071e3]/20 border-[#2997ff] text-white ring-1 ring-[#2997ff]"
                         : "bg-white/[0.03] border-white/10 text-slate-400 hover:text-white")
                     }
                   >
-                    Student / Trainee
+                    <GraduationCap className="w-3.5 h-3.5" /> Student / Trainee
                   </button>
                   <button
                     type="button"
                     onClick={() => setLookupRole("trainer")}
                     className={
-                      "py-1 px-2 rounded-lg text-xs font-semibold border transition cursor-pointer " +
+                      "py-1.5 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center justify-center gap-1.5 " +
                       (lookupRole === "trainer"
-                        ? "bg-[#0071e3]/20 border-[#2997ff] text-white"
+                        ? "bg-[#0071e3]/20 border-[#2997ff] text-white ring-1 ring-[#2997ff]"
                         : "bg-white/[0.03] border-white/10 text-slate-400 hover:text-white")
                     }
                   >
-                    Trainer / Faculty
+                    <UserIcon className="w-3.5 h-3.5" /> Trainer / Faculty
                   </button>
                 </div>
               </div>
 
-              {lookupMode === "phone" ? (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Registered Mobile Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. +91 98765 00000 or 9876500000"
-                      className="apple-input text-xs !pl-9"
-                      value={searchPhone}
-                      onChange={(e) => setSearchPhone(e.target.value)}
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-1">
-                    Enter the 10-digit mobile number linked to your registration.
-                  </p>
+              {/* Full Name */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Full Registered Name <span className="text-rose-400">*</span>
+                </label>
+                <div className="relative">
+                  <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Madhav Kumar or Raj Tiwari"
+                    className="apple-input text-xs !pl-9"
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                  />
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Madhav Kumar"
-                      className="apple-input text-xs"
-                      value={searchName}
-                      onChange={(e) => setSearchName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Department
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Computer Science"
-                      className="apple-input text-xs"
-                      value={searchDept}
-                      onChange={(e) => setSearchDept(e.target.value)}
-                    />
-                  </div>
+              </div>
+
+              {/* Department Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Registered Department
+                </label>
+                <div className="relative">
+                  <Building className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                  <select
+                    value={searchDept}
+                    onChange={(e) => setSearchDept(e.target.value)}
+                    className="apple-input text-xs !pl-9"
+                  >
+                    {COMMON_DEPARTMENTS.map((dept) => (
+                      <option key={dept} value={dept} className="bg-slate-900 text-white">
+                        {dept}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              )}
+              </div>
 
               {lookupError && (
                 <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
@@ -744,8 +720,8 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
               <button
                 type="submit"
-                disabled={isSearching || (lookupMode === "phone" ? !searchPhone.trim() : !searchName.trim())}
-                className="apple-btn-primary w-full py-2 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                disabled={isSearching || searchName.trim().length < 2}
+                className="apple-btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSearching ? (
                   <>
@@ -753,7 +729,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Search className="w-3.5 h-3.5" /> Locate Verified Account
+                    <Search className="w-3.5 h-3.5" /> Find My Account
                   </>
                 )}
               </button>
@@ -763,9 +739,9 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             {hasSearched && foundAccounts.length > 0 && (
               <div className="space-y-2.5 pt-2 border-t border-white/10 animate-fadeIn">
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-                  <span>Verified Accounts Found ({foundAccounts.length})</span>
+                  <span>Verified Accounts Located ({foundAccounts.length})</span>
                   <span className="text-[10px] text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Identity Confirmed
+                    <CheckCircle2 className="w-3 h-3" /> Identity Matched
                   </span>
                 </div>
 
@@ -773,7 +749,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                   {foundAccounts.map((acc) => (
                     <div
                       key={acc.id}
-                      className="p-3 rounded-2xl bg-white/[0.04] border border-white/15 space-y-2 text-xs hover:border-[#2997ff]/40 transition"
+                      className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/15 space-y-2.5 text-xs hover:border-[#2997ff]/40 transition"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -781,12 +757,15 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                             <h4 className="font-bold text-white text-sm">{acc.name}</h4>
                             <span className="badge-blue text-[9px] uppercase font-mono">{acc.role}</span>
                           </div>
-                          <p className="text-[11px] text-slate-400 mt-0.5">{acc.department}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {acc.department} • <span className="text-slate-300">{acc.designation}</span>
+                          </p>
                         </div>
                         <span className="badge-green text-[9px]">Active</span>
                       </div>
 
-                      <div className="p-2 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-2">
+                      {/* Masked Email Badge with Autofill Button */}
+                      <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between gap-2">
                         <div>
                           <span className="text-[10px] text-slate-500 uppercase font-mono block">
                             Registered Login ID (Email)
@@ -800,7 +779,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleCopyAndSelect(acc)}
-                            className="apple-btn-primary text-[11px] py-1 px-2.5 font-bold flex items-center gap-1 cursor-pointer"
+                            className="apple-btn-primary text-[11px] py-1.5 px-3 font-bold flex items-center gap-1 cursor-pointer"
                           >
                             {copiedId === acc.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                             <span>Use ID</span>
@@ -835,7 +814,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                 <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
                 <h4 className="text-sm font-bold text-white">Helpdesk Request Dispatched</h4>
                 <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-                  An urgent credential recovery ticket has been registered in the governance ledger. Our administration team will contact your alternate contact within 24 hours.
+                  An urgent credential recovery ticket has been registered in the governance ledger. Our administration team will review your identity and follow up.
                 </p>
                 <button
                   type="button"
@@ -848,7 +827,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             ) : (
               <form onSubmit={handleSubmitHelpdesk} className="space-y-3">
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Lost access to both your registered email and mobile number? Submit an official IT credential assistance ticket:
+                  Lost access to your registered email? Submit an official IT credential assistance ticket:
                 </p>
 
                 <div>
@@ -882,12 +861,12 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Alternate Phone / Email
+                      Alternate Email / Contact ID
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="Contact details"
+                      placeholder="e.g. alternate email or ID"
                       className="apple-input text-xs"
                       value={ticketContact}
                       onChange={(e) => setTicketContact(e.target.value)}
@@ -897,12 +876,12 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Issue Summary
+                    Issue Description
                   </label>
                   <textarea
                     rows={2}
                     required
-                    placeholder="e.g. Changed my mobile number and lost access to university email..."
+                    placeholder="Describe your credential access issue..."
                     className="apple-input text-xs"
                     value={ticketMessage}
                     onChange={(e) => setTicketMessage(e.target.value)}
@@ -924,7 +903,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         {/* Footer Security Badge */}
         <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-500">
           <span className="flex items-center gap-1">
-            <Shield className="w-3 h-3 text-emerald-400" /> AES-256-GCM Cryptographic Audit
+            <Shield className="w-3 h-3 text-emerald-400" /> Cryptographic Identity Verification
           </span>
           <span>Official Capacity Connect Framework</span>
         </div>
