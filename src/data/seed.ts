@@ -766,6 +766,43 @@ export const initialCourses: Course[] = [
     ],
     prerequisites: ["Object-Oriented Programming and basic software concepts"],
     resources: []
+  },
+  {
+    id: "c-raj-tiwari-dsa",
+    title: "Data Structures & Algorithms Problem Solving",
+    description: "Comprehensive hands-on Data Structures & Algorithms masterclass taught by Raj Tiwari. Master foundational problem solving, asymptotic complexity, arrays, recursion, pointers, linked lists, trees, graphs, and dynamic programming.",
+    trainerId: "u-trainer-official",
+    trainerName: "Raj Tiwari",
+    category: "Technical",
+    thumbnail: "/thumbnails/dsa-course.jpg",
+    duration: "20 Mins • 1 Lecture",
+    level: "Intermediate",
+    status: "active",
+    createdAt: "2026-09-06T08:30:00Z",
+    rating: 0,
+    totalRatings: 0,
+    videoUrl: "/videos/Video1.mp4",
+    lessons: [
+      {
+        id: "l-raj-01",
+        lessonNumber: 1,
+        title: "Lecture 01: Introduction to Problem Solving & Algorithm Foundations",
+        duration: "20 Mins",
+        youtubeUrl: "/videos/Video1.mp4",
+        videoId: "v-raj-01",
+        videoSource: "file",
+        description: "Official introductory lecture on problem-solving mindsets, data structures foundations, and algorithmic complexity by Raj Tiwari."
+      }
+    ],
+    tags: ["Data Structures", "Algorithms", "DSA", "Problem Solving", "Raj Tiwari", "Technical"],
+    syllabus: [
+      "Module 1: Problem Solving Mindset, Algorithmic Thinking & Complexity",
+      "Module 2: Linear Data Structures: Arrays, Strings, Stacks & Queues",
+      "Module 3: Non-Linear Structures: Trees, BST, Heaps & Graph Traversals",
+      "Module 4: Dynamic Programming, Greedy Algorithms & System Optimization"
+    ],
+    prerequisites: ["Basic understanding of high-school mathematics and programming fundamentals"],
+    resources: []
   }
 ];
 
