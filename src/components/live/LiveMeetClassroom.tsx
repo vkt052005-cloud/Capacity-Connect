@@ -26,124 +26,6 @@ export const LiveMeetClassroom: React.FC = () => {
   const [userEnteredPin, setUserEnteredPin] = useState("");
   const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
 
-  // Live Video & Audio WebRTC Engine
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [micActive, setMicActive] = useState(true);
-  const [screenSharing, setScreenSharing] = useState(false);
-  const [closedCaptions, setClosedCaptions] = useState(true);
-  const [captionsIndex, setCaptionsIndex] = useState(0);
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-
-  const lectureCaptions = [
-    `Welcome to ${activeSession?.title || "Classroom"}. Please verify your audio and video stream.`,
-    "We are stepping through real-time distributed architecture, failover mechanisms, and latency budgets.",
-    "Notice how consensus is established across the cluster nodes without single points of failure.",
-    "If you have any questions or code issues, use the in-class Q&A tab or raise your hand.",
-    "Your live attendance is certified and logged in Capacity Connect LMS."
-  ];
-
-  useEffect(() => {
-    if (!closedCaptions) return;
-    const interval = setInterval(() => {
-      setCaptionsIndex((prev) => (prev + 1) % lectureCaptions.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [closedCaptions, lectureCaptions.length]);
-
-  const toggleCamera = async () => {
-    if (cameraActive) {
-      if (mediaStream) {
-        mediaStream.getVideoTracks().forEach((track) => track.stop());
-      }
-      setCameraActive(false);
-      addToast({ title: "Camera Off", message: "Webcam video stopped.", type: "info" });
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: micActive });
-        setMediaStream(stream);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        setCameraActive(true);
-        addToast({ title: "Camera Enabled", message: "Live webcam feed active in Google Meet classroom.", type: "success" });
-      } catch {
-        addToast({
-          title: "Camera Access Notice",
-          message: "Unable to start webcam (permissions or no device). Audio avatar mode is active.",
-          type: "info"
-        });
-        setCameraActive(false);
-      }
-    }
-  };
-
-  const toggleMic = () => {
-    if (mediaStream) {
-      mediaStream.getAudioTracks().forEach((t) => {
-        t.enabled = !micActive;
-      });
-    }
-    setMicActive(!micActive);
-    addToast({
-      title: micActive ? "Microphone Muted" : "Microphone Active",
-      message: micActive ? "Your microphone is muted." : "You are speaking now.",
-      type: "info"
-    });
-  };
-
-  const toggleScreenShare = async () => {
-    if (screenSharing) {
-      if (videoRef.current && mediaStream) {
-        videoRef.current.srcObject = mediaStream;
-      }
-      setScreenSharing(false);
-      addToast({ title: "Screen Share Ended", message: "Returned to regular camera feed.", type: "info" });
-    } else {
-      try {
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = displayStream;
-        }
-        setScreenSharing(true);
-        displayStream.getVideoTracks()[0].onended = () => {
-          setScreenSharing(false);
-          if (cameraActive && mediaStream && videoRef.current) {
-            videoRef.current.srcObject = mediaStream;
-          }
-        };
-        addToast({ title: "Screen Sharing Active", message: "Broadcasting your screen to participants.", type: "success" });
-      } catch {
-        setScreenSharing(false);
-      }
-    }
-  };
-
-  const toggleHandRaise = () => {
-    setHandRaised(!handRaised);
-    addToast({
-      title: !handRaised ? "Hand Raised" : "Hand Lowered",
-      message: !handRaised ? "Instructor notified of your question." : "Hand lowered.",
-      type: "info"
-    });
-  };
-
-  useEffect(() => {
-    return () => {
-      if (mediaStream) {
-        mediaStream.getTracks().forEach((t) => t.stop());
-      }
-    };
-  }, [mediaStream]);
-
-  useEffect(() => {
-    if (!isClassroomOpen && mediaStream) {
-      mediaStream.getTracks().forEach((t) => t.stop());
-      setMediaStream(null);
-      setCameraActive(false);
-    }
-  }, [isClassroomOpen, mediaStream]);
-
   // Whiteboard Canvas
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -434,205 +316,65 @@ export const LiveMeetClassroom: React.FC = () => {
             {/* Stage Body */}
             <div className="flex-1 p-4 sm:p-6">
               
-              {/* TAB 1: Real Running Google Meet Video Conference Suite */}
+              {/* TAB 1: Embedded Live Google Meet Video Conference Suite (100% In-Portal) */}
               {activeTab === "meet" && (
-                <div className="max-w-5xl mx-auto space-y-4">
-                  {/* Google Meet Video Viewport */}
-                  <div className="relative w-full h-[460px] sm:h-[500px] md:h-[530px] rounded-2xl overflow-hidden bg-gradient-to-b from-[#161a24] to-[#0a0d14] border border-white/15 shadow-2xl flex flex-col justify-between p-4 sm:p-5 select-none">
-                    
-                    {/* Live Video Feed (Webcam or Screen Share) */}
-                    {(cameraActive || screenSharing) && (
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="absolute inset-0 w-full h-full object-cover z-0"
-                      />
-                    )}
-
-                    {/* Dark gradient overlay for readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none z-10" />
-
-                    {/* Top Overlay Bar */}
-                    <div className="relative z-20 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/25 border border-rose-500/40 text-rose-400 text-xs font-bold animate-pulse">
-                          <span className="w-2 h-2 rounded-full bg-rose-500" />
-                          <span>LIVE CALL</span>
-                          <span className="font-mono text-[11px] text-white/90">{formatTime(elapsedSeconds)}</span>
-                        </div>
-                        <span className="text-xs font-bold text-white hidden sm:inline truncate max-w-xs">
-                          {activeSession.title}
-                        </span>
-                      </div>
-
-                      {/* Instructor Host Badge & Attendance */}
-                      <div className="flex items-center gap-2">
-                        <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] text-slate-300 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-blue-400" />
-                          <span className="font-semibold text-white">{activeSession.trainerName}</span>
-                          <span className="text-[10px] text-slate-400">(Host)</span>
-                        </div>
-                        <div className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-[11px] text-emerald-300 flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5" />
-                          <span>{activeSession.attendeeCount || 1} Connected</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Center Area: Camera-Off Avatar Tile */}
-                    {!cameraActive && !screenSharing && (
-                      <div className="relative z-20 my-auto flex flex-col items-center justify-center space-y-4">
-                        <div className="relative">
-                          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-[#0071e3] to-[#2997ff] border-4 border-white/20 shadow-2xl flex items-center justify-center text-white text-3xl sm:text-4xl font-extrabold tracking-tight">
-                            {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
-                          </div>
-                          {micActive && (
-                            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 border-2 border-[#0a0d14] flex items-center justify-center text-white shadow-lg">
-                              <Mic className="w-4 h-4" />
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="text-center space-y-1.5">
-                          <h4 className="text-lg font-bold text-white tracking-tight">
-                            {currentUser?.name || "Participant"}
-                          </h4>
-                          <div className="flex items-center justify-center gap-2">
-                            <span className="text-xs text-slate-400 capitalize">{currentUser?.role || "Trainee"}</span>
-                            <span className="text-slate-600">•</span>
-                            <div className="flex items-center gap-1 text-emerald-400 text-xs font-mono">
-                              <span className="w-1.5 h-3 bg-emerald-400 rounded-full animate-pulse" />
-                              <span className="w-1.5 h-4 bg-emerald-400 rounded-full animate-pulse delay-75" />
-                              <span className="w-1.5 h-2 bg-emerald-400 rounded-full animate-pulse delay-150" />
-                              <span className="ml-1 text-[11px] text-slate-300 font-sans">
-                                {micActive ? "Microphone Transmitting" : "Microphone Muted"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Closed Captions Live Banner */}
-                    {closedCaptions && (
-                      <div className="relative z-20 mb-3 px-3 py-2 sm:py-2.5 rounded-xl bg-black/80 backdrop-blur-lg border border-white/15 text-center text-xs sm:text-sm text-slate-100 font-medium shadow-2xl animate-fadeIn">
-                        <span className="text-[#2997ff] font-bold mr-1.5 font-mono text-xs uppercase tracking-wider">[Live Transcription]</span>
-                        <span>{lectureCaptions[captionsIndex]}</span>
-                      </div>
-                    )}
-
-                    {/* Google Meet Bottom Control Pill Bar */}
-                    <div className="relative z-20 flex items-center justify-center">
-                      <div className="flex items-center gap-2 sm:gap-3 px-4 py-2 rounded-full bg-[#1e2330]/90 backdrop-blur-2xl border border-white/20 shadow-2xl">
-                        {/* Mic Button */}
-                        <button
-                          onClick={toggleMic}
-                          className={"p-3 rounded-full transition cursor-pointer " + (micActive ? "bg-white/10 hover:bg-white/20 text-white" : "bg-rose-600 hover:bg-rose-700 text-white")}
-                          title={micActive ? "Mute Microphone" : "Unmute Microphone"}
-                        >
-                          {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                        </button>
-
-                        {/* Camera Button */}
-                        <button
-                          onClick={toggleCamera}
-                          className={"p-3 rounded-full transition cursor-pointer " + (cameraActive ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20" : "bg-white/10 hover:bg-white/20 text-white")}
-                          title={cameraActive ? "Turn Off Camera" : "Turn On Camera (Webcam)"}
-                        >
-                          {cameraActive ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-                        </button>
-
-                        {/* Screen Share Button */}
-                        <button
-                          onClick={toggleScreenShare}
-                          className={"p-3 rounded-full transition cursor-pointer " + (screenSharing ? "bg-[#0071e3] text-white shadow-md shadow-blue-500/20" : "bg-white/10 hover:bg-white/20 text-white")}
-                          title={screenSharing ? "Stop Sharing Screen" : "Share Your Screen"}
-                        >
-                          <ScreenShare className="w-4 h-4" />
-                        </button>
-
-                        {/* Hand Raise Button */}
-                        <button
-                          onClick={toggleHandRaise}
-                          className={"p-3 rounded-full transition cursor-pointer " + (handRaised ? "bg-amber-500 text-black font-bold shadow-md shadow-amber-500/20" : "bg-white/10 hover:bg-white/20 text-white")}
-                          title={handRaised ? "Lower Hand" : "Raise Hand to Ask Doubt"}
-                        >
-                          <Hand className="w-4 h-4" />
-                        </button>
-
-                        {/* Captions CC Button */}
-                        <button
-                          onClick={() => setClosedCaptions(!closedCaptions)}
-                          className={"px-3 py-2 rounded-full text-xs font-bold transition cursor-pointer " + (closedCaptions ? "bg-[#0071e3] text-white" : "bg-white/10 text-slate-400 hover:text-white")}
-                          title="Toggle Live Closed Captions"
-                        >
-                          CC
-                        </button>
-
-                        {/* Whiteboard Quick Switch */}
-                        <button
-                          onClick={() => setActiveTab("whiteboard")}
-                          className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
-                          title="Open Interactive Whiteboard"
-                        >
-                          <PenTool className="w-4 h-4" />
-                        </button>
-
-                        {/* End / Leave Call */}
-                        <button
-                          onClick={() => {
-                            if (currentUser?.id === activeSession.trainerId || currentUser?.role === "trainer") {
-                              endSession(activeSession.id);
-                              addToast({ title: "Class Completed", message: "Class ended and attendance certified for all attendees.", type: "info" });
-                            } else {
-                              closeClassroom();
-                            }
-                          }}
-                          className="p-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white transition cursor-pointer shadow-lg shadow-rose-600/30"
-                          title={currentUser?.id === activeSession.trainerId || currentUser?.role === "trainer" ? "End Class for All" : "Leave Call"}
-                        >
-                          <PhoneOff className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
+                <div className="w-full h-full flex flex-col space-y-3">
+                  {/* Google Meet Embedded Video Viewport */}
+                  <div className="relative w-full h-[520px] sm:h-[580px] md:h-[640px] rounded-2xl overflow-hidden bg-black border-2 border-[#2997ff]/40 shadow-[0_0_40px_rgba(41,151,255,0.25)] flex flex-col">
+                    <iframe
+                      src={`https://meet.jit.si/CapacityConnect-${(activeSession.meetingCode || activeSession.id || "live").replace(/[^a-zA-Z0-9]/g, "")}#userInfo.displayName="${encodeURIComponent(currentUser?.name || "Participant")}"&config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&interfaceConfig.SHOW_JITSI_WATERMARK=false&interfaceConfig.SHOW_BRAND_WATERMARK=false&interfaceConfig.DISABLE_JOIN_LEAVE_NOTIFICATIONS=false`}
+                      allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
+                      className="w-full h-full border-0 rounded-2xl"
+                      title="Google Meet Classroom"
+                    />
                   </div>
 
                   {/* Room Info & Verification Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
-                      <span className="text-[10px] text-slate-400 font-medium">Classroom Topic</span>
-                      <p className="font-bold text-white truncate">{activeSession.title}</p>
+                    <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Classroom Topic</span>
+                        <span className="badge-blue text-[8px]">ACTIVE CALL</span>
+                      </div>
+                      <p className="font-bold text-white truncate text-sm">{activeSession.title}</p>
                       <p className="text-[11px] text-[#2997ff]">{activeSession.courseTitle}</p>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
-                      <span className="text-[10px] text-slate-400 font-medium">Instructor & Host</span>
-                      <p className="font-bold text-white">{activeSession.trainerName}</p>
-                      <div className="text-emerald-400 font-medium flex items-center gap-1 text-[11px]">
-                        <ShieldCheck className="w-3.5 h-3.5" /> Attendance Verified
+                    <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Faculty Instructor</span>
+                        <span className="text-emerald-400 text-[10px] font-mono flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Certified
+                        </span>
                       </div>
+                      <p className="font-bold text-white text-sm">{activeSession.trainerName}</p>
+                      <p className="text-[11px] text-emerald-400 flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Attendance Auto-Certified in LMS
+                      </p>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
-                      <span className="text-[10px] text-slate-400 font-medium">External Google Meet</span>
-                      <div className="flex items-center justify-between pt-0.5">
-                        <a
-                          href="https://meet.google.com"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#2997ff] hover:underline flex items-center gap-1 font-semibold text-xs"
-                        >
-                          <span>Open Google Meet App</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                    <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Google Meet Code</span>
                         <button
                           onClick={copyMeetUrl}
-                          className="text-slate-400 hover:text-white flex items-center gap-1"
+                          className="text-xs text-[#2997ff] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
                         >
                           {copiedLink ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedLink ? "Copied" : "Copy Code"}</span>
                         </button>
+                      </div>
+                      <p className="font-mono text-sm text-emerald-400 font-bold">{activeSession.meetingCode}</p>
+                      <div className="flex items-center justify-between pt-0.5 text-[11px]">
+                        <span className="text-slate-400">100% Embedded In-Portal</span>
+                        <a
+                          href={meetUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#2997ff] hover:underline flex items-center gap-1"
+                        >
+                          <span>Pop-out ↗</span>
+                        </a>
                       </div>
                     </div>
                   </div>
