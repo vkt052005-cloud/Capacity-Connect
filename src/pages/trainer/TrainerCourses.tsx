@@ -119,6 +119,12 @@ export const TrainerCourses: React.FC = () => {
     (c) => c.trainerId === trainerId || (currentUser?.name && c.trainerName === currentUser.name)
   );
 
+  // Available courses for attaching lessons/materials: instructor's authored courses, or all platform courses if admin/none authored yet
+  const selectableCourses =
+    currentUser?.role === "admin" || myCourses.length === 0
+      ? courses
+      : myCourses;
+
   // Request admin verification handler
   const handleRequestVerification = () => {
     if (verificationRequested) return;
@@ -172,7 +178,7 @@ export const TrainerCourses: React.FC = () => {
       return;
     }
 
-    if (myCourses.length === 0) {
+    if (selectableCourses.length === 0) {
       addToast({
         title: "Create a Course First",
         message: "You must create at least one course before attaching video lessons.",
@@ -182,7 +188,7 @@ export const TrainerCourses: React.FC = () => {
       return;
     }
 
-    const initialId = preselectedCourseId || myCourses[0]?.id || "";
+    const initialId = preselectedCourseId || selectableCourses[0]?.id || "";
     setTargetCourseId(initialId);
 
     const targetCourse = courses.find((c) => c.id === initialId);
@@ -890,21 +896,44 @@ export const TrainerCourses: React.FC = () => {
             <form onSubmit={handleUploadVideoLesson} className="space-y-3.5 text-xs">
               {/* Target Course */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Target Course Curriculum <span className="text-rose-400">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Target Course Curriculum <span className="text-rose-400">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowVideoModal(false);
+                      setShowAddModal(true);
+                    }}
+                    className="text-[11px] text-[#2997ff] hover:underline font-semibold cursor-pointer"
+                  >
+                    + Create New Course
+                  </button>
+                </div>
                 <select
                   required
                   value={targetCourseId}
                   onChange={(e) => setTargetCourseId(e.target.value)}
-                  className="apple-input text-xs w-full cursor-pointer"
+                  className="apple-input text-xs w-full cursor-pointer bg-slate-900 text-white"
                 >
-                  {myCourses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title} ({c.lessons?.length || 0} existing lessons)
+                  {selectableCourses.length === 0 ? (
+                    <option value="" disabled>
+                      No courses available — click "Create New Course" first
                     </option>
-                  ))}
+                  ) : (
+                    selectableCourses.map((c) => (
+                      <option key={c.id} value={c.id} className="bg-slate-900 text-white">
+                        {c.title} ({c.lessons?.length || 0} existing lessons • {c.trainerName})
+                      </option>
+                    ))
+                  )}
                 </select>
+                {selectableCourses.length === 0 && (
+                  <p className="text-[11px] text-amber-400 mt-1">
+                    No courses found yet. Please create a curriculum first to attach lessons.
+                  </p>
+                )}
               </div>
 
               {/* Lesson Title & Duration */}
@@ -1468,20 +1497,38 @@ export const TrainerCourses: React.FC = () => {
 
             <form onSubmit={handleUploadStudyMaterial} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Target Course <span className="text-rose-400">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Target Course <span className="text-rose-400">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowStudyMaterialModal(false);
+                      setShowAddModal(true);
+                    }}
+                    className="text-[11px] text-emerald-400 hover:underline font-semibold cursor-pointer"
+                  >
+                    + Create New Course
+                  </button>
+                </div>
                 <select
                   required
                   value={studyMaterialCourseId}
                   onChange={(e) => setStudyMaterialCourseId(e.target.value)}
-                  className="apple-input text-xs w-full cursor-pointer"
+                  className="apple-input text-xs w-full cursor-pointer bg-slate-900 text-white"
                 >
-                  {myCourses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
+                  {selectableCourses.length === 0 ? (
+                    <option value="" disabled>
+                      No courses available — click "Create New Course" first
                     </option>
-                  ))}
+                  ) : (
+                    selectableCourses.map((c) => (
+                      <option key={c.id} value={c.id} className="bg-slate-900 text-white">
+                        {c.title} • {c.trainerName}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
