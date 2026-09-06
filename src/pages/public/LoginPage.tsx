@@ -463,11 +463,26 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {role !== "admin" && (
-          <div className="text-center text-xs text-slate-400">
-            <span>New user? </span>
-            <Link to="/register" className="text-[#2997ff] font-bold hover:underline">
-              Register for a new account →
-            </Link>
+          <div className="text-center text-xs text-slate-400 space-y-1">
+            <div>
+              <span>New user? </span>
+              <Link to="/register" className="text-[#2997ff] font-bold hover:underline">
+                Register for a new account →
+              </Link>
+            </div>
+            <div>
+              <span>Trouble signing in? </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setRecoveryInitialTab("recover_id");
+                  setResetModalOpen(true);
+                }}
+                className="text-slate-400 hover:text-[#2997ff] hover:underline font-medium cursor-pointer"
+              >
+                Recover Login ID or Reset Password →
+              </button>
+            </div>
           </div>
         )}
       </div>
