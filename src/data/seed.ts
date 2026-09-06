@@ -2329,7 +2329,9 @@ export const STORAGE_KEYS = {
   BADGES: "cc_badges",
   AUDIT_LOGS: "cc_audit_logs",
   REMOVED_USERS: "cc_removed_users",
-  DELETED_COURSES: "cc_deleted_courses"
+  DELETED_COURSES: "cc_deleted_courses",
+  SESSION_ATTENDANCE: "cc_session_attendance",
+  LESSON_ATTENDANCE: "cc_lesson_attendance"
 };
 
 export function getFromStorage<T>(key: string): T[] {

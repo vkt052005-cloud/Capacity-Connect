@@ -1,154 +1,206 @@
--- ==============================================================================
--- CAPACITY CONNECT LEARNING MANAGEMENT PORTAL
--- Complete Production PostgreSQL Database Schema for Supabase
--- Run this in your Supabase SQL Editor: https://supabase.com/dashboard/project/osahxrfvcuxymkktrbwl/sql
--- ==============================================================================
+-- ============================================================
+-- Capacity Connect — Full Supabase Schema
+-- Run this in Supabase Dashboard → SQL Editor → Run
+-- ============================================================
 
--- 1. Users Table
-CREATE TABLE IF NOT EXISTS public.users (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('trainee', 'trainer', 'admin')),
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('pending', 'active', 'inactive', 'suspended')),
-  is_verified_by_admin BOOLEAN DEFAULT FALSE,
-  trainee_profile JSONB,
-  trainer_profile JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+-- Enable UUID extension
+create extension if not exists "uuid-ossp";
+
+-- ─── Core Tables ─────────────────────────────────────────────
+
+create table if not exists users (
+  id text primary key,
+  name text not null,
+  email text unique not null,
+  password text,
+  role text not null default 'trainee',
+  status text not null default 'pending',
+  created_at timestamptz default now(),
+  phone text,
+  department text,
+  designation text,
+  is_verified_by_admin boolean default false,
+  trainee_profile jsonb,
+  trainer_profile jsonb,
+  removed_at timestamptz,
+  removed_by text,
+  removal_reason text
 );
 
--- 2. Courses Table
-CREATE TABLE IF NOT EXISTS public.courses (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  trainer_id TEXT,
-  trainer_name TEXT,
-  category TEXT,
-  level TEXT,
-  duration TEXT,
-  thumbnail TEXT,
-  video_url TEXT,
-  lessons JSONB DEFAULT '[]'::jsonb,
-  modules JSONB DEFAULT '[]'::jsonb,
-  resources JSONB DEFAULT '[]'::jsonb,
-  tags JSONB DEFAULT '[]'::jsonb,
-  syllabus JSONB DEFAULT '[]'::jsonb,
-  prerequisites JSONB DEFAULT '[]'::jsonb,
-  status TEXT DEFAULT 'active',
-  rating NUMERIC(3, 2) DEFAULT 0,
-  total_ratings INT DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists courses (
+  id text primary key,
+  title text not null,
+  description text,
+  trainer_id text,
+  trainer_name text,
+  category text,
+  thumbnail text,
+  duration text,
+  level text,
+  status text default 'active',
+  created_at timestamptz default now(),
+  resources jsonb default '[]',
+  tags jsonb default '[]',
+  rating numeric default 0,
+  total_ratings integer default 0,
+  syllabus jsonb,
+  prerequisites jsonb,
+  lessons jsonb default '[]',
+  modules jsonb
 );
 
--- 3. Enrollments Table
-CREATE TABLE IF NOT EXISTS public.enrollments (
-  id TEXT PRIMARY KEY,
-  trainee_id TEXT NOT NULL,
-  course_id TEXT NOT NULL,
-  progress INT DEFAULT 0,
-  enrolled_at TIMESTAMPTZ DEFAULT NOW(),
-  completed_at TIMESTAMPTZ
+create table if not exists enrollments (
+  id text primary key,
+  trainee_id text not null,
+  course_id text not null,
+  enrolled_at timestamptz default now(),
+  progress integer default 0,
+  completed_at timestamptz,
+  feedback_id text
 );
 
--- 4. Course Feedbacks & Authentic Student Ratings Table
-CREATE TABLE IF NOT EXISTS public.feedbacks (
-  id TEXT PRIMARY KEY,
-  trainee_id TEXT NOT NULL,
-  trainee_name TEXT NOT NULL,
-  course_id TEXT NOT NULL,
-  course_title TEXT NOT NULL,
-  trainer_id TEXT,
-  trainer_name TEXT,
-  rating NUMERIC(2, 1) NOT NULL,
-  comment TEXT NOT NULL,
-  tags JSONB DEFAULT '[]'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists feedbacks (
+  id text primary key,
+  trainee_id text not null,
+  trainee_name text,
+  course_id text not null,
+  course_title text,
+  trainer_id text,
+  trainer_name text,
+  rating numeric not null,
+  comment text,
+  created_at timestamptz default now(),
+  tags jsonb
 );
 
--- 5. Certificates Table
-CREATE TABLE IF NOT EXISTS public.certificates (
-  id TEXT PRIMARY KEY,
-  trainee_id TEXT NOT NULL,
-  trainee_name TEXT NOT NULL,
-  course_id TEXT NOT NULL,
-  course_title TEXT NOT NULL,
-  trainer_name TEXT NOT NULL,
-  certificate_hash TEXT UNIQUE NOT NULL,
-  grade TEXT,
-  verification_url TEXT,
-  issued_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists certificates (
+  id text primary key,
+  trainee_id text not null,
+  trainee_name text,
+  course_id text not null,
+  course_title text,
+  trainer_name text,
+  issued_at timestamptz default now(),
+  certificate_hash text,
+  grade text,
+  verification_url text
 );
 
--- 6. Live Sessions Table (Google Meet Integration)
-CREATE TABLE IF NOT EXISTS public.live_sessions (
-  id TEXT PRIMARY KEY,
-  course_id TEXT,
-  course_title TEXT NOT NULL,
-  trainer_id TEXT NOT NULL,
-  trainer_name TEXT NOT NULL,
-  title TEXT NOT NULL,
-  description TEXT,
-  scheduled_at TIMESTAMPTZ DEFAULT NOW(),
-  duration_minutes INT DEFAULT 60,
-  google_meet_url TEXT,
-  meeting_code TEXT,
-  join_url TEXT,
-  calendar_url TEXT,
-  platform TEXT DEFAULT 'google-meet',
-  status TEXT DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'live', 'completed', 'cancelled')),
-  attendee_count INT DEFAULT 0,
-  attendees JSONB DEFAULT '[]'::jsonb,
-  is_instant BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists live_sessions (
+  id text primary key,
+  course_id text,
+  course_title text,
+  trainer_id text not null,
+  trainer_name text,
+  title text not null,
+  description text,
+  scheduled_at timestamptz,
+  duration_minutes integer default 60,
+  google_meet_url text,
+  meeting_code text,
+  join_url text,
+  platform text default 'google-meet',
+  status text default 'upcoming',
+  attendee_count integer default 0,
+  attendees jsonb default '[]',
+  calendar_url text,
+  is_instant boolean default false
 );
 
--- 7. Row-Level Security (RLS) Enablement & Open Access Policies
--- Enable RLS on all tables
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.enrollments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.feedbacks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.live_sessions ENABLE ROW LEVEL SECURITY;
+create table if not exists assessments (
+  id text primary key,
+  course_id text not null,
+  course_title text,
+  title text not null,
+  description text,
+  deadline timestamptz,
+  duration_minutes integer,
+  questions jsonb default '[]',
+  created_by text,
+  created_at timestamptz default now(),
+  passing_score numeric default 70
+);
 
--- Drop any previous restrictive policies if they exist
-DROP POLICY IF EXISTS "Public Access Users" ON public.users;
-DROP POLICY IF EXISTS "Public Access Courses" ON public.courses;
-DROP POLICY IF EXISTS "Public Access Enrollments" ON public.enrollments;
-DROP POLICY IF EXISTS "Public Access Feedbacks" ON public.feedbacks;
-DROP POLICY IF EXISTS "Public Access Certificates" ON public.certificates;
-DROP POLICY IF EXISTS "Public Access LiveSessions" ON public.live_sessions;
+create table if not exists notifications (
+  id text primary key,
+  type text not null,
+  title text not null,
+  content text,
+  created_at timestamptz default now(),
+  pinned boolean default false,
+  author text,
+  link text
+);
 
--- Create full read/write policies for the anon API key
-CREATE POLICY "Public Access Users" ON public.users FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public Access Courses" ON public.courses FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public Access Enrollments" ON public.enrollments FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public Access Feedbacks" ON public.feedbacks FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public Access Certificates" ON public.certificates FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public Access LiveSessions" ON public.live_sessions FOR ALL USING (true) WITH CHECK (true);
+create table if not exists audit_logs (
+  id text primary key,
+  timestamp timestamptz default now(),
+  actor text,
+  role text,
+  action text,
+  target text,
+  status text,
+  ip_address text
+);
 
--- 8. Enable Realtime Replication Publication
-DROP PUBLICATION IF EXISTS supabase_realtime;
-CREATE PUBLICATION supabase_realtime FOR TABLE 
-  public.users, 
-  public.courses, 
-  public.enrollments, 
-  public.feedbacks, 
-  public.certificates, 
-  public.live_sessions;
+-- ─── Attendance Tables (NEW) ──────────────────────────────────
 
--- 9. Seed Official Verified Accounts
-INSERT INTO public.users (id, name, email, password, role, status, is_verified_by_admin)
-VALUES
-  ('u-admin-official', 'Capacity Connect Admin', 'vkt052005@gmail.com', 'SRNNv@2005', 'admin', 'active', true),
-  ('u-trainer-official', 'Raj Tiwari', 'tiwariraj052005@gmail.com', 'SRNNv@2005', 'trainer', 'active', true),
-  ('u-trainer-codewithharry', 'CodeWithHarry (Haris Khan)', 'codewithharry@gmail.com', 'SRNNv@2005', 'trainer', 'active', true),
-  ('u-trainee-official', 'Madhav Kumar', 't2005madhav@gmail.com', 'SRNNv@2005', 'trainee', 'active', false)
-ON CONFLICT (email) DO UPDATE SET
-  name = EXCLUDED.name,
-  password = EXCLUDED.password,
-  status = EXCLUDED.status,
-  is_verified_by_admin = EXCLUDED.is_verified_by_admin;
+create table if not exists session_attendance (
+  id text primary key,
+  session_id text not null,
+  session_title text,
+  course_id text,
+  course_title text,
+  trainee_id text not null,
+  trainee_name text,
+  trainer_id text,
+  trainer_name text,
+  joined_at timestamptz default now(),
+  left_at timestamptz,
+  duration_minutes integer default 0,
+  status text default 'present'
+);
+
+create table if not exists lesson_attendance (
+  id text primary key,
+  course_id text not null,
+  course_title text,
+  lesson_id text not null,
+  lesson_title text,
+  trainee_id text not null,
+  trainee_name text,
+  trainer_id text,
+  trainer_name text,
+  watched_at timestamptz default now(),
+  watch_duration_seconds integer default 0,
+  completion_percent integer default 0,
+  status text default 'partial'
+);
+
+-- ─── Row Level Security (open policy for anon key) ───────────
+
+alter table users enable row level security;
+alter table courses enable row level security;
+alter table enrollments enable row level security;
+alter table feedbacks enable row level security;
+alter table certificates enable row level security;
+alter table live_sessions enable row level security;
+alter table assessments enable row level security;
+alter table notifications enable row level security;
+alter table audit_logs enable row level security;
+alter table session_attendance enable row level security;
+alter table lesson_attendance enable row level security;
+
+-- Allow all operations for anon and authenticated roles
+do $$
+declare
+  t text;
+begin
+  foreach t in array array[
+    'users','courses','enrollments','feedbacks','certificates',
+    'live_sessions','assessments','notifications','audit_logs',
+    'session_attendance','lesson_attendance'
+  ] loop
+    execute format('create policy if not exists "allow_all_%s" on %s for all to anon, authenticated using (true) with check (true)', t, t);
+  end loop;
+end $$;

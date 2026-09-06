@@ -202,6 +202,43 @@ export interface LiveSession {
   isInstant?: boolean;
 }
 
+// ─── Attendance Types ────────────────────────────────────────────────────────
+export type AttendanceStatus = "present" | "late" | "absent";
+export type LessonWatchStatus = "watched" | "partial" | "skipped";
+
+export interface SessionAttendance {
+  id: string;
+  sessionId: string;
+  sessionTitle: string;
+  courseId: string;
+  courseTitle: string;
+  traineeId: string;
+  traineeName: string;
+  trainerId: string;
+  trainerName: string;
+  joinedAt: string;
+  leftAt?: string;
+  durationMinutes: number;
+  status: AttendanceStatus;
+}
+
+export interface LessonAttendance {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+  traineeId: string;
+  traineeName: string;
+  trainerId: string;
+  trainerName: string;
+  watchedAt: string;
+  watchDurationSeconds: number;
+  completionPercent: number;
+  status: LessonWatchStatus;
+}
+
+
 // ─── Assessment & Proctoring Types ──────────────────────────────────────────
 export interface Option {
   id: string;

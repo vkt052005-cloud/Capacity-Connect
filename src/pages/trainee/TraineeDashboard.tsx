@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   BookOpen, Award, Video, CheckCircle2,
   Clock, ArrowRight, Play, Radio,
-  ExternalLink, Copy, Check, Calendar, Sparkles, ShieldCheck
+  ExternalLink, Copy, Check, Calendar, Sparkles, ShieldCheck, BarChart2
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useAuthStore } from "../../store/authStore";
@@ -14,6 +14,7 @@ import { useAssessmentsStore } from "../../store/assessmentsStore";
 import { useAppStore } from "../../store/appStore";
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
 import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment";
+import { useAttendanceStore } from "../../store/attendanceStore";
 
 export const TraineeDashboard: React.FC = () => {
   const { currentUser } = useAuthStore();
@@ -21,6 +22,7 @@ export const TraineeDashboard: React.FC = () => {
   const { assessments, attempts } = useAssessmentsStore();
   const { openClassroom, sessions, launchGoogleMeet, joinByMeetUrlOrCode } = useLiveSessionsStore();
   const { addToast } = useAppStore();
+  const { getTraineeSessionAttendance, getTraineeLessonAttendance } = useAttendanceStore();
   const navigate = useNavigate();
 
   const [quickMeetInput, setQuickMeetInput] = useState("");
@@ -47,6 +49,21 @@ export const TraineeDashboard: React.FC = () => {
     (s) => s.status === "upcoming" && isStudentEnrolledInTeacherCourse(traineeId, s, courses, enrollments)
   );
   const activeLiveSession = liveSession || upcomingSession;
+
+  // Attendance stats
+  const mySessionAttendance = getTraineeSessionAttendance(traineeId);
+  const myLessonAttendance = getTraineeLessonAttendance(traineeId);
+  const totalLessons = enrolledCourses.reduce((acc, c) => acc + (c.lessons?.length || 0), 0);
+  const totalSessions = sessions.filter((s) =>
+    isStudentEnrolledInTeacherCourse(traineeId, s, courses, enrollments)
+  ).length;
+  const sessionsAttended = mySessionAttendance.length;
+  const lessonsWatched = myLessonAttendance.filter((a) => a.status === "watched").length;
+  const totalPossible = totalSessions + totalLessons;
+  const attendancePercent = totalPossible > 0
+    ? Math.round(((sessionsAttended + lessonsWatched) / totalPossible) * 100)
+    : 0;
+  const attendanceColor = attendancePercent >= 75 ? "text-emerald-400" : attendancePercent >= 50 ? "text-amber-400" : "text-rose-400";
 
   const handleJoinGoogleMeet = (session: typeof activeLiveSession) => {
     if (!session) return;
@@ -125,8 +142,45 @@ export const TraineeDashboard: React.FC = () => {
                 </div>
                 <span className="text-[10px] text-slate-400">Certificates</span>
               </div>
+
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-white/[0.04] border border-white/10 text-center min-w-[75px] sm:min-w-[85px]">
+                <div className={`flex items-center justify-center gap-1 font-bold text-sm sm:text-base ${attendanceColor}`}>
+                  <BarChart2 className="w-4 h-4" />
+                  <span>{attendancePercent}%</span>
+                </div>
+                <span className="text-[10px] text-slate-400">Attendance</span>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* ─── ATTENDANCE OVERVIEW CARD ─── */}
+        <div className="glass-card p-4 border border-white/10">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center">
+                <BarChart2 className="w-4 h-4 text-indigo-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">My Attendance</h3>
+                <p className="text-[10px] text-slate-400">Live sessions + video lessons combined</p>
+              </div>
+            </div>
+            <div className={`text-2xl font-black ${attendanceColor}`}>{attendancePercent}%</div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="text-xs text-slate-400 mb-0.5">Live Classes Attended</div>
+              <div className="text-sm font-bold text-white">{sessionsAttended} <span className="text-[10px] text-slate-500 font-normal">/ {totalSessions} scheduled</span></div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="text-xs text-slate-400 mb-0.5">Lessons Watched (≥80%)</div>
+              <div className="text-sm font-bold text-white">{lessonsWatched} <span className="text-[10px] text-slate-500 font-normal">/ {totalLessons} total</span></div>
+            </div>
+          </div>
+          {totalPossible === 0 && (
+            <p className="text-[10px] text-slate-500 mt-2 text-center">Enroll in courses and attend live sessions to track your attendance.</p>
+          )}
         </div>
 
         {/* ─── LIVE GOOGLE MEET ALERT BANNER (If a class is currently Live) ─── */}

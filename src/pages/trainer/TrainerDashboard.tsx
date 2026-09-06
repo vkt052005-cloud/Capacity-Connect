@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   BookOpen, Users, Award, Video, Plus, CheckSquare,
   BarChart3, Sparkles, FolderOpen, Calendar, Clock, Radio,
-  ExternalLink, X, ShieldCheck, ShieldAlert
+  ExternalLink, X, ShieldCheck, ShieldAlert, BarChart2
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useAuthStore } from "../../store/authStore";
@@ -11,6 +11,7 @@ import { useCoursesStore } from "../../store/coursesStore";
 import { useAssessmentsStore } from "../../store/assessmentsStore";
 import { useAppStore } from "../../store/appStore";
 import { useLiveSessionsStore, formatGoogleMeet } from "../../store/liveSessionsStore";
+import { useAttendanceStore } from "../../store/attendanceStore";
 import { LiveSession } from "../../types";
 import { STANDARD_SUBJECTS, getSubjectById } from "../../data/subjects";
 
@@ -28,9 +29,12 @@ export const TrainerDashboard: React.FC = () => {
     updateSessionMeetUrl
   } = useLiveSessionsStore();
   const { addToast } = useAppStore();
+  const { getTrainerSessionSummary } = useAttendanceStore();
   const trainerId = currentUser?.id || "";
   const myCourses = courses.filter((c) => c.trainerId === trainerId || (currentUser?.name && c.trainerName === currentUser.name));
   const mySessions = sessions.filter((s) => s.trainerId === trainerId || s.trainerName === currentUser?.name);
+  const myAttendanceSummary = getTrainerSessionSummary(trainerId);
+  const totalStudentsAttended = myAttendanceSummary.reduce((sum, s) => sum + s.count, 0);
 
   const isVerifiedTrainer = Boolean(
     currentUser?.role === "admin" ||
@@ -256,6 +260,37 @@ export const TrainerDashboard: React.FC = () => {
               )}
             </Link>
           </div>
+        </div>
+
+        {/* Attendance Summary Card */}
+        <div className="glass-card p-4 border border-white/10">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center">
+                <BarChart2 className="w-4 h-4 text-indigo-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">Class Attendance Summary</h3>
+                <p className="text-[10px] text-slate-400">Trainees who joined your live sessions</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xl font-black text-indigo-400">{totalStudentsAttended}</div>
+              <div className="text-[10px] text-slate-500">Total Joins</div>
+            </div>
+          </div>
+          {myAttendanceSummary.length > 0 ? (
+            <div className="space-y-1.5 max-h-36 overflow-y-auto">
+              {myAttendanceSummary.slice(0, 5).map((s) => (
+                <div key={s.sessionId} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <span className="text-xs text-slate-300 truncate max-w-[70%]">{s.sessionTitle}</span>
+                  <span className="text-xs font-bold text-indigo-300 shrink-0">{s.count} joined</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[10px] text-slate-500 text-center py-2">No attendance data yet. Attendance is recorded when trainees join your live sessions.</p>
+          )}
         </div>
 
         {/* Live Google Meet Classes Hub */}

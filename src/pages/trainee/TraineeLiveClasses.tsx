@@ -11,12 +11,14 @@ import { useCoursesStore } from "../../store/coursesStore";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment";
+import { useAttendanceStore } from "../../store/attendanceStore";
 
 export const TraineeLiveClasses: React.FC = () => {
   const { sessions, openClassroom, findSessionByCode, launchGoogleMeet, deleteSession, clearCompletedSessions } = useLiveSessionsStore();
   const { courses, enrollments } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
+  const { markSessionAttendance } = useAttendanceStore();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +29,17 @@ export const TraineeLiveClasses: React.FC = () => {
   const traineeId = currentUser?.id || "";
 
   const handleJoinSession = (session: typeof sessions[0]) => {
+    // Mark attendance
+    if (currentUser) {
+      markSessionAttendance(currentUser.id, currentUser.name, {
+        id: session.id,
+        title: session.title,
+        courseId: session.courseId,
+        courseTitle: session.courseTitle,
+        trainerId: session.trainerId,
+        trainerName: session.trainerName,
+      });
+    }
     launchGoogleMeet(session.id, traineeId, currentUser?.name, true);
     addToast({
       title: "Opening Google Meet Room",

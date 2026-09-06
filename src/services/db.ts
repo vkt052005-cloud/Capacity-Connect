@@ -14,6 +14,8 @@ const COLLECTION_STORAGE_MAP: Record<string, string> = {
   audit_logs: STORAGE_KEYS.AUDIT_LOGS,
   assessments: STORAGE_KEYS.ASSESSMENTS,
   notifications: STORAGE_KEYS.NOTIFICATIONS,
+  session_attendance: STORAGE_KEYS.SESSION_ATTENDANCE,
+  lesson_attendance: STORAGE_KEYS.LESSON_ATTENDANCE,
 };
 
 class DatabaseService {
