@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { LiveSession } from "../types";
 import { STORAGE_KEYS, getFromStorage, saveToStorage, initialLiveSessions } from "../data/seed";
+import { dbService } from "../services/db";
 
 // Helper to generate a genuine 3-4-3 Google Meet room code e.g. "abc-defg-hij"
 export const generateMeetCode = (): string => {
@@ -64,7 +65,9 @@ interface LiveSessionsState {
   sessions: LiveSession[];
   activeSession: LiveSession | null;
   isClassroomOpen: boolean;
+  isSubscribed: boolean;
   load: () => void;
+  initSubscription: () => void;
   deleteSession: (id: string) => void;
   clearCompletedSessions: () => void;
   scheduleSession: (data: Omit<LiveSession, "id" | "attendeeCount" | "attendees">) => LiveSession;
@@ -89,33 +92,63 @@ interface LiveSessionsState {
   joinByMeetUrlOrCode: (input: string, userId?: string, userName?: string) => { session: LiveSession | null; targetUrl: string };
 }
 
+const sanitizeLiveSessions = (sessions: LiveSession[]): LiveSession[] => {
+  return (sessions || []).filter(
+    (s) =>
+      s &&
+      s.id !== "live-01" &&
+      s.id !== "live-02" &&
+      s.id !== "live-03" &&
+      s.trainerName !== "Dr. Marcus Vance" &&
+      s.zoomMeetingId !== "982-4512-8874" &&
+      !s.meetingCode?.includes("xxx-yyyy-zzz") &&
+      s.meetingCode !== "meet.google.com/new" &&
+      !(s.status === "completed" && s.title?.includes("Data Structures & Algorithms (DSA) Problem Solving"))
+  );
+};
+
 export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
   sessions: [],
   activeSession: null,
   isClassroomOpen: false,
+  isSubscribed: false,
+
+  initSubscription: () => {
+    if (get().isSubscribed) return;
+    set({ isSubscribed: true });
+
+    dbService.subscribe("live_sessions", async () => {
+      try {
+        const cloudSessions = await dbService.getAll<LiveSession>("live_sessions");
+        if (cloudSessions && cloudSessions.length > 0) {
+          const cleaned = sanitizeLiveSessions(cloudSessions);
+          saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, cleaned);
+          set({ sessions: cleaned });
+        }
+      } catch (e) {}
+    });
+  },
 
   load: () => {
     let saved = getFromStorage<LiveSession>(STORAGE_KEYS.LIVE_SESSIONS);
-    // Purge any legacy mock / fake sessions ("Dr. Marcus Vance", "live-01", "xxx-yyyy-zzz", etc.)
-    // and purge repetitive mock completed sessions from past runs
     if (saved && saved.length > 0) {
-      saved = saved.filter(
-        (s) =>
-          s.id !== "live-01" &&
-          s.id !== "live-02" &&
-          s.id !== "live-03" &&
-          s.trainerName !== "Dr. Marcus Vance" &&
-          s.zoomMeetingId !== "982-4512-8874" &&
-          !s.meetingCode?.includes("xxx-yyyy-zzz") &&
-          s.meetingCode !== "meet.google.com/new" &&
-          !(s.status === "completed" && s.title?.includes("Data Structures & Algorithms (DSA) Problem Solving"))
-      );
+      saved = sanitizeLiveSessions(saved);
       saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
     } else {
       saved = initialLiveSessions;
       saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
     }
     set({ sessions: saved });
+
+    get().initSubscription();
+
+    dbService.getAll<LiveSession>("live_sessions").then((cloud) => {
+      if (cloud && cloud.length > 0) {
+        const cleaned = sanitizeLiveSessions(cloud);
+        saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, cleaned);
+        set({ sessions: cleaned });
+      }
+    }).catch(() => {});
   },
 
   deleteSession: (id: string) => {
@@ -125,6 +158,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       sessions: updated,
       activeSession: get().activeSession?.id === id ? null : get().activeSession
     });
+    dbService.remove("live_sessions", id).catch(() => {});
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
@@ -137,9 +171,11 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
   },
 
   clearCompletedSessions: () => {
+    const completedIds = get().sessions.filter((s) => s.status === "completed").map((s) => s.id);
     const updated = get().sessions.filter((s) => s.status !== "completed");
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated });
+    completedIds.forEach((id) => dbService.remove("live_sessions", id).catch(() => {}));
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
@@ -179,6 +215,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     const updated = [newSession, ...get().sessions];
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated });
+    dbService.create("live_sessions", newSession).catch(() => {});
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"));
@@ -228,6 +265,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     const updated = [newSession, ...get().sessions];
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated, activeSession: newSession, isClassroomOpen: false });
+    dbService.create("live_sessions", newSession).catch(() => {});
     
     // Automatically launch Official Google Meet directly in a dedicated tab for the instructor
     if (typeof window !== "undefined") {
@@ -297,6 +335,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       sessions: updated,
       activeSession: targetSession || get().activeSession
     });
+    dbService.update("live_sessions", id, { status: "live", googleMeetUrl: targetMeetUrl, joinUrl: targetMeetUrl, meetingCode: targetCode }).catch(() => {});
 
     if (typeof window !== "undefined") {
       if (targetMeetUrl) {
@@ -322,6 +361,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       activeSession: get().activeSession?.id === id ? null : get().activeSession,
       isClassroomOpen: get().activeSession?.id === id ? false : get().isClassroomOpen
     });
+    dbService.update("live_sessions", id, { status: "completed" }).catch(() => {});
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"));
@@ -340,6 +380,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     );
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated });
+    dbService.update("live_sessions", id, { status: "cancelled" }).catch(() => {});
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"));

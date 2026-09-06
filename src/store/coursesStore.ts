@@ -1,13 +1,16 @@
 import { create } from "zustand";
 import type { Course, Enrollment, Certificate, Resource, Feedback } from "../types";
 import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId } from "../data/seed";
+import { dbService } from "../services/db";
 
 interface CoursesState {
   courses: Course[];
   enrollments: Enrollment[];
   certificates: Certificate[];
   feedbacks: Feedback[];
+  isSubscribed: boolean;
   load: () => void;
+  initSubscription: () => void;
   enroll: (traineeId: string, courseId: string) => void;
   unenroll: (traineeId: string, courseId: string) => void;
   updateProgress: (enrollmentId: string, progress: number) => void;
@@ -100,6 +103,48 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
   certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
   feedbacks: initialFeedbacks,
+  isSubscribed: false,
+
+  initSubscription: () => {
+    if (get().isSubscribed) return;
+    set({ isSubscribed: true });
+
+    // Real-time server sync listeners for courses, enrollments, feedbacks, certificates
+    const refreshAll = async () => {
+      try {
+        const [cloudCourses, cloudEnrollments, cloudFeedbacks, cloudCertificates] = await Promise.all([
+          dbService.getAll<Course>("courses"),
+          dbService.getAll<Enrollment>("enrollments"),
+          dbService.getAll<Feedback>("feedbacks"),
+          dbService.getAll<Certificate>("certificates"),
+        ]);
+
+        const validFeedbacks = sanitizeFeedbacks(cloudFeedbacks && cloudFeedbacks.length > 0 ? cloudFeedbacks : getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
+        const validCourses = sanitizeCourses(cloudCourses && cloudCourses.length > 0 ? cloudCourses : getFromStorage<Course>(STORAGE_KEYS.COURSES), validFeedbacks);
+        const validEnrollments = sanitizeEnrollments(cloudEnrollments && cloudEnrollments.length > 0 ? cloudEnrollments : getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS));
+        const validCertificates = cloudCertificates && cloudCertificates.length > 0 ? cloudCertificates : getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES);
+
+        saveToStorage(STORAGE_KEYS.COURSES, validCourses);
+        saveToStorage(STORAGE_KEYS.ENROLLMENTS, validEnrollments);
+        saveToStorage(STORAGE_KEYS.FEEDBACKS, validFeedbacks);
+        saveToStorage(STORAGE_KEYS.CERTIFICATES, validCertificates);
+
+        set({
+          courses: validCourses,
+          enrollments: validEnrollments,
+          feedbacks: validFeedbacks,
+          certificates: validCertificates,
+        });
+      } catch (err) {
+        // Fallback to local
+      }
+    };
+
+    dbService.subscribe("courses", () => refreshAll());
+    dbService.subscribe("enrollments", () => refreshAll());
+    dbService.subscribe("feedbacks", () => refreshAll());
+    dbService.subscribe("certificates", () => refreshAll());
+  },
 
   load: () => {
     const freshFeedbacks = sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
@@ -110,6 +155,34 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
       feedbacks: freshFeedbacks
     });
+
+    // Ensure real-time multi-device subscription is active
+    get().initSubscription();
+
+    // Asynchronously fetch latest records from central server DB and cloud
+    Promise.all([
+      dbService.getAll<Course>("courses"),
+      dbService.getAll<Enrollment>("enrollments"),
+      dbService.getAll<Feedback>("feedbacks"),
+      dbService.getAll<Certificate>("certificates")
+    ]).then(([srvCourses, srvEnrollments, srvFeedbacks, srvCertificates]) => {
+      const activeFeedbacks = srvFeedbacks && srvFeedbacks.length > 0 ? sanitizeFeedbacks(srvFeedbacks) : freshFeedbacks;
+      const activeCourses = srvCourses && srvCourses.length > 0 ? sanitizeCourses(srvCourses, activeFeedbacks) : freshCourses;
+      const activeEnrollments = srvEnrollments && srvEnrollments.length > 0 ? sanitizeEnrollments(srvEnrollments) : get().enrollments;
+      const activeCertificates = srvCertificates && srvCertificates.length > 0 ? srvCertificates : get().certificates;
+
+      saveToStorage(STORAGE_KEYS.COURSES, activeCourses);
+      saveToStorage(STORAGE_KEYS.ENROLLMENTS, activeEnrollments);
+      saveToStorage(STORAGE_KEYS.FEEDBACKS, activeFeedbacks);
+      saveToStorage(STORAGE_KEYS.CERTIFICATES, activeCertificates);
+
+      set({
+        courses: activeCourses,
+        enrollments: activeEnrollments,
+        feedbacks: activeFeedbacks,
+        certificates: activeCertificates
+      });
+    }).catch(() => {});
   },
 
   enroll: (traineeId, courseId) => {
@@ -126,13 +199,18 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const updated = [...enrollments, newEnrollment];
     saveToStorage(STORAGE_KEYS.ENROLLMENTS, updated);
     set({ enrollments: updated });
+    dbService.create("enrollments", newEnrollment).catch(() => {});
   },
 
   unenroll: (traineeId, courseId) => {
     const { enrollments } = get();
+    const target = enrollments.find((e) => e.traineeId === traineeId && e.courseId === courseId);
     const updated = enrollments.filter((e) => !(e.traineeId === traineeId && e.courseId === courseId));
     saveToStorage(STORAGE_KEYS.ENROLLMENTS, updated);
     set({ enrollments: updated });
+    if (target?.id) {
+      dbService.remove("enrollments", target.id).catch(() => {});
+    }
   },
 
   updateProgress: (enrollmentId, progress) => {
@@ -140,6 +218,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const updated = enrollments.map((e) => (e.id === enrollmentId ? { ...e, progress } : e));
     saveToStorage(STORAGE_KEYS.ENROLLMENTS, updated);
     set({ enrollments: updated });
+    dbService.update("enrollments", enrollmentId, { progress }).catch(() => {});
   },
 
   completeCourse: (traineeId, courseId, grade, scorePercentage, certData) => {
@@ -150,6 +229,11 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
         : e
     );
     saveToStorage(STORAGE_KEYS.ENROLLMENTS, updated);
+    const targetEnrollment = updated.find((e) => e.traineeId === traineeId && e.courseId === courseId);
+    if (targetEnrollment?.id) {
+      dbService.update("enrollments", targetEnrollment.id, { progress: 100, completedAt: targetEnrollment.completedAt }).catch(() => {});
+    }
+
     const course = courses.find((c) => c.id === courseId);
     const certExists = certificates.find((c) => c.traineeId === traineeId && c.courseId === courseId);
 
@@ -178,6 +262,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       const updatedCerts = [...certificates, cert];
       saveToStorage(STORAGE_KEYS.CERTIFICATES, updatedCerts);
       set({ enrollments: updated, certificates: updatedCerts });
+      dbService.create("certificates", cert).catch(() => {});
       return cert;
     } else {
       set({ enrollments: updated });
@@ -192,6 +277,10 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     );
     saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
+    const targetCourse = updated.find((c) => c.id === resource.courseId);
+    if (targetCourse) {
+      dbService.update("courses", resource.courseId, { resources: targetCourse.resources }).catch(() => {});
+    }
   },
 
   addCourse: (course) => {
@@ -199,6 +288,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const updated = [...courses, course];
     saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
+    dbService.create("courses", course).catch(() => {});
   },
 
   updateCourse: (courseId, updates) => {
@@ -206,6 +296,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const updated = courses.map((c) => (c.id === courseId ? { ...c, ...updates } : c));
     saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
+    dbService.update("courses", courseId, updates).catch(() => {});
   },
 
   deleteCourse: (courseId) => {
@@ -213,12 +304,14 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const updated = courses.filter((c) => c.id !== courseId);
     saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
+    dbService.remove("courses", courseId).catch(() => {});
   },
 
   addFeedback: (fb) => {
     const { feedbacks, courses } = get();
     const updatedFeedbacks = [fb, ...feedbacks];
     saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
+    dbService.create("feedbacks", fb).catch(() => {});
 
     // Automatically recalculate the overall quality rating for this course directly from student ratings
     const courseFeedbacks = updatedFeedbacks.filter((f) => f.courseId === fb.courseId);
@@ -238,6 +331,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
     saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
     set({ feedbacks: updatedFeedbacks, courses: updatedCourses });
+    dbService.update("courses", fb.courseId, { rating: avgRating, totalRatings: courseFeedbacks.length }).catch(() => {});
   },
 
   deleteFeedback: (feedbackId) => {
@@ -245,6 +339,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const targetFeedback = feedbacks.find((f) => f.id === feedbackId);
     const updatedFeedbacks = feedbacks.filter((f) => f.id !== feedbackId);
     saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
+    dbService.remove("feedbacks", feedbackId).catch(() => {});
 
     if (targetFeedback) {
       const remainingCourseFeedbacks = updatedFeedbacks.filter((f) => f.courseId === targetFeedback.courseId);
@@ -265,6 +360,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       });
       saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
       set({ feedbacks: updatedFeedbacks, courses: updatedCourses });
+      dbService.update("courses", targetFeedback.courseId, { rating: avgRating, totalRatings: remainingCourseFeedbacks.length }).catch(() => {});
     } else {
       set({ feedbacks: updatedFeedbacks });
     }

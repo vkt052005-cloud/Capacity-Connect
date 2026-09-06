@@ -4,6 +4,18 @@ import { supabase, isSupabaseConfigured } from './supabase';
 
 type ChangeCallback = (event: { action: 'create' | 'update' | 'delete' | 'sync'; data?: any }) => void;
 
+const COLLECTION_STORAGE_MAP: Record<string, string> = {
+  users: STORAGE_KEYS.USERS,
+  courses: STORAGE_KEYS.COURSES,
+  enrollments: STORAGE_KEYS.ENROLLMENTS,
+  feedbacks: STORAGE_KEYS.FEEDBACKS,
+  certificates: STORAGE_KEYS.CERTIFICATES,
+  live_sessions: STORAGE_KEYS.LIVE_SESSIONS,
+  audit_logs: STORAGE_KEYS.AUDIT_LOGS,
+  assessments: STORAGE_KEYS.ASSESSMENTS,
+  notifications: STORAGE_KEYS.NOTIFICATIONS,
+};
+
 class DatabaseService {
   private eventSource: EventSource | null = null;
   private listeners: Map<string, Set<ChangeCallback>> = new Map();
@@ -16,6 +28,10 @@ class DatabaseService {
   private getBaseUrl(): string {
     if (typeof window === 'undefined') return 'http://localhost:5173';
     return window.location.origin;
+  }
+
+  private getStorageKey(collection: string): string | undefined {
+    return COLLECTION_STORAGE_MAP[collection];
   }
 
   private initRealtimeStream() {
@@ -59,7 +75,7 @@ class DatabaseService {
       const timer = setInterval(async () => {
         try {
           const items = await this.getAll(collection);
-          const newHash = JSON.stringify(items.map((i: any) => i.id + i.status + i.role));
+          const newHash = JSON.stringify(items.map((i: any) => (i.id || '') + (i.status || '') + (i.role || '') + (i.rating || '')));
           if (lastHash && newHash !== lastHash) {
             this.listeners.get(collection)?.forEach((cb) => cb({ action: 'sync' }));
           }
@@ -80,13 +96,15 @@ class DatabaseService {
 
   // GET ALL Records
   public async getAll<T = any>(collection: string): Promise<T[]> {
+    const storageKey = this.getStorageKey(collection);
+
     // 1. Try Cloud Supabase if configured
     if (isSupabaseConfigured) {
       try {
         const cloudData = await supabase.select<T>(collection);
         if (cloudData && cloudData.length > 0) {
-          if (collection === 'users') {
-            saveToStorage(STORAGE_KEYS.USERS, cloudData);
+          if (storageKey) {
+            saveToStorage(storageKey, cloudData);
           }
           return cloudData;
         }
@@ -101,8 +119,8 @@ class DatabaseService {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          if (collection === 'users') {
-            saveToStorage(STORAGE_KEYS.USERS, data);
+          if (storageKey) {
+            saveToStorage(storageKey, data);
           }
           return data as T[];
         }
@@ -112,18 +130,20 @@ class DatabaseService {
     }
 
     // 3. LocalStorage fallback
-    if (collection === 'users') {
-      return getFromStorage<T>(STORAGE_KEYS.USERS);
+    if (storageKey) {
+      return getFromStorage<T>(storageKey);
     }
     return [];
   }
 
   // CREATE Record
   public async create<T = any>(collection: string, record: T): Promise<T> {
+    const storageKey = this.getStorageKey(collection);
+
     // 1. Optimistically save to local storage
-    if (collection === 'users') {
-      const local = getFromStorage<any>(STORAGE_KEYS.USERS);
-      saveToStorage(STORAGE_KEYS.USERS, [record, ...local]);
+    if (storageKey) {
+      const local = getFromStorage<any>(storageKey);
+      saveToStorage(storageKey, [record, ...local]);
     }
 
     // 2. Try Cloud Supabase if configured
@@ -154,11 +174,13 @@ class DatabaseService {
 
   // UPDATE Record
   public async update<T = any>(collection: string, id: string, updates: Partial<T>): Promise<void> {
+    const storageKey = this.getStorageKey(collection);
+
     // 1. Update in local storage
-    if (collection === 'users') {
-      const local = getFromStorage<any>(STORAGE_KEYS.USERS);
+    if (storageKey) {
+      const local = getFromStorage<any>(storageKey);
       const updated = local.map((i: any) => (i.id === id ? { ...i, ...updates } : i));
-      saveToStorage(STORAGE_KEYS.USERS, updated);
+      saveToStorage(storageKey, updated);
     }
 
     // 2. Try Cloud Supabase
@@ -184,11 +206,13 @@ class DatabaseService {
 
   // DELETE Record
   public async remove(collection: string, id: string): Promise<void> {
+    const storageKey = this.getStorageKey(collection);
+
     // 1. Delete from local storage
-    if (collection === 'users') {
-      const local = getFromStorage<any>(STORAGE_KEYS.USERS);
+    if (storageKey) {
+      const local = getFromStorage<any>(storageKey);
       const filtered = local.filter((i: any) => i.id !== id);
-      saveToStorage(STORAGE_KEYS.USERS, filtered);
+      saveToStorage(storageKey, filtered);
     }
 
     // 2. Try Cloud Supabase
