@@ -78,7 +78,16 @@ export interface LeaderboardEntry {
 }
 
 // ─── Course & Content Types ──────────────────────────────────────────────────
-export type CourseCategory = "Technical" | "Leadership" | "Communication" | "Compliance" | "Soft Skills" | "Domain" | "AI & Data";
+export type CourseCategory =
+  | "Technical"
+  | "Leadership"
+  | "Communication"
+  | "Compliance"
+  | "Soft Skills"
+  | "Domain"
+  | "AI & Data"
+  | "MoES & IMD Operations"
+  | "Atmospheric & Ocean Sciences";
 export type CourseStatus = "active" | "draft" | "archived";
 export type ResourceType = "video" | "pdf" | "presentation" | "document" | "link";
 

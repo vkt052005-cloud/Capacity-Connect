@@ -1,18 +1,137 @@
 import React, { useState } from "react";
-import { BookOpen, CheckCircle2, Shield, Trash2, Star, MessageSquare, Filter, AlertTriangle } from "lucide-react";
+import { BookOpen, CheckCircle2, Shield, Trash2, Star, MessageSquare, Filter, AlertTriangle, Plus, X, Video, FileText } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useCoursesStore } from "../../store/coursesStore";
 import { useAppStore } from "../../store/appStore";
+import { useAuthStore } from "../../store/authStore";
+import { useNotificationsStore } from "../../store/notificationsStore";
 import { formatCourseDuration } from "../../utils/courseDuration";
+import { CourseCategory, CourseLesson, Resource } from "../../types";
+
+const ADMIN_THUMBNAIL_PRESETS = [
+  { label: "Computer Science & IT", url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80" },
+  { label: "AI & Machine Learning", url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=80" },
+  { label: "MoES/IMD Satellite Meteorology", url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80" },
+  { label: "Ocean State Forecasting", url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80" },
+  { label: "Cloud & Distributed Systems", url: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80" },
+  { label: "Cybersecurity & Governance", url: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80" },
+  { label: "Public Administration & Leadership", url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=80" },
+];
 
 export const CourseManagement: React.FC = () => {
-  const { courses, deleteCourse, feedbacks, deleteFeedback, enrollments } = useCoursesStore();
+  const { courses, addCourse, deleteCourse, feedbacks, deleteFeedback, enrollments } = useCoursesStore();
   const { addToast } = useAppStore();
+  const { addNotification } = useNotificationsStore();
+  const { currentUser } = useAuthStore();
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("all");
+
+  // Create Course Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<CourseCategory>("Technical");
+  const [duration, setDuration] = useState("0 Mins");
+  const [modulesCount, setModulesCount] = useState<number | "">("");
+  const [level, setLevel] = useState<"Beginner" | "Intermediate" | "Advanced">("Intermediate");
+  const [trainerName, setTrainerName] = useState(currentUser?.name || "MoES Platform Admin");
+  const [thumbnailUrl, setThumbnailUrl] = useState(ADMIN_THUMBNAIL_PRESETS[0].url);
+  const [initialVideoUrl, setInitialVideoUrl] = useState("");
+  const [initialVideoTitle, setInitialVideoTitle] = useState("");
+  const [initialVideoDuration, setInitialVideoDuration] = useState("20 Mins");
 
   // Permanent course deletion state
   const [courseToDelete, setCourseToDelete] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleAdminCreateCourse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+
+    const courseId = "c-" + Date.now();
+    const courseTitle = title.trim();
+    const modNum = typeof modulesCount === "number" && modulesCount > 0 ? modulesCount : undefined;
+    const baseDuration = duration.trim() || "0 Mins";
+    const initialDuration = modNum ? `${baseDuration} • ${modNum} Modules` : baseDuration;
+
+    const initialLessons: CourseLesson[] = [];
+    const initialResources: Resource[] = [];
+
+    if (initialVideoUrl.trim()) {
+      const lessonTitleClean = initialVideoTitle.trim() || "Module 1: Orientation & Foundations";
+      let videoId = `v-${Date.now()}`;
+      const ytMatch = initialVideoUrl.match(/(?:youtu\.be\/|watch\?v=|embed\/)([^#&?]{11})/);
+      if (ytMatch && ytMatch[1]) {
+        videoId = ytMatch[1];
+      }
+
+      const isDrive = initialVideoUrl.includes("drive.google.com");
+      const isYt = !isDrive && (initialVideoUrl.includes("youtube.com") || initialVideoUrl.includes("youtu.be"));
+
+      const firstLesson: CourseLesson = {
+        id: `lesson-${Date.now()}-1`,
+        lessonNumber: 1,
+        title: lessonTitleClean,
+        duration: initialVideoDuration.trim() || "20 Mins",
+        youtubeUrl: initialVideoUrl.trim(),
+        videoId,
+        videoSource: isDrive ? "drive" : isYt ? "youtube" : "url",
+        description: "Official introductory lecture approved by Platform Administration."
+      };
+      initialLessons.push(firstLesson);
+
+      initialResources.push({
+        id: "res-admin-video-" + Date.now(),
+        courseId,
+        title: `${firstLesson.title} (Video Lecture)`,
+        type: "video",
+        url: initialVideoUrl.trim(),
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: trainerName,
+        description: "Official course video lecture"
+      });
+    }
+
+    addCourse({
+      id: courseId,
+      title: courseTitle,
+      description,
+      category,
+      duration: initialLessons.length > 0 ? initialVideoDuration.trim() || initialDuration : initialDuration,
+      modules: modNum || (initialLessons.length > 0 ? 1 : undefined),
+      level,
+      status: "active",
+      trainerId: currentUser?.id || "admin-root",
+      trainerName: trainerName.trim() || "MoES Platform Administration",
+      thumbnail: thumbnailUrl.trim() || ADMIN_THUMBNAIL_PRESETS[0].url,
+      createdAt: new Date().toISOString(),
+      tags: [category, level, "Official Government Curriculum"],
+      resources: initialResources,
+      lessons: initialLessons
+    });
+
+    addNotification({
+      title: `New Official Course: ${courseTitle}`,
+      content: `Platform Administration has published a new certified ${category} program: "${courseTitle}".`,
+      type: "new_content",
+      pinned: true,
+      author: trainerName.trim() || "MoES Administration"
+    });
+
+    setShowCreateModal(false);
+    setTitle("");
+    setDescription("");
+    setModulesCount("");
+    setDuration("0 Mins");
+    setInitialVideoUrl("");
+    setInitialVideoTitle("");
+    setThumbnailUrl(ADMIN_THUMBNAIL_PRESETS[0].url);
+
+    addToast({
+      title: "Course Curriculum Published",
+      message: `"${courseTitle}" is now live in the global trainee catalog.`,
+      type: "success"
+    });
+  };
 
   const filteredFeedbacks =
     selectedCourseFilter === "all"
@@ -83,6 +202,13 @@ export const CourseManagement: React.FC = () => {
               <h3 className="text-sm font-bold text-white">Active Specializations & Modules ({courses.length})</h3>
               <p className="text-xs text-slate-400">Course catalogs with dynamic student quality ratings</p>
             </div>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="apple-btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 font-bold cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create New Course</span>
+            </button>
           </div>
           <div className="divide-y divide-white/5">
             {courses.map((c) => {
@@ -311,6 +437,196 @@ export const CourseManagement: React.FC = () => {
                 {isDeleting ? "Deleting Permanently..." : "Permanently Delete Course"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ─── Modal: Admin Create Course Modal ────────────────────────────────────── */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-2xl animate-fadeIn overflow-y-auto">
+          <div className="glass-panel p-5 sm:p-7 max-w-xl w-full border border-white/20 shadow-2xl space-y-4 my-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-[#2997ff]" />
+                <div>
+                  <h3 className="text-base font-bold text-white">Publish Course as Administrator</h3>
+                  <p className="text-[11px] text-slate-400">Institutional curriculum & training modules for ministry officers</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAdminCreateCourse} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Course Title <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Numerical Weather Prediction & Atmospheric Modeling"
+                  className="apple-input text-xs w-full"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Description <span className="text-rose-400">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="Comprehensive scope, prerequisites, and learning objectives..."
+                  className="apple-input text-xs w-full"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Category</label>
+                  <select
+                    className="apple-input text-xs w-full"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value as any)}
+                  >
+                    <option value="Technical">Technical (Software & Cloud)</option>
+                    <option value="AI & Data">AI & Data Engineering</option>
+                    <option value="MoES & IMD Operations">MoES & IMD Operations</option>
+                    <option value="Atmospheric & Ocean Sciences">Atmospheric & Ocean Sciences</option>
+                    <option value="Leadership">Leadership & Governance</option>
+                    <option value="Compliance">Compliance & Security</option>
+                    <option value="Domain">Domain Knowledge</option>
+                    <option value="Soft Skills">Soft Skills & Public Service</option>
+                    <option value="Communication">Communication & Reporting</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Assigned Trainer / Faculty</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Dr. Rajesh Kumar (IMD Senior Scientist)"
+                    className="apple-input text-xs w-full"
+                    value={trainerName}
+                    onChange={(e) => setTrainerName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Course Thumbnail Selector */}
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                <label className="block text-xs font-semibold text-slate-200">
+                  Course Visual Thumbnail
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {ADMIN_THUMBNAIL_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => setThumbnailUrl(preset.url)}
+                      className={`relative rounded-lg overflow-hidden border text-left transition cursor-pointer group ${
+                        thumbnailUrl === preset.url ? "border-[#2997ff] ring-2 ring-[#2997ff]/40" : "border-white/10 opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <img src={preset.url} alt={preset.label} className="w-full h-12 object-cover" />
+                      <div className="p-1 bg-black/70 text-[9px] font-semibold text-white truncate">
+                        {preset.label}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="pt-1">
+                  <input
+                    type="url"
+                    placeholder="Or paste custom image URL (https://...)"
+                    value={thumbnailUrl}
+                    onChange={(e) => setThumbnailUrl(e.target.value)}
+                    className="apple-input text-xs w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Optional First Video Lecture */}
+              <div className="p-3 rounded-xl bg-[#0071e3]/5 border border-[#0071e3]/20 space-y-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#2997ff]">
+                  <Video className="w-4 h-4" />
+                  <span>Attach First Video Lecture (Optional)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="Lesson title (e.g. Module 1: System Overview)"
+                    value={initialVideoTitle}
+                    onChange={(e) => setInitialVideoTitle(e.target.value)}
+                    className="apple-input text-xs w-full"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Duration (e.g. 20 Mins)"
+                    value={initialVideoDuration}
+                    onChange={(e) => setInitialVideoDuration(e.target.value)}
+                    className="apple-input text-xs w-full"
+                  />
+                </div>
+                <input
+                  type="url"
+                  placeholder="Paste YouTube or Google Drive Video URL"
+                  value={initialVideoUrl}
+                  onChange={(e) => setInitialVideoUrl(e.target.value)}
+                  className="apple-input text-xs w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Initial Duration Estimate
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 3 Hours"
+                    className="apple-input text-xs w-full"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Number of Planned Modules
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    placeholder="e.g. 6"
+                    className="apple-input text-xs w-full"
+                    value={modulesCount}
+                    onChange={(e) => setModulesCount(e.target.value ? parseInt(e.target.value, 10) : "")}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-white/10">
+                <button type="submit" className="apple-btn-primary flex-1 text-xs py-2 font-bold cursor-pointer">
+                  Publish Curriculum
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="apple-btn-secondary text-xs px-4 py-2 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

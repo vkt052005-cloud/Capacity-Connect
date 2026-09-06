@@ -4,7 +4,7 @@ import {
   Video, Presentation, Sparkles, MessageSquare, Award,
   CheckCircle2, AlertTriangle, ListVideo, Search, ChevronLeft,
   ChevronRight, Play, ExternalLink, Star, LogOut, BookOpen,
-  FolderOpen, Download, FileText, Radio, ShieldCheck, Clock, Calendar
+  FolderOpen, Download, FileText, Radio, ShieldCheck, Clock, Calendar, Plus
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
@@ -312,7 +312,7 @@ export const CourseDetail: React.FC = () => {
     });
   };
 
-  const currentLesson = allLessons[selectedLessonIndex] || allLessons[0];
+  const currentLesson = allLessons.length > 0 ? (allLessons[selectedLessonIndex] || allLessons[0]) : null;
   const activeVideoUrl = currentLesson?.youtubeUrl || mainResource?.url || course.videoUrl;
   const activeVideoTitle = currentLesson ? `${currentLesson.lessonNumber}. ${currentLesson.title}` : course.title;
 
@@ -563,6 +563,41 @@ export const CourseDetail: React.FC = () => {
 
         {/* Tab 1: Video Player & Interactive Playlist */}
         {activeTab === "video" && (
+          allLessons.length === 0 ? (
+            <div className="card p-10 text-center space-y-4 border-dashed border-white/20 animate-fadeIn my-4">
+              <div className="w-16 h-16 rounded-2xl bg-[#0071e3]/20 border border-[#2997ff]/40 text-[#2997ff] flex items-center justify-center mx-auto">
+                <Video className="w-8 h-8" />
+              </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <h3 className="text-base font-bold text-white">Course Curriculum in Preparation</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  The faculty instructor ({course.trainerName}) has published this course and will be uploading video lectures shortly. You can access study materials, attend live Google Meet sessions, or ask questions in the peer discussion forum.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+                <button
+                  onClick={() => setActiveTab("resources")}
+                  className="apple-btn-secondary text-xs px-4 py-2 font-semibold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" /> View Study Materials ({course.resources?.length || 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab("live")}
+                  className="apple-btn-primary text-xs px-4 py-2 font-semibold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Radio className="w-3.5 h-3.5" /> Live Meet Classes ({courseSessions.length})
+                </button>
+                {(currentUser?.role === "admin" || currentUser?.id === course.trainerId || currentUser?.name === course.trainerName) && (
+                  <Link
+                    to="/trainer/courses"
+                    className="apple-btn-primary text-xs px-4 py-2 font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Upload Video Lectures as Instructor ↗
+                  </Link>
+                )}
+              </div>
+            </div>
+          ) : (
           <div className="space-y-6 animate-fadeIn">
             {/* 1. HORIZONTAL SINGLE LINE VIEW: All videos in a single scrollable row */}
             <div className="card p-4 space-y-2.5">
@@ -575,7 +610,7 @@ export const CourseDetail: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="badge-blue text-[10px] font-mono">
-                    Playing: #{currentLesson.lessonNumber} of {allLessons.length}
+                    Playing: #{currentLesson?.lessonNumber || 1} of {allLessons.length}
                   </span>
                 </div>
               </div>
@@ -583,7 +618,7 @@ export const CourseDetail: React.FC = () => {
               {/* Horizontal Single Line Scroll */}
               <div className="flex overflow-x-auto gap-2.5 pb-2 pt-1 custom-scrollbar snap-x">
                 {allLessons.map((l, idx) => {
-                  const isCurrent = l.lessonNumber === currentLesson.lessonNumber;
+                  const isCurrent = currentLesson ? l.lessonNumber === currentLesson.lessonNumber : false;
                   return (
                     <button
                       key={l.id}
@@ -633,17 +668,17 @@ export const CourseDetail: React.FC = () => {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="badge-blue text-[10px] font-mono">
-                          LESSON {currentLesson.lessonNumber} OF {allLessons.length}
+                          LESSON {currentLesson?.lessonNumber || 1} OF {allLessons.length}
                         </span>
                         <span className="text-xs text-slate-400 font-mono">
-                          ⏱ {currentLesson.duration}
+                          ⏱ {currentLesson?.duration || ""}
                         </span>
                         <span className="badge-green text-[9px]">
                           ✓ Unrestricted Direct Access
                         </span>
                       </div>
                       <h2 className="text-base sm:text-lg font-bold text-white">
-                        {currentLesson.title}
+                        {currentLesson?.title || course.title}
                       </h2>
                     </div>
 
@@ -696,7 +731,7 @@ export const CourseDetail: React.FC = () => {
 
                 <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
                   {filteredLessons.map((l) => {
-                    const isCurrent = l.lessonNumber === currentLesson.lessonNumber;
+                    const isCurrent = currentLesson ? l.lessonNumber === currentLesson.lessonNumber : false;
                     const originalIdx = allLessons.findIndex((item) => item.id === l.id);
 
                     return (
@@ -778,7 +813,7 @@ export const CourseDetail: React.FC = () => {
               {/* Video Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredLessons.map((l) => {
-                  const isCurrent = l.lessonNumber === currentLesson.lessonNumber;
+                  const isCurrent = currentLesson ? l.lessonNumber === currentLesson.lessonNumber : false;
                   const originalIdx = allLessons.findIndex((item) => item.id === l.id);
 
                   return (
@@ -833,6 +868,7 @@ export const CourseDetail: React.FC = () => {
               </div>
             </div>
           </div>
+          )
         )}
 
         {/* Tab 2: Slide Deck Presentation Viewer */}

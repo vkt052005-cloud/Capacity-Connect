@@ -3,7 +3,8 @@ import {
   BookOpen, Plus, Trash2, CheckCircle2, Video, ShieldCheck,
   ShieldAlert, Play, X, ExternalLink, Film, UploadCloud,
   ChevronDown, ChevronUp, Clock, AlertTriangle, Sparkles, FileVideo,
-  Star, MessageSquare
+  Star, MessageSquare, FileText, Presentation, FolderOpen, Paperclip, Download,
+  Image, FileUp, Link as LinkIcon
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useCoursesStore } from "../../store/coursesStore";
@@ -15,8 +16,39 @@ import { formatCourseDuration, extractMediaDuration } from "../../utils/courseDu
 import { storeVideoBlob } from "../../utils/videoStorage";
 import type { CourseCategory, CourseLesson, Resource } from "../../types";
 
+export const THUMBNAIL_PRESETS = [
+  {
+    label: "💻 Full-Stack & Software Engineering",
+    url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80"
+  },
+  {
+    label: "🤖 AI, Machine Learning & Data Systems",
+    url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=80"
+  },
+  {
+    label: "🛰️ Satellite Meteorology & Radar (MoES & IMD)",
+    url: "https://images.unsplash.com/photo-1590055531615-f16d36ffe8ec?w=800&auto=format&fit=crop&q=80"
+  },
+  {
+    label: "🌊 Ocean State Forecasting & Atmospheric Modeling",
+    url: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&auto=format&fit=crop&q=80"
+  },
+  {
+    label: "☁️ Cloud Infrastructure & DevOps",
+    url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80"
+  },
+  {
+    label: "🔒 Cybersecurity & Defense",
+    url: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80"
+  },
+  {
+    label: "🏛️ Strategic Leadership & Public Governance",
+    url: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&auto=format&fit=crop&q=80"
+  }
+];
+
 export const TrainerCourses: React.FC = () => {
-  const { courses, addCourse, updateCourse, deleteCourse, feedbacks, enrollments } = useCoursesStore();
+  const { courses, addCourse, updateCourse, deleteCourse, feedbacks, enrollments, addResource, deleteResource } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const { addNotification } = useNotificationsStore();
@@ -28,9 +60,10 @@ export const TrainerCourses: React.FC = () => {
   // Selected Course for reviews modal
   const [reviewsModalCourseId, setReviewsModalCourseId] = useState<string | null>(null);
 
-  // Verification Gate: Only admin-verified trainers can upload videos
+  // Verification Gate: Legitimate trainers & admins can upload videos to their courses
   const isVerifiedTrainer = Boolean(
     currentUser?.role === "admin" ||
+    currentUser?.role === "trainer" ||
     currentUser?.isVerifiedByAdmin ||
     currentUser?.trainerProfile?.isVerifiedByAdmin
   );
@@ -46,6 +79,23 @@ export const TrainerCourses: React.FC = () => {
   const [duration, setDuration] = useState("0 Mins");
   const [modulesCount, setModulesCount] = useState<number | "">("");
   const [level, setLevel] = useState<"Beginner" | "Intermediate" | "Advanced">("Intermediate");
+  const [thumbnailUrl, setThumbnailUrl] = useState(THUMBNAIL_PRESETS[0].url);
+  const [initialVideoUrl, setInitialVideoUrl] = useState("");
+  const [initialVideoTitle, setInitialVideoTitle] = useState("");
+  const [initialVideoDuration, setInitialVideoDuration] = useState("20 Mins");
+  const [initialResourceTitle, setInitialResourceTitle] = useState("");
+  const [initialResourceUrl, setInitialResourceUrl] = useState("");
+  const [initialResourceType, setInitialResourceType] = useState<"pdf" | "presentation" | "document" | "link">("pdf");
+
+  // Study Material Upload Modal State
+  const [showStudyMaterialModal, setShowStudyMaterialModal] = useState(false);
+  const [studyMaterialCourseId, setStudyMaterialCourseId] = useState("");
+  const [studyMaterialTitle, setStudyMaterialTitle] = useState("");
+  const [studyMaterialType, setStudyMaterialType] = useState<"pdf" | "presentation" | "document" | "link">("pdf");
+  const [studyMaterialUrl, setStudyMaterialUrl] = useState("");
+  const [studyMaterialFileName, setStudyMaterialFileName] = useState("");
+  const [expandedResourcesCourseId, setExpandedResourcesCourseId] = useState<string | null>(null);
+  const studyFileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Video Upload Modal State
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -191,56 +241,170 @@ export const TrainerCourses: React.FC = () => {
     }
   };
 
-  // Create Course Handler
-  const handleCreateCourse = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
+    // Create Course Handler
+    const handleCreateCourse = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!title.trim()) return;
 
-    const modNum = typeof modulesCount === "number" && modulesCount > 0 ? modulesCount : undefined;
-    const baseDuration = duration.trim() || "0 Mins";
-    const initialDuration = modNum ? `${baseDuration} • ${modNum} Modules` : baseDuration;
+      const modNum = typeof modulesCount === "number" && modulesCount > 0 ? modulesCount : undefined;
+      const baseDuration = duration.trim() || "0 Mins";
+      const initialDuration = modNum ? `${baseDuration} • ${modNum} Modules` : baseDuration;
 
-    const trainerDisplayName = currentUser?.name || "Faculty Trainer";
-    const courseTitle = title.trim();
+      const trainerDisplayName = currentUser?.name || "Faculty Trainer";
+      const courseTitle = title.trim();
+      const courseId = "c-" + Date.now();
 
-    addCourse({
-      id: "c-" + Date.now(),
-      title: courseTitle,
-      description,
-      category,
-      duration: initialDuration,
-      modules: modNum,
-      level,
-      status: "active",
-      trainerId,
-      trainerName: trainerDisplayName,
-      thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
-      createdAt: new Date().toISOString(),
-      tags: [category, level, "Capacity Building"],
-      resources: [],
-      lessons: []
-    });
+      // Optional initial video lesson
+      const initialLessons: CourseLesson[] = [];
+      const initialResources: Resource[] = [];
 
-    // Automatically broadcast notification: 'A teacher uploaded a course'
-    addNotification({
-      title: `A teacher uploaded a course: ${courseTitle}`,
-      content: `${trainerDisplayName} has published a new ${category} curriculum: "${courseTitle}". Trainees can now enroll and start learning.`,
-      type: "new_content",
-      pinned: true,
-      author: trainerDisplayName
-    });
+      if (initialVideoUrl.trim()) {
+        const lessonTitleClean = initialVideoTitle.trim() || "Module 1: Orientation & Foundations";
+        let videoId = `v-${Date.now()}`;
+        const ytMatch = initialVideoUrl.match(/(?:youtu\.be\/|watch\?v=|embed\/)([^#&?]{11})/);
+        if (ytMatch && ytMatch[1]) {
+          videoId = ytMatch[1];
+        }
 
-    setShowAddModal(false);
-    setTitle("");
-    setDescription("");
-    setModulesCount("");
-    setDuration("0 Mins");
-    addToast({
-      title: "Course Created Successfully",
-      message: "New curriculum published to catalog and trainees notified.",
-      type: "success"
-    });
-  };
+        const isDrive = initialVideoUrl.includes("drive.google.com");
+        const isYt = !isDrive && (initialVideoUrl.includes("youtube.com") || initialVideoUrl.includes("youtu.be"));
+
+        const firstLesson: CourseLesson = {
+          id: `lesson-${Date.now()}-1`,
+          lessonNumber: 1,
+          title: lessonTitleClean,
+          duration: initialVideoDuration.trim() || "20 Mins",
+          youtubeUrl: initialVideoUrl.trim(),
+          videoId,
+          videoSource: isDrive ? "drive" : isYt ? "youtube" : "url",
+          description: "Initial foundational video lecture included during course publishing."
+        };
+        initialLessons.push(firstLesson);
+
+        initialResources.push({
+          id: "res-video-" + Date.now(),
+          courseId,
+          title: `${firstLesson.title} (Video Lecture)`,
+          type: "video",
+          url: initialVideoUrl.trim(),
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: trainerDisplayName,
+          description: "Course foundational video lecture"
+        });
+      }
+
+      // Optional initial study material
+      if (initialResourceUrl.trim()) {
+        initialResources.push({
+          id: "res-doc-" + Date.now(),
+          courseId,
+          title: initialResourceTitle.trim() || `${courseTitle} - Complete Study Material & Handbook`,
+          type: initialResourceType,
+          url: initialResourceUrl.trim(),
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: trainerDisplayName,
+          description: "Essential study material and syllabus uploaded with curriculum creation."
+        });
+      }
+
+      addCourse({
+        id: courseId,
+        title: courseTitle,
+        description,
+        category,
+        duration: initialLessons.length > 0 ? initialVideoDuration.trim() || initialDuration : initialDuration,
+        modules: modNum || (initialLessons.length > 0 ? 1 : undefined),
+        level,
+        status: "active",
+        trainerId,
+        trainerName: trainerDisplayName,
+        thumbnail: thumbnailUrl.trim() || THUMBNAIL_PRESETS[0].url,
+        createdAt: new Date().toISOString(),
+        tags: [category, level, "Capacity Building"],
+        resources: initialResources,
+        lessons: initialLessons
+      });
+
+      // Automatically broadcast notification: 'A teacher uploaded a course'
+      addNotification({
+        title: `A teacher uploaded a course: ${courseTitle}`,
+        content: `${trainerDisplayName} has published a new ${category} curriculum: "${courseTitle}". Trainees can now enroll and start learning.`,
+        type: "new_content",
+        pinned: true,
+        author: trainerDisplayName
+      });
+
+      setShowAddModal(false);
+      setTitle("");
+      setDescription("");
+      setModulesCount("");
+      setDuration("0 Mins");
+      setInitialVideoUrl("");
+      setInitialVideoTitle("");
+      setInitialResourceTitle("");
+      setInitialResourceUrl("");
+      setThumbnailUrl(THUMBNAIL_PRESETS[0].url);
+      addToast({
+        title: "Course Created Successfully",
+        message: "New curriculum published to catalog and trainees notified.",
+        type: "success"
+      });
+    };
+
+    // Handle Study Material Upload
+    const handleUploadStudyMaterial = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!studyMaterialCourseId || !studyMaterialTitle.trim() || !studyMaterialUrl.trim()) {
+        addToast({
+          title: "Missing Details",
+          message: "Please specify resource title and document link/file.",
+          type: "error"
+        });
+        return;
+      }
+
+      const course = courses.find((c) => c.id === studyMaterialCourseId);
+      if (!course) return;
+
+      const newResource: Resource = {
+        id: "res-" + Date.now(),
+        courseId: course.id,
+        title: studyMaterialTitle.trim(),
+        type: studyMaterialType,
+        url: studyMaterialUrl.trim(),
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: currentUser?.name || "Faculty Trainer",
+        description: `Uploaded for ${course.title}`
+      };
+
+      const updatedResources = [...(course.resources || []), newResource];
+      updateCourse(course.id, { resources: updatedResources });
+
+      setShowStudyMaterialModal(false);
+      setStudyMaterialTitle("");
+      setStudyMaterialUrl("");
+      setStudyMaterialFileName("");
+      setExpandedResourcesCourseId(course.id);
+      addToast({
+        title: "Study Material Uploaded",
+        message: `"${newResource.title}" has been attached to ${course.title}.`,
+        type: "success"
+      });
+    };
+
+    // Handle Delete Resource
+    const handleDeleteResource = (courseId: string, resourceId: string) => {
+      const course = courses.find((c) => c.id === courseId);
+      if (!course || !course.resources) return;
+
+      const updatedResources = course.resources.filter((r) => r.id !== resourceId);
+      updateCourse(courseId, { resources: updatedResources });
+      addToast({
+        title: "Resource Removed",
+        message: "Study material has been detached from course.",
+        type: "info"
+      });
+    };
 
   // Submit Video Lesson Upload with IndexedDB persistence for local files
   const handleUploadVideoLesson = async (e: React.FormEvent) => {
@@ -578,11 +742,107 @@ export const TrainerCourses: React.FC = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Expand Study Materials Drawer */}
+                    <div className="pt-1.5 border-t border-white/5">
+                      {(() => {
+                        const isResExpanded = expandedResourcesCourseId === c.id;
+                        const studyMaterials = (c.resources || []).filter((r) => r.type !== "video");
+                        const matCount = studyMaterials.length;
+
+                        return (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedResourcesCourseId(isResExpanded ? null : c.id)}
+                              className="w-full py-1.5 px-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 text-[11px] font-semibold text-slate-300 flex items-center justify-between transition cursor-pointer"
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Study Materials & Handbooks ({matCount})</span>
+                              </span>
+                              {isResExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </button>
+
+                            {isResExpanded && (
+                              <div className="mt-2 space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                                {matCount === 0 ? (
+                                  <p className="text-[11px] text-slate-500 italic text-center py-3">
+                                    No study materials attached to this course yet.
+                                  </p>
+                                ) : (
+                                  studyMaterials.map((res) => (
+                                    <div
+                                      key={res.id}
+                                      className="p-2 rounded-lg bg-black/40 border border-white/5 flex items-center justify-between text-xs hover:border-white/15 transition group"
+                                    >
+                                      <div className="flex items-center gap-2 truncate pr-2">
+                                        <div className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                          {res.type === "pdf" ? "PDF" : res.type === "presentation" ? "PPT" : "DOC"}
+                                        </div>
+                                        <div className="truncate">
+                                          <p className="font-semibold text-white truncate text-[11.5px]">{res.title}</p>
+                                          <span className="text-[9.5px] text-slate-400 capitalize">{res.type}</span>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <a
+                                          href={res.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="p-1 text-slate-400 hover:text-emerald-400 transition cursor-pointer"
+                                          title="Open / Download"
+                                        >
+                                          <Download className="w-3.5 h-3.5" />
+                                        </a>
+                                        <button
+                                          onClick={() => handleDeleteResource(c.id, res.id)}
+                                          className="p-1 text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                                          title="Delete Material"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStudyMaterialCourseId(c.id);
+                                    setStudyMaterialTitle("");
+                                    setStudyMaterialUrl("");
+                                    setStudyMaterialFileName("");
+                                    setShowStudyMaterialModal(true);
+                                  }}
+                                  className="w-full mt-2 py-1.5 px-3 rounded-lg border border-dashed border-emerald-500/40 hover:bg-emerald-500/10 text-[11px] font-bold text-emerald-400 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                                >
+                                  <Plus className="w-3.5 h-3.5" /> Upload Study Material
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
                     <span className="text-slate-400 font-mono text-[11px]">{formatCourseDuration(c)}</span>
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setStudyMaterialCourseId(c.id);
+                          setStudyMaterialTitle("");
+                          setStudyMaterialUrl("");
+                          setStudyMaterialFileName("");
+                          setShowStudyMaterialModal(true);
+                        }}
+                        className="text-xs text-emerald-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                      >
+                        <FileText className="w-3.5 h-3.5" /> +Material
+                      </button>
                       <button
                         onClick={() => handleOpenVideoModal(c.id)}
                         className="text-xs text-[#2997ff] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
@@ -957,52 +1217,76 @@ export const TrainerCourses: React.FC = () => {
 
       {/* ─── Modal 4: Create Course Modal ────────────────────────────────────────── */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-2xl animate-fadeIn">
-          <div className="glass-panel p-6 max-w-md w-full border border-white/20 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-white">Create New Course</h3>
-            <form onSubmit={handleCreateCourse} className="space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-2xl animate-fadeIn overflow-y-auto">
+          <div className="glass-panel p-5 sm:p-7 max-w-xl w-full border border-white/20 shadow-2xl space-y-4 my-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-[#2997ff]" />
+                <div>
+                  <h3 className="text-base font-bold text-white">Publish New Course Curriculum</h3>
+                  <p className="text-[11px] text-slate-400">Create course, assign thumbnail, and optionally attach initial lecture & study materials</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCourse} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Course Title</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Course Title <span className="text-rose-400">*</span>
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Distributed Consensus in Cloud Infrastructure"
-                  className="apple-input text-xs"
+                  placeholder="e.g. Radar Meteorology & Extreme Weather Diagnostics"
+                  className="apple-input text-xs w-full"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Description</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Course Description <span className="text-rose-400">*</span>
+                </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   required
-                  placeholder="Overview of learning outcomes..."
-                  className="apple-input text-xs"
+                  placeholder="Provide syllabus overview, objectives, and prerequisites..."
+                  className="apple-input text-xs w-full"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Category</label>
                   <select
-                    className="apple-input text-xs"
+                    className="apple-input text-xs w-full"
                     value={category}
                     onChange={(e) => setCategory(e.target.value as any)}
                   >
-                    <option value="Technical">Technical</option>
-                    <option value="AI & Data">AI & Data</option>
-                    <option value="Leadership">Leadership</option>
-                    <option value="Compliance">Compliance</option>
+                    <option value="Technical">Technical (Software & Cloud)</option>
+                    <option value="AI & Data">AI & Data Engineering</option>
+                    <option value="MoES & IMD Operations">MoES & IMD Operations</option>
+                    <option value="Atmospheric & Ocean Sciences">Atmospheric & Ocean Sciences</option>
+                    <option value="Leadership">Leadership & Governance</option>
+                    <option value="Compliance">Compliance & Security</option>
+                    <option value="Domain">Domain Knowledge</option>
+                    <option value="Soft Skills">Soft Skills & Public Service</option>
+                    <option value="Communication">Communication & Reporting</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Level</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Difficulty Level</label>
                   <select
-                    className="apple-input text-xs"
+                    className="apple-input text-xs w-full"
                     value={level}
                     onChange={(e) => setLevel(e.target.value as any)}
                   >
@@ -1013,44 +1297,282 @@ export const TrainerCourses: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Estimated Initial Duration <span className="text-slate-500 font-normal">(Optional)</span>
+              {/* Course Thumbnail Selector */}
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                <label className="block text-xs font-semibold text-slate-200">
+                  Course Visual Thumbnail
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 2 Hours, 45 Mins (auto-calculated as video lessons are added)"
-                  className="apple-input text-xs w-full"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                />
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {THUMBNAIL_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => setThumbnailUrl(preset.url)}
+                      className={`relative rounded-lg overflow-hidden border text-left transition cursor-pointer group ${
+                        thumbnailUrl === preset.url ? "border-[#2997ff] ring-2 ring-[#2997ff]/40" : "border-white/10 opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <img src={preset.url} alt={preset.label} className="w-full h-12 object-cover" />
+                      <div className="p-1 bg-black/70 text-[9px] font-semibold text-white truncate">
+                        {preset.label}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="pt-1">
+                  <input
+                    type="url"
+                    placeholder="Or paste custom image URL (https://...)"
+                    value={thumbnailUrl}
+                    onChange={(e) => setThumbnailUrl(e.target.value)}
+                    className="apple-input text-xs w-full"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Number of Modules <span className="text-slate-500 font-normal">(Optional)</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="50"
-                  placeholder="Leave empty if course has no distinct modules"
-                  className="apple-input text-xs w-full"
-                  value={modulesCount}
-                  onChange={(e) => setModulesCount(e.target.value ? parseInt(e.target.value, 10) : "")}
-                />
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Duration is calculated dynamically as video lessons are added. Modules are only displayed if specified.
+              {/* Optional First Video Lecture */}
+              <div className="p-3 rounded-xl bg-[#0071e3]/5 border border-[#0071e3]/20 space-y-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#2997ff]">
+                  <Video className="w-4 h-4" />
+                  <span>Attach First Video Lecture (Optional)</span>
+                </div>
+                <p className="text-[10.5px] text-slate-400">
+                  You can immediately attach your first lecture so trainees can start viewing right away.
                 </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="Lesson title (e.g. Module 1: Introduction)"
+                    value={initialVideoTitle}
+                    onChange={(e) => setInitialVideoTitle(e.target.value)}
+                    className="apple-input text-xs w-full"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Duration (e.g. 25 Mins)"
+                    value={initialVideoDuration}
+                    onChange={(e) => setInitialVideoDuration(e.target.value)}
+                    className="apple-input text-xs w-full"
+                  />
+                </div>
+                <input
+                  type="url"
+                  placeholder="Paste YouTube or Google Drive Video URL"
+                  value={initialVideoUrl}
+                  onChange={(e) => setInitialVideoUrl(e.target.value)}
+                  className="apple-input text-xs w-full"
+                />
               </div>
 
-              <div className="flex gap-2 pt-2">
+              {/* Optional Initial Study Material */}
+              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+                  <FileText className="w-4 h-4" />
+                  <span>Attach Syllabus or Study Material (Optional)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    placeholder="Document Title (e.g. Course Handbook & Syllabus)"
+                    value={initialResourceTitle}
+                    onChange={(e) => setInitialResourceTitle(e.target.value)}
+                    className="apple-input text-xs sm:col-span-2 w-full"
+                  />
+                  <select
+                    value={initialResourceType}
+                    onChange={(e) => setInitialResourceType(e.target.value as any)}
+                    className="apple-input text-xs w-full"
+                  >
+                    <option value="pdf">PDF</option>
+                    <option value="presentation">Presentation (PPT)</option>
+                    <option value="document">Document (DOC)</option>
+                    <option value="link">Web Link</option>
+                  </select>
+                </div>
+                <input
+                  type="url"
+                  placeholder="Paste Cloud Storage / Google Drive / Public PDF URL"
+                  value={initialResourceUrl}
+                  onChange={(e) => setInitialResourceUrl(e.target.value)}
+                  className="apple-input text-xs w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Initial Duration Estimate
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 2 Hours, 45 Mins"
+                    className="apple-input text-xs w-full"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Number of Planned Modules
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    placeholder="e.g. 5"
+                    className="apple-input text-xs w-full"
+                    value={modulesCount}
+                    onChange={(e) => setModulesCount(e.target.value ? parseInt(e.target.value, 10) : "")}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-white/10">
                 <button type="submit" className="apple-btn-primary flex-1 text-xs py-2 font-bold cursor-pointer">
-                  Publish Course
+                  Publish Curriculum
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
+                  className="apple-btn-secondary text-xs px-4 py-2 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal 5: Upload Study Material Modal ─────────────────────────────────── */}
+      {showStudyMaterialModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-2xl animate-fadeIn overflow-y-auto">
+          <div className="glass-panel p-5 sm:p-6 max-w-lg w-full border border-white/20 shadow-2xl space-y-4 my-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Upload Study Material</h3>
+                  <p className="text-xs text-slate-400">PDFs, slide decks, documents & reference links</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowStudyMaterialModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadStudyMaterial} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Target Course <span className="text-rose-400">*</span>
+                </label>
+                <select
+                  required
+                  value={studyMaterialCourseId}
+                  onChange={(e) => setStudyMaterialCourseId(e.target.value)}
+                  className="apple-input text-xs w-full cursor-pointer"
+                >
+                  {myCourses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Material Title <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Satellite Meteorology Reference Manual (Vol 1)"
+                  value={studyMaterialTitle}
+                  onChange={(e) => setStudyMaterialTitle(e.target.value)}
+                  className="apple-input text-xs w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Document Format</label>
+                  <select
+                    value={studyMaterialType}
+                    onChange={(e) => setStudyMaterialType(e.target.value as any)}
+                    className="apple-input text-xs w-full"
+                  >
+                    <option value="pdf">PDF Document (.pdf)</option>
+                    <option value="presentation">Presentation Slide (.ppt / .pptx)</option>
+                    <option value="document">Handbook / Document (.docx / .txt)</option>
+                    <option value="link">Web Reference Link</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Or Upload File
+                  </label>
+                  <input
+                    ref={studyFileInputRef}
+                    type="file"
+                    accept=".pdf,.ppt,.pptx,.doc,.docx,.txt"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        setStudyMaterialFileName(f.name);
+                        if (!studyMaterialTitle) {
+                          setStudyMaterialTitle(f.name.replace(/\.[^/.]+$/, ""));
+                        }
+                        const url = URL.createObjectURL(f);
+                        setStudyMaterialUrl(url);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => studyFileInputRef.current?.click()}
+                    className="apple-btn-secondary text-xs w-full py-2 flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{studyMaterialFileName ? "Replace File" : "Choose File"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {studyMaterialFileName && (
+                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-[11px] text-emerald-300">
+                  <span className="truncate">{studyMaterialFileName}</span>
+                  <span className="text-[10px] text-slate-400">Attached</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Document URL / Cloud Link <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://drive.google.com/... or https://example.com/handbook.pdf"
+                  value={studyMaterialUrl}
+                  onChange={(e) => setStudyMaterialUrl(e.target.value)}
+                  className="apple-input text-xs w-full"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-white/10">
+                <button type="submit" className="apple-btn-primary flex-1 text-xs py-2 font-bold cursor-pointer">
+                  Attach Study Material
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStudyMaterialModal(false)}
                   className="apple-btn-secondary text-xs px-4 py-2 cursor-pointer"
                 >
                   Cancel
