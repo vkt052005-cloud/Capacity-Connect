@@ -586,7 +586,54 @@ export const initialCourses: Course[] = [
       "Project 2: Snake, Water, Gun Game"
     ],
     prerequisites: ["No prior programming experience required", "A computer with GCC or VS Code installed"],
-    resources: []
+    resources: [
+      {
+        id: "r-c-01",
+        courseId: "c-c-prog",
+        title: "Complete C Programming Master Notes & Pointers Blueprint",
+        type: "presentation",
+        url: "#slides",
+        size: "14.2 MB",
+        uploadedAt: "2026-03-03T10:00:00Z",
+        uploadedBy: "CodeWithHarry (Haris Khan)",
+        version: "v2.0",
+        summary: "In-depth guide to C syntax, memory allocation with malloc/calloc, pointer arithmetic, struct memory alignment, and recursion.",
+        keyTakeaways: [
+          "C provides direct memory management and low-level hardware control through pointers.",
+          "Dynamic memory allocated with malloc() must always be paired with free() to prevent memory leaks.",
+          "Arrays decay into pointers to their first elements when passed to functions.",
+          "Structures allow composite data models with continuous byte layout in RAM."
+        ],
+        flashcards: [
+          { id: "f-c-1", front: "What is the difference between malloc() and calloc()?", back: "malloc allocates uninitialized garbage memory, while calloc allocates zero-initialized memory.", category: "Memory" },
+          { id: "f-c-2", front: "What is a dangling pointer?", back: "A pointer that references a memory location that has already been deallocated using free().", category: "Pointers" }
+        ],
+        slides: [
+          {
+            slideNumber: 1,
+            title: "C Memory Layout & The Stack vs Heap",
+            bullets: [
+              "Text Segment: Compiled executable instructions",
+              "Data Segment: Initialized global and static variables",
+              "Stack: Function call frames, local variables (auto-managed)",
+              "Heap: Dynamic runtime memory allocated via malloc/calloc"
+            ],
+            keyConcept: "Understanding memory segments is vital for debugging segfaults and optimizing C programs."
+          },
+          {
+            slideNumber: 2,
+            title: "Mastering Pointers & References",
+            bullets: [
+              "Pointer declaration: int *ptr",
+              "Address-of operator: &variable",
+              "Dereference operator: *ptr",
+              "Passing pointers to functions enables in-place mutation"
+            ],
+            keyConcept: "Pointers hold memory addresses, allowing efficient pass-by-reference semantics."
+          }
+        ]
+      }
+    ]
   },
   {
     id: "c-python",
@@ -613,7 +660,54 @@ export const initialCourses: Course[] = [
       "Days 81-100: Real-World Applications, APIs, Multithreading, GUI Projects & Packaging"
     ],
     prerequisites: ["No prerequisites required"],
-    resources: []
+    resources: [
+      {
+        id: "r-py-01",
+        courseId: "c-python",
+        title: "Python 100 Days Complete Cheatsheet & OOP Handbook",
+        type: "presentation",
+        url: "#slides",
+        size: "16.8 MB",
+        uploadedAt: "2026-03-03T10:00:00Z",
+        uploadedBy: "CodeWithHarry (Haris Khan)",
+        version: "v3.2",
+        summary: "Comprehensive handbook covering Python idioms, list comprehensions, decorators, OOP classes, generator functions, and automation patterns.",
+        keyTakeaways: [
+          "Python is dynamically typed and garbage collected with automatic reference counting.",
+          "List and dict comprehensions offer concise and fast alternatives to explicit loops.",
+          "Generators use yield to lazily stream large datasets with O(1) memory footprint.",
+          "Decorators wrap functions to dynamically enhance behavior without modifying source code."
+        ],
+        flashcards: [
+          { id: "f-py-1", front: "What is GIL in CPython?", back: "The Global Interpreter Lock is a mutex that prevents multiple native threads from executing Python bytecodes at once.", category: "Core Python" },
+          { id: "f-py-2", front: "What is the difference between list and tuple?", back: "Lists are mutable and defined with [], while tuples are immutable and defined with ().", category: "Data Types" }
+        ],
+        slides: [
+          {
+            slideNumber: 1,
+            title: "Idiomatic Python & Data Structures",
+            bullets: [
+              "Lists, Tuples, Sets, and Dictionaries",
+              "List comprehensions: [x**2 for x in nums if x > 0]",
+              "Unpacking and *args, **kwargs keyword expansion",
+              "Context managers with 'with' statements for clean resource closing"
+            ],
+            keyConcept: "Writing Pythonic code focuses on readability and concise standard library constructs."
+          },
+          {
+            slideNumber: 2,
+            title: "Decorators & Generators in Production",
+            bullets: [
+              "Functions as first-class citizens in Python",
+              "Higher-order functions and closure scope",
+              "Decorators for timing, authentication, and logging",
+              "Generators with yield to stream massive files without memory spikes"
+            ],
+            keyConcept: "Generators preserve memory by calculating next values only on demand."
+          }
+        ]
+      }
+    ]
   },
   {
     id: "c-cpp-dsa",
@@ -2155,14 +2249,20 @@ export function initializeStorage() {
           return true;
         })
         .map((c: any) => {
+          const initMatch = initialCourses.find((ic) => ic.id === c.id);
+          let resList = Array.isArray(c.resources) && c.resources.length > 0 ? c.resources : (initMatch?.resources || []);
           if (c.id === "c6" || c.id === "c-c-prog" || c.id === "c-python") {
             return {
               ...c,
+              resources: resList,
               trainerId: "u-trainer-codewithharry",
               trainerName: "CodeWithHarry (Haris Khan)"
             };
           }
-          return c;
+          return {
+            ...c,
+            resources: resList
+          };
         });
       localStorage.setItem("cc_courses", JSON.stringify(cleanedCourses));
     }

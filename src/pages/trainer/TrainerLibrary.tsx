@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { FolderOpen, Upload, FileText, Presentation, Video, CheckCircle2, Trash2, ShieldAlert, ShieldCheck, Lock, Download, BookOpen, Search } from "lucide-react";
+import { FolderOpen, Upload, FileText, Presentation, Video, CheckCircle2, Trash2, ShieldAlert, ShieldCheck, Lock, Download, BookOpen, Search, Eye, X } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { SlideDeckViewer } from "../../components/video/SlideDeckViewer";
 import { useCoursesStore } from "../../store/coursesStore";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 
 export const TrainerLibrary: React.FC = () => {
-  const { courses, addResource } = useCoursesStore();
+  const { courses, addResource, deleteResource } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
 
@@ -22,6 +23,7 @@ export const TrainerLibrary: React.FC = () => {
   const [resourceType, setResourceType] = useState<"presentation" | "pdf" | "video">("presentation");
   const [version, setVersion] = useState("v2.5");
   const [searchQuery, setSearchQuery] = useState("");
+  const [previewResource, setPreviewResource] = useState<any | null>(null);
 
   const course = courses.find((c) => c.id === selectedCourseId) || courses[0];
   const allResources = course?.resources || [];
@@ -29,7 +31,12 @@ export const TrainerLibrary: React.FC = () => {
     ? allResources.filter((r) => r.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : allResources;
 
-  const handleDownloadResource = (r: any) => {
+  const handleStudyOrDownload = (r: any) => {
+    if (r.type === "presentation" && r.slides && r.slides.length > 0) {
+      setPreviewResource(r);
+      return;
+    }
+
     addToast({
       title: "Downloading Material",
       message: `"${r.title}" (${r.type.toUpperCase()}) is opening. Ready for offline learning.`,
@@ -50,6 +57,32 @@ export const TrainerLibrary: React.FC = () => {
       return;
     }
 
+    // Default slides for newly created presentations so they are immediately interactive in SlideDeckViewer
+    const defaultSlides = resourceType === "presentation" ? [
+      {
+        slideNumber: 1,
+        title: `${resourceTitle} - Core Overview`,
+        bullets: [
+          `Key concepts and curriculum topics for ${course?.title || "this course"}`,
+          "Architecture and modular implementation guidelines",
+          "Best practices, security benchmarks, and development patterns",
+          "Self-paced learning checkpoints and code exercises"
+        ],
+        keyConcept: "Mastering foundational patterns empowers engineers to build scalable and maintainable solutions."
+      },
+      {
+        slideNumber: 2,
+        title: "Technical Roadmap & Practical Applications",
+        bullets: [
+          "Hands-on implementation steps and tooling setup",
+          "Verification standards and automated testing procedures",
+          "Common pitfalls and performance optimization techniques",
+          "Preparation notes for proctored modular certification assessments"
+        ],
+        keyConcept: "Consistent practice and review guarantee long-term retention and technical proficiency."
+      }
+    ] : undefined;
+
     addResource({
       id: "res-" + Date.now(),
       courseId: selectedCourseId,
@@ -60,7 +93,8 @@ export const TrainerLibrary: React.FC = () => {
       uploadedAt: new Date().toISOString(),
       uploadedBy: currentUser?.name || "Faculty Trainer",
       version,
-      summary: "Newly uploaded learning resource for " + (course?.title || "course")
+      summary: "Newly uploaded learning resource for " + (course?.title || "course"),
+      slides: defaultSlides
     });
 
     setResourceTitle("");
@@ -245,14 +279,41 @@ export const TrainerLibrary: React.FC = () => {
 
                   <div className="flex items-center gap-2 self-end sm:self-center">
                     <span className="badge-green text-[9px]">OFFICIALLY INDEXED</span>
+                    {r.type === "presentation" && r.slides && r.slides.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => handleStudyOrDownload(r)}
+                        className="apple-btn-primary text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Interactive Slides ({r.slides.length})</span>
+                      </button>
+                    ) : null}
                     <button
                       type="button"
-                      onClick={() => handleDownloadResource(r)}
+                      onClick={() => handleStudyOrDownload(r)}
                       className="apple-btn-secondary text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 cursor-pointer hover:text-[#2997ff]"
                     >
                       <Download className="w-3.5 h-3.5 text-[#2997ff]" />
                       <span>{isTrainee ? "Download / Study" : "View"}</span>
                     </button>
+                    {!isTrainee && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          deleteResource(selectedCourseId, r.id);
+                          addToast({
+                            title: "Resource Removed",
+                            message: `"${r.title}" has been deleted from this course library.`,
+                            type: "info"
+                          });
+                        }}
+                        className="p-1.5 rounded-lg border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 cursor-pointer transition"
+                        title="Delete this learning material"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -260,6 +321,37 @@ export const TrainerLibrary: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Interactive Slide Deck Presentation Modal */}
+      {previewResource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+          <div className="relative max-w-4xl w-full glass-panel border border-white/20 shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <Presentation className="w-5 h-5 text-[#2997ff]" />
+                <div>
+                  <h3 className="text-sm font-bold text-white">{previewResource.title}</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Interactive Slide Deck Viewer • {previewResource.version || "v2.0"} • {course?.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewResource(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 cursor-pointer transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <SlideDeckViewer
+              slides={previewResource.slides || []}
+              title={previewResource.title}
+              version={previewResource.version}
+            />
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

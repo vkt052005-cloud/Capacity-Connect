@@ -34,6 +34,7 @@ interface CoursesState {
     certData?: Partial<Certificate>
   ) => Certificate | undefined;
   addResource: (resource: Resource) => void;
+  deleteResource: (courseId: string, resourceId: string) => void;
   addCourse: (course: Course) => void;
   updateCourse: (courseId: string, updates: Partial<Course>) => void;
   deleteCourse: (courseId: string) => void;
@@ -301,13 +302,26 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   addResource: (resource) => {
     const { courses } = get();
     const updated = courses.map((c) =>
-      c.id === resource.courseId ? { ...c, resources: [...c.resources, resource] } : c
+      c.id === resource.courseId ? { ...c, resources: [...(c.resources || []), resource] } : c
     );
     saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
     const targetCourse = updated.find((c) => c.id === resource.courseId);
     if (targetCourse) {
       dbService.update("courses", resource.courseId, { resources: targetCourse.resources }).catch(() => {});
+    }
+  },
+
+  deleteResource: (courseId, resourceId) => {
+    const { courses } = get();
+    const updated = courses.map((c) =>
+      c.id === courseId ? { ...c, resources: (c.resources || []).filter((r) => r.id !== resourceId) } : c
+    );
+    saveToStorage(STORAGE_KEYS.COURSES, updated);
+    set({ courses: updated });
+    const targetCourse = updated.find((c) => c.id === courseId);
+    if (targetCourse) {
+      dbService.update("courses", courseId, { resources: targetCourse.resources }).catch(() => {});
     }
   },
 
