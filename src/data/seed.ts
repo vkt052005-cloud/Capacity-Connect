@@ -1973,9 +1973,27 @@ export const initialFeedbacks: Feedback[] = [];
 
 export const initialNotifications: Notification[] = [
   {
+    id: "n-ann-1",
+    type: "announcement",
+    title: "Official Announcement: Annual Capacity Building & Technical Upskilling Calendar 2026",
+    content: "The Ministry & Directorate has ratified the 2026 Competency Development Schedule. All engineers, faculty, and technical trainees are requested to review designated subject roadmaps and upcoming live masterclasses.",
+    createdAt: "2026-09-06T12:00:00Z",
+    pinned: true,
+    author: "Directorate of Training & Capacity Building"
+  },
+  {
+    id: "n-ach-1",
+    type: "achievement",
+    title: "Milestone Achieved: 1,500+ Engineers & Trainees Certified",
+    content: "CAPACITY CONNECT has successfully crossed 1,500 certified trainees across Full-Stack Web Development, Data Structures, Python Automation, and Systems Architecture with an exceptional 94.2% competency retention index.",
+    createdAt: "2026-09-06T11:15:00Z",
+    pinned: true,
+    author: "Academic Council & Assessment Cell"
+  },
+  {
     id: "n1",
     type: "new_content",
-    title: "A teacher uploaded a course: Web Development Course (Full Stack)",
+    title: "New Course Uploaded: Web Development Course (Full Stack)",
     content: "CodeWithHarry (Haris Khan) has published the complete Web Development Course with 139 interactive video lessons, projects, and exercises.",
     createdAt: "2026-09-06T10:00:00Z",
     pinned: true,
@@ -1984,7 +2002,7 @@ export const initialNotifications: Notification[] = [
   {
     id: "n2",
     type: "new_content",
-    title: "A teacher uploaded a course: Complete C Programming",
+    title: "New Course Uploaded: Complete C Programming",
     content: "CodeWithHarry (Haris Khan) uploaded a comprehensive 73-lesson C programming masterclass covering pointers, memory structures, and file operations.",
     createdAt: "2026-09-06T09:30:00Z",
     pinned: true,
@@ -1993,7 +2011,7 @@ export const initialNotifications: Notification[] = [
   {
     id: "n3",
     type: "new_content",
-    title: "A teacher uploaded a course: Python for Automation & Systems",
+    title: "New Course Uploaded: Python for Automation & Systems",
     content: "CodeWithHarry (Haris Khan) uploaded the 100 Days of Python curriculum complete with modular exercises and proctored assessments.",
     createdAt: "2026-09-06T09:00:00Z",
     pinned: true,
@@ -2002,11 +2020,20 @@ export const initialNotifications: Notification[] = [
   {
     id: "n4",
     type: "new_content",
-    title: "A teacher uploaded a course: Data Structures & Algorithms",
+    title: "New Course Uploaded: Data Structures & Algorithms",
     content: "Raj Tiwari published the complete Data Structures & Algorithms curriculum with problem-solving roadmaps and proctored module quizzes.",
     createdAt: "2026-09-06T08:30:00Z",
     pinned: false,
     author: "Raj Tiwari"
+  },
+  {
+    id: "n-ach-2",
+    type: "achievement",
+    title: "National Recognition: Excellence in Digital Training Infrastructure",
+    content: "Capacity Connect awarded top honors for high-fidelity interactive training delivery, zero-latency Google Meet integration, and cryptographic credential issuance.",
+    createdAt: "2026-09-05T16:00:00Z",
+    pinned: false,
+    author: "National Capacity Building Commission"
   }
 ];
 

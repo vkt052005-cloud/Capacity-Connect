@@ -3,7 +3,7 @@ import { NavLink, Link, useLocation } from "react-router-dom";
 import {
   BookOpen, Award, Shield, Users, Video, BarChart3,
   CheckCircle2, Bell, Brain, Library, FileText, UserCheck,
-  FolderLock
+  FolderLock, FolderOpen
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
@@ -17,6 +17,7 @@ export const Sidebar: React.FC = () => {
     { to: "/trainee/dashboard", label: "Dashboard", icon: BookOpen },
     { to: "/trainee/live-classes", label: "Live Meet Classes", icon: Video },
     { to: "/trainee/courses", label: "Course Catalog", icon: Library },
+    { to: "/trainee/library", label: "Study Library", icon: FolderOpen },
     { to: "/trainee/assessments", label: "MCQ Assessments", icon: Shield },
     { to: "/trainee/certificates", label: "My Certificates", icon: Award },
     { to: "/trainee/feedback", label: "Course Feedback", icon: FileText },

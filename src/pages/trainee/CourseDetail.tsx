@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Video, Presentation, Sparkles, MessageSquare, Award,
   CheckCircle2, AlertTriangle, ListVideo, Search, ChevronLeft,
-  ChevronRight, Play, ExternalLink, Star, LogOut, BookOpen
+  ChevronRight, Play, ExternalLink, Star, LogOut, BookOpen,
+  FolderOpen, Download, FileText
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
@@ -145,7 +146,7 @@ export const CourseDetail: React.FC = () => {
   const navigate = useNavigate();
   const playerRef = useRef<HTMLDivElement>(null);
 
-  const [activeTab, setActiveTab] = useState<"video" | "slides" | "ai" | "discussions" | "reviews">("video");
+  const [activeTab, setActiveTab] = useState<"video" | "slides" | "resources" | "ai" | "discussions" | "reviews">("video");
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
   const [lessonSearch, setLessonSearch] = useState("");
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("");
@@ -365,6 +366,15 @@ export const CourseDetail: React.FC = () => {
               }
             >
               <Presentation className="w-3.5 h-3.5" /> Slide Deck
+            </button>
+            <button
+              onClick={() => setActiveTab("resources")}
+              className={
+                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " +
+                (activeTab === "resources" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")
+              }
+            >
+              <FolderOpen className="w-3.5 h-3.5" /> Study Materials & Library ({course.resources?.length || 0})
             </button>
             <button
               onClick={() => setActiveTab("ai")}
@@ -720,6 +730,93 @@ export const CourseDetail: React.FC = () => {
               title={course.title}
               version={mainResource?.version}
             />
+          </div>
+        )}
+
+        {/* Tab: Study Materials & Library Resources */}
+        {activeTab === "resources" && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="card p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4 text-[#2997ff]" />
+                    Official Course Study Materials & Library Repository
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Faculty presentations, curriculum handbooks, and reference notes indexed for this course.
+                  </p>
+                </div>
+                <Link
+                  to="/trainee/library"
+                  className="apple-btn-secondary text-xs px-3.5 py-1.5 font-semibold text-[#2997ff] flex items-center gap-1.5 self-start sm:self-auto"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Browse Full Institutional Library</span>
+                </Link>
+              </div>
+
+              {!course.resources || course.resources.length === 0 ? (
+                <div className="p-8 text-center space-y-2 rounded-xl bg-white/[0.02] border border-white/5">
+                  <FileText className="w-8 h-8 text-slate-500 mx-auto" />
+                  <p className="text-xs text-slate-300 font-medium">No external documents uploaded yet.</p>
+                  <p className="text-[11px] text-slate-500">
+                    Your instructor will publish downloadable slide decks and cheat sheets here. You can also view the interactive Slide Deck in the adjacent tab.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {course.resources.map((res) => (
+                    <div
+                      key={res.id}
+                      className="p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-[#2997ff]/40 flex flex-col justify-between gap-3 transition"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#0071e3]/20 text-[#2997ff] flex items-center justify-center shrink-0 mt-0.5">
+                          {res.type === "presentation" ? (
+                            <Presentation className="w-5 h-5" />
+                          ) : res.type === "video" ? (
+                            <Video className="w-5 h-5" />
+                          ) : (
+                            <FileText className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-white line-clamp-1">{res.title}</h4>
+                            <span className="badge-blue text-[8px] py-0.5 uppercase shrink-0">{res.type}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 line-clamp-2">
+                            {res.summary || res.description || "Official course curriculum and reference resource."}
+                          </p>
+                          <p className="text-[10px] text-slate-500 font-mono">
+                            Size: {res.size || "8.5 MB"} • Version: {res.version || "v2.0"} • Faculty: {res.uploadedBy || course.trainerName}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                        <span className="badge-green text-[9px]">READY FOR OFFLINE STUDY</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addToast({
+                              title: "Downloading Learning Resource",
+                              message: `"${res.title}" is ready for offline reading and review.`,
+                              type: "success"
+                            });
+                          }}
+                          className="apple-btn-secondary text-xs px-3 py-1 font-semibold flex items-center gap-1.5 text-[#2997ff] hover:text-white cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5 text-[#2997ff]" />
+                          <span>Download / Study</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

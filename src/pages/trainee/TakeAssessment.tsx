@@ -177,6 +177,48 @@ export const TakeAssessment: React.FC = () => {
     );
   }
 
+  const isDeadlineExpired = Boolean(
+    rawAssessment?.deadline && new Date(rawAssessment.deadline) < new Date()
+  );
+
+  if (isDeadlineExpired) {
+    return (
+      <DashboardLayout
+        pageTitle="Assessment Submissions Closed"
+        breadcrumbs={[
+          { label: "Trainee Dashboard", to: "/trainee/dashboard" },
+          { label: "Assessments", to: "/trainee/assessments" },
+          { label: "Deadline Closed" }
+        ]}
+      >
+        <div className="max-w-md mx-auto my-16 p-8 glass-panel border border-rose-500/30 rounded-3xl text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+            <Clock className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <span className="badge-red text-[10px] uppercase font-bold tracking-wider">Submissions Closed</span>
+            <h2 className="text-xl font-bold text-white">{rawAssessment?.title || "Assessment"}</h2>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            The submission deadline for this assessment was <strong>{new Date(rawAssessment!.deadline).toLocaleString()}</strong>.
+            This evaluation is no longer accepting student attempts.
+          </p>
+          <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 text-[11px] text-slate-300 text-left space-y-1.5">
+            <p>• Course: <span className="text-white font-medium">{rawAssessment?.courseTitle}</span></p>
+            <p>• Faculty: <span className="text-white font-medium">{rawAssessment?.createdBy}</span></p>
+            <p>• Status: <span className="text-rose-400 font-semibold">Deadline Expired</span></p>
+          </div>
+          <button
+            onClick={() => navigate("/trainee/assessments")}
+            className="apple-btn-primary text-xs px-5 py-2.5 font-bold mx-auto flex items-center gap-2 cursor-pointer"
+          >
+            Return to Active Assessments
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const currentQ = questions[currentIndex];
