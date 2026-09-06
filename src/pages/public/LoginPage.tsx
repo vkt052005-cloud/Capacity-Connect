@@ -40,6 +40,8 @@ export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const isPendingNotice = searchParams.get("pending") === "true";
   const pendingEmail = searchParams.get("email") || "";
+  const redirectTarget = (location.state as any)?.from?.pathname || searchParams.get("redirect") || "";
+  const isCourseRedirect = redirectTarget.includes("/course/") || redirectTarget.includes("/courses");
 
   // If already authenticated and active, redirect to requested page or role dashboard
   useEffect(() => {
@@ -122,7 +124,8 @@ export const LoginPage: React.FC = () => {
           message: "Authenticated as TRAINEE.",
           type: "success"
         });
-        navigate("/trainee/dashboard");
+        const targetPath = (location.state as any)?.from?.pathname || searchParams.get("redirect") || "/trainee/dashboard";
+        navigate(targetPath);
         return;
       }
 
@@ -244,9 +247,16 @@ export const LoginPage: React.FC = () => {
         type: "success"
       });
 
-      if (role === "trainee") navigate("/trainee/dashboard");
-      else if (role === "trainer") navigate("/trainer/dashboard");
-      else navigate("/admin/dashboard");
+      const targetPath = (location.state as any)?.from?.pathname || searchParams.get("redirect");
+      if (targetPath) {
+        navigate(targetPath);
+      } else if (role === "trainee") {
+        navigate("/trainee/dashboard");
+      } else if (role === "trainer") {
+        navigate("/trainer/dashboard");
+      } else {
+        navigate("/admin/dashboard");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to complete authentication.");
     } finally {
@@ -284,6 +294,18 @@ export const LoginPage: React.FC = () => {
               </div>
               <p className="text-[11px] text-amber-200/90 leading-relaxed">
                 Your trainer registration application{pendingEmail ? ` for ${pendingEmail}` : ""} has been received. In accordance with platform security governance, an Administrator must review and approve your trainer credentials before you can log in.
+              </p>
+            </div>
+          )}
+
+          {isCourseRedirect && (
+            <div className="p-3.5 rounded-xl bg-blue-500/15 border border-blue-500/35 text-xs text-blue-200 space-y-1 animate-fadeIn">
+              <div className="flex items-center gap-2 font-bold text-white">
+                <Lock className="w-4 h-4 text-[#2997ff] shrink-0" />
+                <span>Sign In Required to Watch Courses</span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Please sign in to your student account to access video lectures, curriculum materials, and downloadable study resources.
               </p>
             </div>
           )}

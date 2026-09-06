@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Video, Presentation, Sparkles, MessageSquare, Award,
@@ -138,7 +138,7 @@ const COURSE_ASSESSMENT_MAP: Record<string, string> = {
 
 export const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { courses, completeCourse } = useCoursesStore();
+  const { courses, enrollments, enroll, completeCourse } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
@@ -148,6 +148,18 @@ export const CourseDetail: React.FC = () => {
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
   const [lessonSearch, setLessonSearch] = useState("");
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("");
+
+  // Automatically enroll active student if accessing course
+  useEffect(() => {
+    if (currentUser && currentUser.role === "trainee" && id) {
+      const isAlreadyEnrolled = enrollments.some(
+        (e) => e.traineeId === currentUser.id && e.courseId === id
+      );
+      if (!isAlreadyEnrolled) {
+        enroll(currentUser.id, id);
+      }
+    }
+  }, [currentUser, id, enrollments, enroll]);
 
   // Ensure course is accurately resolved: first check user courses store, then seed courses
   const course = courses.find((c) => c.id === id) || initialCourses.find((c) => c.id === id);

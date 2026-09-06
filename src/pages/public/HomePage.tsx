@@ -20,6 +20,8 @@ import { initialCourses } from "../../data/seed";
 
 export const HomePage: React.FC = () => {
   const { courses, load } = useCoursesStore();
+  const { currentUser } = useAuthStore();
+  const { addToast } = useAppStore();
 
   useEffect(() => {
     load();
@@ -35,6 +37,19 @@ export const HomePage: React.FC = () => {
 
   const handleRoleQuickStart = (role: "trainee" | "trainer" | "admin") => {
     navigate(`/login?role=${role}`);
+  };
+
+  const handleWatchCourse = (courseId: string) => {
+    if (!currentUser) {
+      addToast({
+        title: "Login Required to Watch",
+        message: "Please log in to watch this course and access video lectures.",
+        type: "info"
+      });
+      navigate("/login", { state: { from: { pathname: `/trainee/course/${courseId}` } } });
+    } else {
+      navigate(`/trainee/course/${courseId}`);
+    }
   };
 
   const faqs = [
@@ -250,7 +265,7 @@ export const HomePage: React.FC = () => {
               </p>
             </div>
             <Link
-              to="/trainee/courses"
+              to="/courses"
               className="text-xs text-[#2997ff] hover:underline flex items-center gap-1 font-semibold"
             >
               <span>Browse Catalog</span>
@@ -262,7 +277,10 @@ export const HomePage: React.FC = () => {
             <div className="max-w-3xl mx-auto">
               {featuredCourses.map((c) => (
                 <div key={c.id} className="card overflow-hidden grid grid-cols-1 sm:grid-cols-12 group hover:border-[#2997ff]/50 transition shadow-2xl">
-                  <div className="sm:col-span-5 relative min-h-[220px] overflow-hidden">
+                  <div
+                    onClick={() => handleWatchCourse(c.id)}
+                    className="sm:col-span-5 relative min-h-[220px] overflow-hidden cursor-pointer"
+                  >
                     <img
                       src={getCourseThumbnail(c)}
                       alt={c.title}
@@ -286,7 +304,10 @@ export const HomePage: React.FC = () => {
                         <span className="badge-green text-[9px]">{c.lessons?.length || (c.id === 'c-dsa' ? 315 : 139)} Lessons</span>
                         <span className="badge-blue text-[9px] font-mono">⭐ {c.rating || 4.98}</span>
                       </div>
-                      <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#2997ff] transition">
+                      <h3
+                        onClick={() => handleWatchCourse(c.id)}
+                        className="text-base sm:text-lg font-bold text-white group-hover:text-[#2997ff] transition cursor-pointer"
+                      >
                         {c.title}
                       </h3>
                       <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
@@ -299,13 +320,23 @@ export const HomePage: React.FC = () => {
 
                     <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                       <span className="text-xs text-slate-400 font-mono">⏱ {formatCourseDuration(c)}</span>
-                      <Link
-                        to={`/trainee/course/${c.id}`}
-                        className="apple-btn-primary text-xs px-4 py-2 font-bold flex items-center gap-1.5"
-                      >
-                        <span>Start Learning</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
+                      {currentUser ? (
+                        <Link
+                          to={`/trainee/course/${c.id}`}
+                          className="apple-btn-primary text-xs px-4 py-2 font-bold flex items-center gap-1.5"
+                        >
+                          <span>Start Learning</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => handleWatchCourse(c.id)}
+                          className="apple-btn-primary text-xs px-4 py-2 font-bold flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <span>Start Learning</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -316,37 +347,55 @@ export const HomePage: React.FC = () => {
               {featuredCourses.map((c) => (
                 <div key={c.id} className="card overflow-hidden flex flex-col justify-between group hover:border-[#2997ff]/50 transition">
                   <div>
-                    <div className="relative h-32 overflow-hidden">
+                    <div
+                      onClick={() => handleWatchCourse(c.id)}
+                      className="relative h-32 overflow-hidden cursor-pointer"
+                    >
                       <img
                         src={getCourseThumbnail(c)}
                         alt={c.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                         onError={(e) => {
-                        const target = e.currentTarget;
-                        const fallback = getCourseThumbnail(c);
-                        if (!target.src.endsWith(fallback)) {
-                          target.src = fallback;
-                        }
-                      }}
+                          const target = e.currentTarget;
+                          const fallback = getCourseThumbnail(c);
+                          if (!target.src.endsWith(fallback)) {
+                            target.src = fallback;
+                          }
+                        }}
                       />
                       <div className="absolute top-2 right-2">
                         <span className="badge-blue text-[8px]">{c.category}</span>
                       </div>
                     </div>
                     <div className="p-4 space-y-1.5">
-                      <h3 className="text-xs font-bold text-white line-clamp-2">{c.title}</h3>
+                      <h3
+                        onClick={() => handleWatchCourse(c.id)}
+                        className="text-xs font-bold text-white line-clamp-2 cursor-pointer group-hover:text-[#2997ff] transition"
+                      >
+                        {c.title}
+                      </h3>
                       <p className="text-[10px] text-slate-400">Instructor: {c.trainerName}</p>
                     </div>
                   </div>
                   <div className="p-4 pt-0 border-t border-white/5 flex items-center justify-between">
                     <span className="text-[10px] text-slate-500 font-mono">{formatCourseDuration(c)}</span>
-                    <Link
-                      to={`/trainee/course/${c.id}`}
-                      className="text-xs text-[#2997ff] font-semibold hover:underline flex items-center gap-0.5"
-                    >
-                      <span>View Course</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
+                    {currentUser ? (
+                      <Link
+                        to={`/trainee/course/${c.id}`}
+                        className="text-xs text-[#2997ff] font-semibold hover:underline flex items-center gap-0.5"
+                      >
+                        <span>View Course</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => handleWatchCourse(c.id)}
+                        className="text-xs text-[#2997ff] font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
+                      >
+                        <span>View Course</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -94,11 +94,11 @@ function App() {
             <TraineeProfile />
           </ProtectedRoute>
         } />
-        <Route path="/trainee/courses" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <CourseCatalog />
-          </ProtectedRoute>
-        } />
+        {/* Course Catalog (Publicly browseable by all visitors; login required to watch/enroll) */}
+        <Route path="/courses" element={<CourseCatalog />} />
+        <Route path="/trainee/courses" element={<CourseCatalog />} />
+
+        {/* Watch Course / Lecture Studio (Protected — requires login) */}
         <Route path="/trainee/course/:id" element={
           <ProtectedRoute allowedRoles={["trainee"]}>
             <CourseDetail />
