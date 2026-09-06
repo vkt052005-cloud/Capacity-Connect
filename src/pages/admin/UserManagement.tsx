@@ -163,7 +163,7 @@ const generateStrongPasswordString = () => {
 };
 
 export const UserManagement: React.FC = () => {
-  const { users, load, approveUser, rejectUser, deleteUser, deactivateUser, activateUser, updateRole, verifyTrainer } = useUsersStore();
+  const { users, load, approveUser, rejectUser, deleteUser, deactivateUser, activateUser, updateRole, verifyTrainer, removeUser, allowUserAccess } = useUsersStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
 
@@ -175,6 +175,7 @@ export const UserManagement: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [removalReason, setRemovalReason] = useState("");
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "Just now";
@@ -260,16 +261,27 @@ export const UserManagement: React.FC = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!userToDelete) return;
     const name = userToDelete.name;
     const email = userToDelete.email;
-    deleteUser(userToDelete.id);
+    const id = userToDelete.id;
+    await removeUser(id, removalReason.trim() || "Revoked by Administrator");
     setUserToDelete(null);
+    setRemovalReason("");
 
     addToast({
-      title: "User Account Removed",
-      message: `${name} (${email}) has been permanently removed by Admin.`,
+      title: "User Removed & Access Revoked",
+      message: `${name} (${email}) has been removed. They cannot access the platform until an Admin allows access.`,
+      type: "warning"
+    });
+  };
+
+  const handleAllowAccess = async (targetUser: User) => {
+    await allowUserAccess(targetUser.id);
+    addToast({
+      title: "User Access Allowed & Restored",
+      message: `${targetUser.name} (${targetUser.email}) has been re-admitted and can now log in to Capacity Connect.`,
       type: "success"
     });
   };
@@ -383,13 +395,15 @@ export const UserManagement: React.FC = () => {
     });
   };
 
-  const traineeCount = users.filter((u) => u.role === "trainee").length;
-  const trainerCount = users.filter((u) => u.role === "trainer").length;
+  const traineeCount = users.filter((u) => u.role === "trainee" && u.status !== "removed").length;
+  const trainerCount = users.filter((u) => u.role === "trainer" && u.status !== "removed").length;
   const pendingCount = users.filter((u) => u.status === "pending").length;
+  const removedCount = users.filter((u) => u.status === "removed").length;
+  const reinstatementRequests = users.filter((u) => u.status === "removed" && u.reinstatementRequested);
 
   return (
     <DashboardLayout
-      pageTitle="User Governance & Account Removal"
+      pageTitle="User Governance & Access Control"
       breadcrumbs={[
         { label: "Admin Dashboard", to: "/admin/dashboard" },
         { label: "User Governance" }
@@ -397,7 +411,7 @@ export const UserManagement: React.FC = () => {
     >
       <div className="space-y-6">
         {/* Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Total Accounts</span>
             <span className="text-xl font-extrabold text-white tracking-tight">{users.length}</span>
@@ -414,7 +428,56 @@ export const UserManagement: React.FC = () => {
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Pending Approvals</span>
             <span className="text-xl font-extrabold text-amber-400 tracking-tight">{pendingCount}</span>
           </div>
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
+            <span className="text-[10px] text-rose-300/80 font-semibold uppercase block">Removed by Admin</span>
+            <span className="text-xl font-extrabold text-rose-400 tracking-tight">{removedCount}</span>
+          </div>
         </div>
+
+        {/* Re-Admission Requests Pending Admin Permission */}
+        {reinstatementRequests.length > 0 && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 space-y-2.5 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-amber-300 text-xs sm:text-sm">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>{reinstatementRequests.length} Removed User(s) Awaiting Admin Permission for Re-admission</span>
+              </div>
+            </div>
+            <p className="text-[11.5px] text-slate-300 leading-relaxed">
+              These users were previously removed by an administrator. They cannot access Capacity Connect until an Administrator explicitly allows their access.
+            </p>
+            <div className="grid gap-2 pt-1">
+              {reinstatementRequests.map((reqUser) => (
+                <div key={reqUser.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-black/40 p-3 rounded-xl border border-white/10 text-xs">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white flex items-center gap-2">
+                      <span>{reqUser.name}</span>
+                      <span className="text-slate-400 font-normal">({reqUser.email})</span>
+                      <span className="badge text-[9px] badge-blue uppercase">{reqUser.role}</span>
+                    </p>
+                    {reqUser.reinstatementNote && (
+                      <p className="text-[11px] text-amber-200/90 italic">
+                        Note: &ldquo;{reqUser.reinstatementNote}&rdquo;
+                      </p>
+                    )}
+                    {reqUser.removalReason && (
+                      <p className="text-[10px] text-slate-400">
+                        Originally removed for: {reqUser.removalReason}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleAllowAccess(reqUser)}
+                    className="apple-btn-success text-xs px-3.5 py-1.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-md shrink-0"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Allow Access</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Real-time Multi-Device Sync Indicator */}
         <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-300">
@@ -465,6 +528,7 @@ export const UserManagement: React.FC = () => {
               <option value="active">Active</option>
               <option value="pending">Pending Approval</option>
               <option value="inactive">Inactive / Suspended</option>
+              <option value="removed">⛔ Removed / Access Revoked ({removedCount})</option>
             </select>
           </div>
 
@@ -555,18 +619,37 @@ export const UserManagement: React.FC = () => {
 
                       {/* Status */}
                       <td className="py-3 px-3">
-                        <span
-                          className={
-                            "badge text-[9px] font-bold " +
-                            (u.status === "active"
-                              ? "badge-green"
-                              : u.status === "pending"
-                              ? "badge-yellow"
-                              : "badge-red")
-                          }
-                        >
-                          {u.status.toUpperCase()}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={
+                              "badge text-[9px] font-bold " +
+                              (u.status === "active"
+                                ? "badge-green"
+                                : u.status === "pending"
+                                ? "badge-yellow"
+                                : u.status === "removed"
+                                ? "bg-rose-950/80 text-rose-300 border-rose-800/60 font-mono"
+                                : "badge-red")
+                            }
+                          >
+                            {u.status === "removed" ? "⛔ ACCESS REVOKED" : u.status.toUpperCase()}
+                          </span>
+                          {u.status === "removed" && (
+                            <span className="text-[9px] text-slate-400">
+                              Requires Admin Approval
+                            </span>
+                          )}
+                          {u.reinstatementRequested && (
+                            <span className="badge text-[8.5px] font-bold bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse flex items-center gap-1">
+                              <span>⚠️ Re-admission Requested</span>
+                            </span>
+                          )}
+                          {u.removalReason && (
+                            <span className="text-[9.5px] text-slate-400 truncate max-w-[150px]" title={u.removalReason}>
+                              {u.removalReason}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Created */}
@@ -577,8 +660,19 @@ export const UserManagement: React.FC = () => {
                       {/* Action Buttons */}
                       <td className="py-3 px-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Pending Approval / Rejection */}
-                          {u.status === "pending" ? (
+                          {/* If user is removed by admin, show the primary Allow Access button */}
+                          {u.status === "removed" ? (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleAllowAccess(u)}
+                                className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm hover:scale-[1.02]"
+                                title="Allow access and reinstate user account"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Allow Access</span>
+                              </button>
+                            </div>
+                          ) : u.status === "pending" ? (
                             <>
                               <button
                                 onClick={() => {
@@ -726,21 +820,24 @@ export const UserManagement: React.FC = () => {
           <div className="relative max-w-md w-full bg-[#0c1017] p-6 border border-rose-500/40 rounded-2xl shadow-2xl space-y-4 my-auto">
             <div className="flex items-center gap-3 text-rose-400 border-b border-white/10 pb-3">
               <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30">
-                <Trash2 className="w-5 h-5 text-rose-400" />
+                <ShieldAlert className="w-5 h-5 text-rose-400" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white tracking-tight">Permanently Remove User</h3>
-                <p className="text-[10.5px] text-rose-300 font-mono">Immediate Access Revocation</p>
+                <h3 className="text-sm font-bold text-white tracking-tight">Revoke Access & Remove User</h3>
+                <p className="text-[10.5px] text-rose-300 font-mono">Platform Access Blocked Until Allowed by Admin</p>
               </div>
               <button
-                onClick={() => setUserToDelete(null)}
+                onClick={() => {
+                  setUserToDelete(null);
+                  setRemovalReason("");
+                }}
                 className="ml-auto text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-2 text-xs text-slate-300 leading-relaxed bg-white/[0.02] p-3.5 rounded-xl border border-white/5">
+            <div className="space-y-3 text-xs text-slate-300 leading-relaxed bg-white/[0.02] p-3.5 rounded-xl border border-white/5">
               <p>
                 Are you sure you want to remove <strong className="text-white font-bold">{userToDelete.name}</strong>?
               </p>
@@ -749,14 +846,37 @@ export const UserManagement: React.FC = () => {
                 <p>• Role: <span className="uppercase text-[#2997ff] font-semibold">{userToDelete.role}</span></p>
                 <p>• Registered: <span className="text-slate-200">{formatDate(userToDelete.createdAt)}</span></p>
               </div>
-              <p className="text-rose-300/90 text-[10.5px] pt-1">
-                ⚠️ This will permanently delete this account, their profile records, and all course access.
-              </p>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                  Removal Reason / Administrative Note <span className="text-slate-500 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Completed training cycle / Policy infraction / Administrative hold"
+                  className="apple-input text-xs w-full"
+                  value={removalReason}
+                  onChange={(e) => setRemovalReason(e.target.value)}
+                />
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-200 text-[10.5px] space-y-1">
+                <p className="font-bold flex items-center gap-1 text-rose-300">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Strict Re-admission Rule Enforced:</span>
+                </p>
+                <p className="text-rose-200/90 leading-relaxed">
+                  This user will be immediately blocked from logging in or registering with this email. For him/her to access the website again, he/she must be explicitly allowed by an Administrator.
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
-                onClick={() => setUserToDelete(null)}
+                onClick={() => {
+                  setUserToDelete(null);
+                  setRemovalReason("");
+                }}
                 className="apple-btn-secondary text-xs px-4 py-2 font-medium cursor-pointer"
               >
                 Cancel
@@ -766,7 +886,7 @@ export const UserManagement: React.FC = () => {
                 className="apple-btn-danger text-xs px-4 py-2 font-bold flex items-center gap-1.5 shadow-lg shadow-rose-900/30 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Confirm Remove User</span>
+                <span>Confirm & Revoke Access</span>
               </button>
             </div>
           </div>

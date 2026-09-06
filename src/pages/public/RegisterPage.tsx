@@ -161,10 +161,29 @@ export const RegisterPage: React.FC = () => {
     setError("");
     setLoading(true);
 
-    // Pre-flight check: Ensure this official email is not already registered
+    // Pre-flight check: Ensure this official email is not already registered or removed by admin
+    const cleanEmail = email.trim().toLowerCase();
     const existingUsers = getFromStorage<UserType>(STORAGE_KEYS.USERS);
-    const alreadyRegistered = existingUsers.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-    if (alreadyRegistered) {
+    const existingUser = existingUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+
+    let isRemovedInRegistry = false;
+    try {
+      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
+      if (removedRaw) {
+        const parsed = JSON.parse(removedRaw);
+        if (Array.isArray(parsed)) {
+          isRemovedInRegistry = parsed.some((r: any) => (typeof r === 'string' ? r : r.email || '').toLowerCase() === cleanEmail);
+        }
+      }
+    } catch {}
+
+    if (existingUser?.status === "removed" || isRemovedInRegistry) {
+      setError("This account was removed by an Administrator. In accordance with platform policy, you cannot register or access the website until an Administrator allows and reinstates your access.");
+      setLoading(false);
+      return;
+    }
+
+    if (existingUser) {
       setError("An account with this email address is already registered. Please sign in instead.");
       setLoading(false);
       return;

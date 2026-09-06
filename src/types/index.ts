@@ -1,6 +1,6 @@
 // ─── User & Role Types ────────────────────────────────────────────────────────
 export type UserRole = "trainee" | "trainer" | "admin";
-export type UserStatus = "pending" | "active" | "inactive" | "suspended" | "rejected";
+export type UserStatus = "pending" | "active" | "inactive" | "suspended" | "rejected" | "removed";
 
 export interface TraineeProfile {
   qualifications: string[];
@@ -48,6 +48,12 @@ export interface User {
   isVerifiedByAdmin?: boolean;
   traineeProfile?: TraineeProfile;
   trainerProfile?: TrainerProfile;
+  removedAt?: string;
+  removedBy?: string;
+  removalReason?: string;
+  reinstatementRequested?: boolean;
+  reinstatementRequestedAt?: string;
+  reinstatementNote?: string;
 }
 
 // ─── Gamification & Badges ──────────────────────────────────────────────────

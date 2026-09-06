@@ -24,6 +24,24 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Check if user account was removed by an administrator
+  let isRemoved = currentUser.status === "removed";
+  if (!isRemoved && currentUser.email) {
+    try {
+      const removedRaw = localStorage.getItem("cc_removed_users");
+      if (removedRaw) {
+        const list = JSON.parse(removedRaw);
+        if (Array.isArray(list)) {
+          isRemoved = list.some((r: any) => (typeof r === "string" ? r : r.email || "").toLowerCase() === currentUser.email.toLowerCase());
+        }
+      }
+    } catch {}
+  }
+
+  if (isRemoved) {
+    return <Navigate to="/login?removed=true" replace />;
+  }
+
   if (currentUser.status !== "active") {
     return <Navigate to="/login?pending=true" replace />;
   }

@@ -16,9 +16,14 @@ interface UsersState {
   updateRole: (userId: string, role: User['role']) => Promise<void>;
   verifyTrainer: (userId: string, isVerified: boolean) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
+  removeUser: (userId: string, reason?: string) => Promise<void>;
+  allowUserAccess: (userId: string) => Promise<void>;
+  requestReinstatement: (email: string, note?: string) => Promise<{ success: boolean; message: string }>;
+  isUserRemoved: (email: string) => boolean;
   getTrainees: () => User[];
   getTrainers: () => User[];
   getPendingUsers: () => User[];
+  getRemovedUsers: () => User[];
 }
 
 export const useUsersStore = create<UsersState>((set, get) => ({
@@ -213,9 +218,187 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     }
   },
 
+  removeUser: async (userId, reason) => {
+    const { users } = get();
+    const targetUser = users.find((u) => u.id === userId);
+    if (!targetUser) return;
+    if (targetUser.role === "admin") return;
+
+    const now = new Date().toISOString();
+    const updatedUser: User = {
+      ...targetUser,
+      status: "removed",
+      removedAt: now,
+      removedBy: "Capacity Connect Admin",
+      removalReason: reason || "Revoked by Administrator",
+      reinstatementRequested: false,
+      reinstatementNote: undefined
+    };
+
+    const updated = users.map((u) => (u.id === userId ? updatedUser : u));
+    saveToStorage(STORAGE_KEYS.USERS, updated);
+    set({ users: updated });
+
+    try {
+      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
+      let removedList: any[] = [];
+      if (removedRaw) {
+        try { removedList = JSON.parse(removedRaw) || []; } catch {}
+      }
+      const cleanEmail = targetUser.email.toLowerCase();
+      const existingIdx = removedList.findIndex((r: any) => (typeof r === 'string' ? r : r.email || '').toLowerCase() === cleanEmail);
+      const entry = {
+        id: targetUser.id,
+        email: cleanEmail,
+        name: targetUser.name,
+        role: targetUser.role,
+        removedAt: now,
+        reason: reason || "Revoked by Administrator"
+      };
+      if (existingIdx >= 0) {
+        removedList[existingIdx] = entry;
+      } else {
+        removedList.push(entry);
+      }
+      localStorage.setItem(STORAGE_KEYS.REMOVED_USERS, JSON.stringify(removedList));
+    } catch (e) {}
+
+    await dbService.update('users', userId, {
+      status: 'removed',
+      removedAt: now,
+      removedBy: 'Capacity Connect Admin',
+      removalReason: reason || 'Revoked by Administrator'
+    });
+
+    recordAuditEvent({
+      actor: "Capacity Connect Admin",
+      role: "admin",
+      action: "ACCOUNT_REMOVED",
+      target: `${targetUser.name} (${targetUser.email}) [${targetUser.role.toUpperCase()}] Access Revoked. Reason: ${reason || 'Revocation by Administrator'}`,
+      status: "WARNING"
+    });
+
+    try {
+      const currentAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
+      if (currentAuth) {
+        const parsedAuth = JSON.parse(currentAuth);
+        const authId = parsedAuth?.userId || parsedAuth?.user?.id || parsedAuth?.id;
+        const authEmail = (parsedAuth?.user?.email || parsedAuth?.email || "").toLowerCase();
+        if (authId === userId || authEmail === targetUser.email.toLowerCase()) {
+          localStorage.removeItem(STORAGE_KEYS.AUTH);
+        }
+      }
+    } catch (e) {}
+  },
+
+  allowUserAccess: async (userId) => {
+    const { users } = get();
+    const targetUser = users.find((u) => u.id === userId);
+    if (!targetUser) return;
+
+    const updatedUser: User = {
+      ...targetUser,
+      status: "active",
+      removedAt: undefined,
+      removedBy: undefined,
+      removalReason: undefined,
+      reinstatementRequested: false,
+      reinstatementNote: undefined,
+      reinstatementRequestedAt: undefined
+    };
+
+    const updated = users.map((u) => (u.id === userId ? updatedUser : u));
+    saveToStorage(STORAGE_KEYS.USERS, updated);
+    set({ users: updated });
+
+    try {
+      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
+      if (removedRaw) {
+        let removedList = JSON.parse(removedRaw) || [];
+        removedList = removedList.filter((r: any) => (typeof r === 'string' ? r : r.email || '').toLowerCase() !== targetUser.email.toLowerCase());
+        localStorage.setItem(STORAGE_KEYS.REMOVED_USERS, JSON.stringify(removedList));
+      }
+    } catch (e) {}
+
+    await dbService.update('users', userId, {
+      status: 'active',
+      removedAt: null,
+      removedBy: null,
+      removalReason: null,
+      reinstatementRequested: false
+    });
+
+    recordAuditEvent({
+      actor: "Capacity Connect Admin",
+      role: "admin",
+      action: "ACCOUNT_REINSTATED",
+      target: `${targetUser.name} (${targetUser.email}) [${targetUser.role.toUpperCase()}] Access Allowed by Admin`,
+      status: "SUCCESS"
+    });
+  },
+
+  requestReinstatement: async (email, note) => {
+    const clean = email.trim().toLowerCase();
+    const { users } = get();
+    const targetUser = users.find((u) => u.email.toLowerCase() === clean);
+    if (!targetUser) {
+      return { success: false, message: "No account found with this email." };
+    }
+
+    const now = new Date().toISOString();
+    const updatedUser: User = {
+      ...targetUser,
+      reinstatementRequested: true,
+      reinstatementRequestedAt: now,
+      reinstatementNote: note?.trim() || "User requested re-admission to Capacity Connect."
+    };
+
+    const updated = users.map((u) => (u.id === targetUser.id ? updatedUser : u));
+    saveToStorage(STORAGE_KEYS.USERS, updated);
+    set({ users: updated });
+
+    await dbService.update('users', targetUser.id, {
+      reinstatementRequested: true,
+      reinstatementRequestedAt: now,
+      reinstatementNote: note?.trim() || "User requested re-admission to Capacity Connect."
+    });
+
+    recordAuditEvent({
+      actor: targetUser.name,
+      role: targetUser.role,
+      action: "REINSTATEMENT_REQUESTED",
+      target: `Re-admission requested by ${targetUser.email}. Note: ${note || 'None'}`,
+      status: "WARNING"
+    });
+
+    return {
+      success: true,
+      message: "Re-admission request submitted to Administrators. You will be able to access the portal once an Administrator reviews and allows your account."
+    };
+  },
+
+  isUserRemoved: (email) => {
+    const clean = email.trim().toLowerCase();
+    const { users } = get();
+    const match = users.find((u) => u.email.toLowerCase() === clean);
+    if (match && match.status === "removed") return true;
+
+    try {
+      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
+      if (removedRaw) {
+        const list = JSON.parse(removedRaw);
+        if (Array.isArray(list)) {
+          return list.some((r: any) => (typeof r === "string" ? r : r.email || "").toLowerCase() === clean);
+        }
+      }
+    } catch {}
+    return false;
+  },
+
   getTrainees: () => get().users.filter((u) => u.role === 'trainee'),
   getTrainers: () => get().users.filter((u) => u.role === 'trainer'),
   getPendingUsers: () => get().users.filter((u) => u.status === 'pending'),
+  getRemovedUsers: () => get().users.filter((u) => u.status === 'removed'),
 }));
 
 // Initialize subscription on boot

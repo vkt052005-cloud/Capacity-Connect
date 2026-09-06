@@ -2200,7 +2200,8 @@ export const STORAGE_KEYS = {
   DISCUSSIONS: "cc_discussions",
   LEADERBOARD: "cc_leaderboard",
   BADGES: "cc_badges",
-  AUDIT_LOGS: "cc_audit_logs"
+  AUDIT_LOGS: "cc_audit_logs",
+  REMOVED_USERS: "cc_removed_users"
 };
 
 export function getFromStorage<T>(key: string): T[] {
@@ -2210,14 +2211,35 @@ export function getFromStorage<T>(key: string): T[] {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         if (key === STORAGE_KEYS.USERS) {
+          const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
+          let removedEmails = new Set<string>();
+          if (removedRaw) {
+            try {
+              const parsedRemoved = JSON.parse(removedRaw);
+              if (Array.isArray(parsedRemoved)) {
+                removedEmails = new Set(parsedRemoved.map((r: any) => (typeof r === 'string' ? r : r.email || '').toLowerCase()));
+              }
+            } catch (e) {}
+          }
+
           const existingEmails = new Set(parsed.map((u: any) => u.email?.toLowerCase()));
           let modified = false;
           for (const initUser of initialUsers) {
-            if (!existingEmails.has(initUser.email.toLowerCase())) {
+            const emailLower = initUser.email.toLowerCase();
+            if (removedEmails.has(emailLower)) {
+              // Ensure user in storage remains marked as removed if in removed registry
+              const match = parsed.find((u: any) => u.email?.toLowerCase() === emailLower);
+              if (match && match.status !== "removed") {
+                match.status = "removed";
+                modified = true;
+              }
+              continue;
+            }
+            if (!existingEmails.has(emailLower)) {
               parsed.push(initUser);
               modified = true;
             } else {
-              const match = parsed.find((u: any) => u.email?.toLowerCase() === initUser.email.toLowerCase());
+              const match = parsed.find((u: any) => u.email?.toLowerCase() === emailLower);
               if (match) {
                 if (initUser.email.toLowerCase() === "tiwariraj052005@gmail.com") {
                   if (match.name !== "Raj Tiwari" || match.id !== "u-trainer-official") {

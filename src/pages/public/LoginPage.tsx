@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import {
   Mail, Lock, Eye, EyeOff, Shield, Users, GraduationCap,
-  ArrowRight, KeyRound, RotateCw, ArrowLeft, CheckCircle2
+  ArrowRight, KeyRound, RotateCw, ArrowLeft, CheckCircle2,
+  ShieldAlert, Send, AlertTriangle
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
+import { useUsersStore } from "../../store/usersStore";
 import { CaptchaWidget } from "../../components/auth/CaptchaWidget";
 import { ResetPasswordModal } from "../../components/auth/ResetPasswordModal";
 import { Header } from "../../components/layout/Header";
@@ -34,14 +36,21 @@ export const LoginPage: React.FC = () => {
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   const { currentUser, validateCredentials, completeLogin } = useAuthStore();
+  const { requestReinstatement } = useUsersStore();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isPendingNotice = searchParams.get("pending") === "true";
+  const isRemovedNotice = searchParams.get("removed") === "true";
   const pendingEmail = searchParams.get("email") || "";
   const redirectTarget = (location.state as any)?.from?.pathname || searchParams.get("redirect") || "";
   const isCourseRedirect = redirectTarget.includes("/course/") || redirectTarget.includes("/courses");
+
+  const [isRemovedBlocked, setIsRemovedBlocked] = useState(false);
+  const [reinstatementNote, setReinstatementNote] = useState("");
+  const [reinstatementRequestedSuccess, setReinstatementRequestedSuccess] = useState(false);
+  const [submittingReinstatement, setSubmittingReinstatement] = useState(false);
 
   // If already authenticated and active, redirect to requested page or role dashboard
   useEffect(() => {
@@ -103,6 +112,9 @@ export const LoginPage: React.FC = () => {
     try {
       const res = validateCredentials(email, password, role);
       if (!res.success || !res.user) {
+        if (res.isRemoved) {
+          setIsRemovedBlocked(true);
+        }
         setError(res.message || "Invalid official email or password.");
         setLoading(false);
         return;
@@ -298,6 +310,18 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
+          {isRemovedNotice && (
+            <div className="p-4 rounded-xl bg-rose-500/15 border border-rose-500/35 text-xs text-rose-200 space-y-1.5 animate-fadeIn">
+              <div className="flex items-center gap-2 font-bold text-rose-300">
+                <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0" />
+                <span>Account Access Revoked by Administrator</span>
+              </div>
+              <p className="text-[11px] text-rose-200/90 leading-relaxed">
+                Your account was removed by an Administrator. In accordance with platform security policy, you cannot access Capacity Connect until an Administrator explicitly allows and reinstates your account.
+              </p>
+            </div>
+          )}
+
           {isCourseRedirect && (
             <div className="p-3.5 rounded-xl bg-blue-500/15 border border-blue-500/35 text-xs text-blue-200 space-y-1 animate-fadeIn">
               <div className="flex items-center gap-2 font-bold text-white">
@@ -386,6 +410,62 @@ export const LoginPage: React.FC = () => {
                     }
                   >
                     {error}
+                  </div>
+                )}
+
+                {(isRemovedBlocked || isRemovedNotice || error.toLowerCase().includes("removed by an administrator")) && !reinstatementRequestedSuccess && (
+                  <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/35 text-xs space-y-2.5 animate-fadeIn">
+                    <div className="flex items-center gap-2 font-bold text-rose-300">
+                      <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+                      <span>Admin Permission Required for Re-admission</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      You cannot log in until an Administrator allows your account. You can submit an official re-admission request below to notify the Administrator.
+                    </p>
+                    <div className="space-y-1.5 pt-1">
+                      <input
+                        type="text"
+                        placeholder="Optional note / reason for re-admission..."
+                        className="apple-input text-xs w-full"
+                        value={reinstatementNote}
+                        onChange={(e) => setReinstatementNote(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        disabled={submittingReinstatement}
+                        onClick={async () => {
+                          if (!email.trim()) {
+                            addToast({ title: "Email required", message: "Please specify your email in the field above.", type: "warning" });
+                            return;
+                          }
+                          setSubmittingReinstatement(true);
+                          const r = await requestReinstatement(email.trim(), reinstatementNote);
+                          setSubmittingReinstatement(false);
+                          if (r.success) {
+                            setReinstatementRequestedSuccess(true);
+                            addToast({ title: "Request Sent", message: r.message, type: "success" });
+                          } else {
+                            addToast({ title: "Request Notice", message: r.message, type: "info" });
+                          }
+                        }}
+                        className="apple-btn-secondary text-xs w-full py-1.5 font-bold flex items-center justify-center gap-1.5 text-amber-300 border-amber-500/40 hover:border-amber-400 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{submittingReinstatement ? "Submitting Request..." : "Request Admin to Allow Access"}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {reinstatementRequestedSuccess && (
+                  <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/35 text-xs text-emerald-200 space-y-1 animate-fadeIn">
+                    <div className="flex items-center gap-2 font-bold text-emerald-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Re-admission Request Submitted to Admin</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-200/90 leading-relaxed">
+                      Your request has been forwarded to the Administrator panel. Once an Administrator clicks &quot;Allow Access&quot;, you will be able to sign in immediately.
+                    </p>
                   </div>
                 )}
 

@@ -83,6 +83,10 @@ function getInitialAuthUser(): User | null {
     }
 
     if (user) {
+      if (user.status === "removed") {
+        localStorage.removeItem(STORAGE_KEYS.AUTH);
+        return null;
+      }
       return sanitizeUserForSession(user);
     }
   } catch (e) {
@@ -94,8 +98,8 @@ function getInitialAuthUser(): User | null {
 interface AuthState {
   currentUser: User | null;
   isInitialized: boolean;
-  login: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User };
-  validateCredentials: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User };
+  login: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User; isRemoved?: boolean };
+  validateCredentials: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User; isRemoved?: boolean };
   completeLogin: (user: User) => { success: boolean; message: string; user: User };
   logout: () => void;
   register: (data: Omit<User, "id" | "createdAt" | "status">) => { success: boolean; message: string };
@@ -149,10 +153,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   validateCredentials: (email, password, requiredRole) => {
+    const cleanEmail = email.trim().toLowerCase();
     const users = getFromStorage<User>(STORAGE_KEYS.USERS);
     const user = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+      (u) => u.email.toLowerCase() === cleanEmail && u.password === password
     );
+
+    // Check persistent removed registry
+    let isRemovedInRegistry = false;
+    try {
+      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
+      if (removedRaw) {
+        const parsed = JSON.parse(removedRaw);
+        if (Array.isArray(parsed)) {
+          isRemovedInRegistry = parsed.some((r: any) => (typeof r === "string" ? r : r.email || "").toLowerCase() === cleanEmail);
+        }
+      }
+    } catch {}
+
+    if (user?.status === "removed" || isRemovedInRegistry) {
+      recordAuditEvent({
+        actor: user?.name || cleanEmail,
+        role: user?.role || requiredRole || "trainee",
+        action: "REMOVED_USER_LOGIN_BLOCKED",
+        target: "Auth Service",
+        status: "FAILED"
+      });
+      return {
+        success: false,
+        message: "Your account was removed by an Administrator. For you to again access the website, you must be allowed and reinstated by an Administrator.",
+        isRemoved: true,
+        user
+      };
+    }
+
     if (!user) {
       recordAuditEvent({
         actor: email,
@@ -251,9 +285,37 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   register: (data) => {
+    const cleanEmail = data.email.trim().toLowerCase();
     const users = getFromStorage<User>(STORAGE_KEYS.USERS);
-    const exists = users.find((u) => u.email.toLowerCase() === data.email.toLowerCase());
-    if (exists) return { success: false, message: "An account with this email already exists." };
+
+    // Check if account was removed by Administrator
+    let isRemovedInRegistry = false;
+    try {
+      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
+      if (removedRaw) {
+        const parsed = JSON.parse(removedRaw);
+        if (Array.isArray(parsed)) {
+          isRemovedInRegistry = parsed.some((r: any) => (typeof r === "string" ? r : r.email || "").toLowerCase() === cleanEmail);
+        }
+      }
+    } catch {}
+
+    const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (existing?.status === "removed" || isRemovedInRegistry) {
+      recordAuditEvent({
+        actor: data.name || cleanEmail,
+        role: data.role,
+        action: "REMOVED_USER_REGISTRATION_BLOCKED",
+        target: "Registration Gateway",
+        status: "WARNING"
+      });
+      return {
+        success: false,
+        message: "Registration Blocked: This email was removed by an Administrator. Platform policy requires an Administrator to allow and reinstate your access before you can register or access the website."
+      };
+    }
+
+    if (existing) return { success: false, message: "An account with this email already exists." };
 
     const newUser: User = {
       ...data,
