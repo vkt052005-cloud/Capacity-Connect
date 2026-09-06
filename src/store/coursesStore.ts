@@ -29,16 +29,42 @@ interface CoursesState {
   getTrainerCourses: (trainerId: string) => Course[];
 }
 
+const sanitizeCourses = (courses: Course[]): Course[] => {
+  return (courses || []).filter((c) => {
+    if (!c) return false;
+    if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
+    const trainer = (c.trainerName || "").toLowerCase();
+    if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
+    const title = (c.title || "").toLowerCase();
+    if (
+      title.includes("advanced cloud infrastructure") ||
+      title.includes("generative ai & llm systems") ||
+      title.includes("strategic leadership") ||
+      title.includes("cybersecurity governance") ||
+      title.includes("executive communication")
+    ) return false;
+    return true;
+  });
+};
+
+const sanitizeEnrollments = (enrollments: Enrollment[]): Enrollment[] => {
+  return (enrollments || []).filter((e) => {
+    if (!e || !e.courseId) return false;
+    if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
+    return true;
+  });
+};
+
 export const useCoursesStore = create<CoursesState>((set, get) => ({
-  courses: getFromStorage<Course>(STORAGE_KEYS.COURSES),
-  enrollments: getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS),
+  courses: sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES)),
+  enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
   certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
   feedbacks: getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS),
 
   load: () => {
     set({
-      courses: getFromStorage<Course>(STORAGE_KEYS.COURSES),
-      enrollments: getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS),
+      courses: sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES)),
+      enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
       certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
       feedbacks: getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS)
     });

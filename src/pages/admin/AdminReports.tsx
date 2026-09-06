@@ -91,7 +91,7 @@ export const AdminReports: React.FC = () => {
             <div className="space-y-2.5 text-xs text-slate-300">
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
                 <strong className="text-amber-300 block mb-0.5">High Priority: Generative AI Upskilling</strong>
-                Schedule 2 additional cohorts with Dr. Marcus Vance to close the 30% vector database readiness gap in Data Systems.
+                Schedule 2 additional cohorts with Raj Tiwari to close the 30% vector database readiness gap in Data Systems.
               </div>
               <div className="p-3 rounded-xl bg-[#0071e3]/10 border border-[#2997ff]/20">
                 <strong className="text-[#2997ff] block mb-0.5">Compliance Notice: ISO 27001 Re-certification</strong>

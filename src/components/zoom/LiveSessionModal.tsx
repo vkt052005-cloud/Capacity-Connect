@@ -14,8 +14,8 @@ export const LiveSessionModal: React.FC = () => {
   const [sharingScreen, setSharingScreen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<{ sender: string; text: string; time: string }[]>([
-    { sender: "Dr. Marcus Vance", text: "Welcome to today live lab session. Feel free to ask questions in the chat!", time: "16:30" },
-    { sender: "Arjun Sharma", text: "Excited to review the Kafka partition failover setup.", time: "16:31" }
+    { sender: "Raj Tiwari", text: "Welcome to today live lab session. Feel free to ask questions in the chat!", time: "16:30" },
+    { sender: "Arjun Sharma", text: "Excited to review the system design concepts today.", time: "16:31" }
   ]);
   const [newMsg, setNewMsg] = useState("");
   const [syncedAttendance, setSyncedAttendance] = useState(false);

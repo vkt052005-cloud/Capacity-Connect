@@ -181,7 +181,7 @@ export const CourseDetail: React.FC = () => {
     : currentModuleFilters[0].label;
 
   const [discussions, setDiscussions] = useState(
-    initialDiscussions.filter((d) => d.courseId === "c1" || d.courseId === id || d.courseId === course?.id)
+    initialDiscussions.filter((d) => d.courseId === id || d.courseId === course?.id || (!id && d.courseId === "c6"))
   );
   const [newQuestion, setNewQuestion] = useState("");
   const [newQuestionTitle, setNewQuestionTitle] = useState("");

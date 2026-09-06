@@ -1673,7 +1673,7 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     gapScore: 13,
     priority: "High",
     suitableTrainers: [
-      { id: "u-trainer-1", name: "Dr. Marcus Vance", rating: 4.94, matchPercentage: 98, experienceYears: 16, competencies: ["Kubernetes", "Microservices", "Kafka", "Cloud Architecture"] }
+      { id: "u-trainer-official", name: "Raj Tiwari", rating: 4.98, matchPercentage: 98, experienceYears: 10, competencies: ["Kubernetes", "Microservices", "Kafka", "Cloud Architecture"] }
     ]
   },
   {
@@ -1684,7 +1684,8 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     gapScore: 30,
     priority: "Critical",
     suitableTrainers: [
-      { id: "u-trainer-1", name: "Dr. Marcus Vance", rating: 4.96, matchPercentage: 94, experienceYears: 16, competencies: ["RAG Systems", "Vector DBs", "LLM Evaluation", "Agentic Frameworks"] }
+      { id: "u-trainer-official", name: "Raj Tiwari", rating: 4.98, matchPercentage: 96, experienceYears: 10, competencies: ["RAG Systems", "Vector DBs", "LLM Evaluation", "Agentic Frameworks"] },
+      { id: "u-trainer-codewithharry", name: "CodeWithHarry (Haris Khan)", rating: 4.98, matchPercentage: 95, experienceYears: 12, competencies: ["AI Integrations", "Python", "Full-Stack AI", "APIs"] }
     ]
   },
   {
@@ -1695,7 +1696,7 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     gapScore: 2,
     priority: "Medium",
     suitableTrainers: [
-      { id: "u-trainer-3", name: "Prof. Rajesh Kumar", rating: 4.96, matchPercentage: 99, experienceYears: 18, competencies: ["Zero-Trust", "ISO 27001", "Threat Modeling", "Cryptography"] }
+      { id: "u-trainer-varun", name: "Varun Singla", rating: 4.99, matchPercentage: 99, experienceYears: 11, competencies: ["Network Security", "Protocols", "Threat Modeling", "Cryptography"] }
     ]
   },
   {
@@ -1706,7 +1707,7 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     gapScore: 5,
     priority: "Medium",
     suitableTrainers: [
-      { id: "u-trainer-2", name: "Sarah Chen, MBA", rating: 4.88, matchPercentage: 96, experienceYears: 14, competencies: ["Executive Coaching", "Agile Transformation", "Conflict Resolution"] }
+      { id: "u-trainer-rajib", name: "Prof. Rajib Mall", rating: 4.98, matchPercentage: 98, experienceYears: 30, competencies: ["Agile Lifecycle", "Executive Engineering", "Conflict Resolution", "Project Estimation"] }
     ]
   },
   {
@@ -2071,17 +2072,45 @@ export function initializeStorage() {
     const rawCourses = localStorage.getItem("cc_courses");
     if (rawCourses) {
       const parsedCourses = JSON.parse(rawCourses);
-      const cleanedCourses = parsedCourses.map((c: any) => {
-        if (c.id === "c6" || c.id === "c-c-prog" || c.id === "c-python") {
-          return {
-            ...c,
-            trainerId: "u-trainer-codewithharry",
-            trainerName: "CodeWithHarry (Haris Khan)"
-          };
-        }
-        return c;
-      });
+      const cleanedCourses = parsedCourses
+        .filter((c: any) => {
+          if (!c) return false;
+          if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
+          const trainer = (c.trainerName || "").toLowerCase();
+          if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
+          const title = (c.title || "").toLowerCase();
+          if (
+            title.includes("advanced cloud infrastructure") ||
+            title.includes("generative ai & llm systems") ||
+            title.includes("strategic leadership") ||
+            title.includes("cybersecurity governance") ||
+            title.includes("executive communication")
+          ) return false;
+          return true;
+        })
+        .map((c: any) => {
+          if (c.id === "c6" || c.id === "c-c-prog" || c.id === "c-python") {
+            return {
+              ...c,
+              trainerId: "u-trainer-codewithharry",
+              trainerName: "CodeWithHarry (Haris Khan)"
+            };
+          }
+          return c;
+        });
       localStorage.setItem("cc_courses", JSON.stringify(cleanedCourses));
+    }
+
+    // Clean legacy mock enrollments (e.g. default enrollment in c5 or c1-c4)
+    const rawEnrollments = localStorage.getItem("cc_enrollments");
+    if (rawEnrollments) {
+      const parsedEnrollments = JSON.parse(rawEnrollments);
+      const cleanedEnrollments = parsedEnrollments.filter((e: any) => {
+        if (!e || !e.courseId) return false;
+        if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
+        return true;
+      });
+      localStorage.setItem("cc_enrollments", JSON.stringify(cleanedEnrollments));
     }
   } catch (e) {}
 
@@ -2184,9 +2213,26 @@ export function getFromStorage<T>(key: string): T[] {
           }
         }
         if (key === STORAGE_KEYS.COURSES) {
-          // Merge initial courses and any trainer-created courses, sanitizing fake durations
+          // Filter out any legacy mock courses (c1-c5, Marcus Vance, Sarah Chen, Rajesh Kumar)
+          const validExisting = parsed.filter((c: any) => {
+            if (!c) return false;
+            if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
+            const trainer = (c.trainerName || "").toLowerCase();
+            if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
+            const title = (c.title || "").toLowerCase();
+            if (
+              title.includes("advanced cloud infrastructure") ||
+              title.includes("generative ai & llm systems") ||
+              title.includes("strategic leadership") ||
+              title.includes("cybersecurity governance") ||
+              title.includes("executive communication")
+            ) return false;
+            return true;
+          });
+
+          // Merge initial courses and any real trainer-created courses, sanitizing fake durations
           const initialIds = new Set(initialCourses.map((c) => c.id));
-          const trainerCreated = parsed.filter((c: any) => !initialIds.has(c.id));
+          const trainerCreated = validExisting.filter((c: any) => !initialIds.has(c.id));
           const cleanedTrainerCreated = trainerCreated.map((c: any) => {
             if (c.duration && c.duration.includes("12 Hours • 4 Modules")) {
               return { ...c, duration: c.lessons?.length ? `${c.lessons.length * 20} Mins` : "0 Mins" };
@@ -2196,6 +2242,18 @@ export function getFromStorage<T>(key: string): T[] {
           const mergedCourses = [...initialCourses, ...cleanedTrainerCreated];
           localStorage.setItem(key, JSON.stringify(mergedCourses));
           return mergedCourses as any;
+        }
+        if (key === STORAGE_KEYS.ENROLLMENTS) {
+          // Remove enrollments in legacy mock courses c1-c5
+          const validEnrollments = parsed.filter((e: any) => {
+            if (!e || !e.courseId) return false;
+            if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
+            return true;
+          });
+          if (validEnrollments.length !== parsed.length) {
+            localStorage.setItem(key, JSON.stringify(validEnrollments));
+          }
+          return validEnrollments as any;
         }
         if (key === STORAGE_KEYS.ASSESSMENTS) {
           localStorage.setItem(key, JSON.stringify(initialAssessments));
