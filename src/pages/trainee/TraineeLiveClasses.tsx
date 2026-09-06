@@ -197,21 +197,18 @@ export const TraineeLiveClasses: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* NO ACTIVE BROADCAST: Auto-Listening Radar */
+              /* NO ACTIVE BROADCAST: Standby Status */
               <div className="w-full lg:w-[390px] glass-card p-4 border border-white/15 bg-white/[0.03] space-y-3 shrink-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Radio className="w-3.5 h-3.5 text-[#2997ff]" /> Faculty Broadcast Radar
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-emerald-400 font-mono">Live Radar Active</span>
+                  <span className="text-xs font-bold text-white">
+                    Live Classroom Status
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">Standby</span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
                   <p className="text-xs text-slate-200 font-medium">
-                    Listening for faculty broadcasts...
+                    No active live broadcast at the moment
                   </p>
                   <p className="text-[11px] text-slate-400 leading-relaxed">
                     When your teacher starts a live Google Meet class for a course you are enrolled in, it will automatically appear here with a 1-click join button.

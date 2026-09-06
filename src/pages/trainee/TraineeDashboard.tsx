@@ -178,15 +178,8 @@ export const TraineeDashboard: React.FC = () => {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-blue-500/20 border border-blue-500/40 text-[#2997ff] flex items-center justify-center">
-                  <Video className="w-3.5 h-3.5" />
-                </div>
                 <span className="badge-blue text-[9px] uppercase font-bold tracking-wider">
                   Google Meet Classroom Hub
-                </span>
-                <span className="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Live Sync Active
                 </span>
               </div>
               <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
@@ -201,11 +194,9 @@ export const TraineeDashboard: React.FC = () => {
             {liveSession ? (
               <div className="w-full lg:w-auto lg:min-w-[420px] bg-rose-950/30 p-3.5 rounded-xl border border-rose-500/40 space-y-2 shrink-0">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-rose-300 font-bold flex items-center gap-1.5">
-                    <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" /> Your Enrolled Teacher is Live
-                  </span>
-                  <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-emerald-400" /> Authorized
+                  <span className="text-rose-300 font-bold">Your Enrolled Teacher is Live</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">
+                    Authorized
                   </span>
                 </div>
                 <p className="text-xs text-white font-semibold truncate">
@@ -216,17 +207,17 @@ export const TraineeDashboard: React.FC = () => {
                     onClick={() => handleJoinGoogleMeet(liveSession)}
                     className="apple-btn-primary text-xs px-4 py-2 font-bold w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110 shadow-lg cursor-pointer transform hover:scale-[1.01] transition-all"
                   >
-                    <Video className="w-3.5 h-3.5" /> Join Google Meet with Teacher (1-Click) ↗
+                    <span>Join Google Meet with Teacher (1-Click) ↗</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="w-full lg:w-auto lg:min-w-[420px] bg-white/[0.04] p-3 rounded-xl border border-white/10 space-y-2 shrink-0">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-300 font-medium flex items-center gap-1.5">
-                    <Radio className="w-3.5 h-3.5 text-emerald-400" /> Faculty Broadcast Radar
-                  </span>
-                  <span className="text-[10px] text-emerald-400 font-mono">Listening for Teacher</span>
+              <div className="w-full lg:w-auto lg:min-w-[420px] bg-white/[0.04] p-3.5 rounded-xl border border-white/10 space-y-2.5 shrink-0">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-white font-semibold">Join Class</span>
+                  <Link to="/trainee/live-classes" className="text-[#2997ff] hover:underline text-[11px] font-medium">
+                    Schedule ({sessions.length}) →
+                  </Link>
                 </div>
 
                 <form onSubmit={handleQuickMeetJoin} className="flex gap-2">
@@ -239,18 +230,15 @@ export const TraineeDashboard: React.FC = () => {
                   />
                   <button
                     type="submit"
-                    className="apple-btn-primary text-xs px-4 py-2 font-bold shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                    className="apple-btn-primary text-xs px-4 py-2 font-bold shrink-0 shadow-md cursor-pointer"
                   >
-                    <Video className="w-3.5 h-3.5" /> Join Call
+                    <span>Join Call</span>
                   </button>
                 </form>
 
-                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
-                  <Link to="/trainee/live-classes" className="text-[#2997ff] hover:underline font-semibold flex items-center gap-0.5">
-                    View Live Classes Schedule ({sessions.length}) →
-                  </Link>
-                  <span className="text-slate-400">Auto-detects live classes</span>
-                </div>
+                <p className="text-[10px] text-slate-400">
+                  Enrolled live sessions will automatically appear here when started by your instructor.
+                </p>
               </div>
             )}
           </div>
