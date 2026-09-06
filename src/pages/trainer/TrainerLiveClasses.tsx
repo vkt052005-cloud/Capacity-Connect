@@ -21,7 +21,8 @@ export const TrainerLiveClasses: React.FC = () => {
     startSession,
     endSession,
     cancelSession,
-    openClassroom
+    openClassroom,
+    updateSessionMeetUrl
   } = useLiveSessionsStore();
   const { courses } = useCoursesStore();
   const { currentUser } = useAuthStore();
@@ -76,8 +77,27 @@ export const TrainerLiveClasses: React.FC = () => {
     const sub = getSubjectById(selectedSubjectId) || STANDARD_SUBJECTS[0];
     setSelectedSubjectId(sub.id);
     setInstantMeetTitle(sub.defaultTitle);
-    setInstantMeetUrl("");
+    const saved = typeof window !== "undefined" ? localStorage.getItem("faculty_default_meet_" + trainerId) || "" : "";
+    setInstantMeetUrl(saved);
     setShowInstantModal(true);
+  };
+
+  const handleUpdateLiveMeetLink = (sessionId: string, currentCode?: string) => {
+    const code = currentCode || "";
+    const input = window.prompt(
+      "Enter your official Google Meet link or 10-letter room code (e.g. abc-defg-hij):",
+      code !== "new" && !code.includes("xxx-yyyy-zzz") ? code : ""
+    );
+    if (input && input.trim()) {
+      const success = updateSessionMeetUrl(sessionId, input.trim());
+      if (success) {
+        addToast({
+          title: "Google Meet Link Updated",
+          message: "The active room link was updated. Students can now join with 1-click!",
+          type: "success"
+        });
+      }
+    }
   };
 
   const handleBroadcastInstantMeet = (e: React.FormEvent) => {
@@ -221,8 +241,15 @@ export const TrainerLiveClasses: React.FC = () => {
                   </div>
 
                   <div className="pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="text-slate-300 font-mono">
-                      Code: <span className="text-[#2997ff] font-bold">{session.meetingCode}</span>
+                    <div className="text-slate-300 font-mono flex items-center gap-2">
+                      <span>Room Code: <strong className="text-[#2997ff]">{session.meetingCode}</strong></span>
+                      <button
+                        onClick={() => handleUpdateLiveMeetLink(session.id, session.meetingCode)}
+                        className="apple-btn-secondary text-[10px] px-2 py-0.5 text-slate-300 hover:text-white cursor-pointer"
+                        title="Update with your real Google Meet link or code"
+                      >
+                        Edit Code
+                      </button>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -486,22 +513,30 @@ export const TrainerLiveClasses: React.FC = () => {
               </div>
 
               {/* Google Meet Room Link / Code */}
-              <div className="p-3.5 rounded-xl bg-blue-950/25 border border-blue-500/30 space-y-2">
-                <div className="flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-blue-950/25 border border-blue-500/30 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-white flex items-center gap-1.5 text-xs">
-                    <Video className="w-3.5 h-3.5 text-[#2997ff]" /> Google Meet Room Link (Optional)
+                    <Video className="w-3.5 h-3.5 text-[#2997ff]" /> Google Meet Room Link or Code
                   </span>
-                  <span className="badge-blue text-[8px]">AUTO-ALLOCATED IF BLANK</span>
+                  <a
+                    href="https://meet.google.com/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="apple-btn-secondary text-[10px] px-2.5 py-1 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 flex items-center gap-1 font-semibold cursor-pointer shrink-0"
+                    title="Open Google Meet in a new tab to create a live room"
+                  >
+                    <ExternalLink className="w-3 h-3" /> Create Room (meet.google.com/new) ↗
+                  </a>
                 </div>
                 <input
                   type="text"
-                  placeholder="e.g. meet.google.com/abc-defg-hij or leave blank"
+                  placeholder="e.g. meet.google.com/abc-defg-hij or abc-defg-hij"
                   value={instantMeetUrl}
                   onChange={(e) => setInstantMeetUrl(e.target.value)}
                   className="apple-input text-xs font-mono"
                 />
-                <p className="text-[10px] text-slate-300">
-                  Leave blank to automatically create a dedicated Google Meet room, or paste a link from Google Calendar. All students will see this live class on their portal and join with 1-click without typing any link!
+                <p className="text-[10px] text-slate-300 leading-relaxed">
+                  Click <strong className="text-emerald-400">"Create Room ↗"</strong> to generate your active Google Meet call, then paste the URL or 10-letter code above. This is saved as your default room so you don&apos;t have to re-enter it next time!
                 </p>
               </div>
 

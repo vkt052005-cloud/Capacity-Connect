@@ -11,34 +11,28 @@ export const generateMeetCode = (): string => {
   return `${p1}-${p2}-${p3}`;
 };
 
-// Helper to normalize or generate genuine Google Meet URLs and 10-character room codes
-export const formatGoogleMeet = (input?: string): { url: string; code: string } => {
-  const trimmed = (input || "").trim();
-  if (!trimmed || trimmed.toLowerCase() === "new" || trimmed.toLowerCase() === "meet.google.com/new") {
-    // Generate a dedicated, persistent 3-4-3 room code so teacher and students always join the exact same Google Meet room
-    const code = generateMeetCode();
-    return { url: `https://meet.google.com/${code}`, code };
+// Helper to normalize or parse genuine Google Meet URLs and 10-character room codes
+export const formatGoogleMeet = (input?: string): { url: string; code: string; isReal: boolean } => {
+  let trimmed = (input || "").trim();
+  if (!trimmed) {
+    return { url: "https://meet.google.com/new", code: "new", isReal: false };
   }
 
-  // Already a full URL
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-    try {
-      const parsed = new URL(trimmed);
-      const pathname = parsed.pathname.replace(/^\/+/, "");
-      const code = pathname || trimmed;
-      return { url: trimmed, code };
-    } catch {
-      return { url: trimmed, code: trimmed };
-    }
+  // Strip protocol and domain if present
+  trimmed = trimmed.replace(/^https?:\/\//i, "");
+  trimmed = trimmed.replace(/^meet\.google\.com\//i, "");
+  trimmed = trimmed.split("?")[0].replace(/\/+$/, "");
+
+  if (trimmed.toLowerCase() === "new" || !trimmed) {
+    return { url: "https://meet.google.com/new", code: "new", isReal: false };
   }
 
-  // Raw code like 'xyz-abcd-efg' or 'xyzabcdefg'
   const clean = trimmed.replace(/\s+/g, "").toLowerCase();
   let formattedCode = clean;
   if (!clean.includes("-") && clean.length === 10) {
     formattedCode = `${clean.slice(0, 3)}-${clean.slice(3, 7)}-${clean.slice(7)}`;
   }
-  return { url: `https://meet.google.com/${formattedCode}`, code: formattedCode };
+  return { url: `https://meet.google.com/${formattedCode}`, code: formattedCode, isReal: true };
 };
 
 // Helper to generate a Google Calendar invite URL
@@ -88,6 +82,7 @@ interface LiveSessionsState {
   openClassroom: (session: LiveSession) => void;
   closeClassroom: () => void;
   joinSession: (sessionId: string, userId: string) => void;
+  updateSessionMeetUrl: (sessionId: string, newUrlOrCode: string) => boolean;
   findSessionByCode: (code: string) => LiveSession | undefined;
   joinByMeetUrlOrCode: (input: string, userId?: string, userName?: string) => { session: LiveSession | null; targetUrl: string };
 }
@@ -162,7 +157,17 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
   },
 
   startInstantMeet: (data) => {
-    const meetDetails = formatGoogleMeet(data.customMeetUrl);
+    let customUrl = data.customMeetUrl;
+    if (!customUrl && typeof window !== "undefined") {
+      const savedDefault = localStorage.getItem("faculty_default_meet_" + data.trainerId);
+      if (savedDefault) customUrl = savedDefault;
+    }
+
+    const meetDetails = formatGoogleMeet(customUrl);
+    if (meetDetails.isReal && typeof window !== "undefined") {
+      localStorage.setItem("faculty_default_meet_" + data.trainerId, meetDetails.url);
+    }
+
     const newSession: LiveSession = {
       id: "meet-instant-" + Date.now(),
       courseId: data.courseId,
@@ -214,17 +219,12 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     let targetUrl = session.googleMeetUrl || session.joinUrl;
     let code = session.meetingCode;
 
-    if (!code || code === "xxx-yyyy-zzz" || code === "new") {
-      const generated = formatGoogleMeet(targetUrl);
-      code = generated.code;
-      targetUrl = generated.url;
-    }
-
-    if (!targetUrl || targetUrl.includes("xxx-yyyy-zzz") || targetUrl.endsWith("/new")) {
-      targetUrl = `https://meet.google.com/${code}`;
-    }
-    if (!targetUrl.startsWith("http")) {
-      targetUrl = `https://meet.google.com/${targetUrl}`;
+    if (!targetUrl || !code || code === "new" || code === "xxx-yyyy-zzz" || targetUrl.includes("xxx-yyyy-zzz") || targetUrl.endsWith("/new")) {
+      targetUrl = "https://meet.google.com/new";
+    } else {
+      if (!targetUrl.startsWith("http")) {
+        targetUrl = `https://meet.google.com/${targetUrl}`;
+      }
     }
 
     // Directly launch Official Google Meet in a dedicated window/tab
@@ -345,6 +345,51 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     });
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
     set({ sessions: updated });
+  },
+
+  updateSessionMeetUrl: (sessionId: string, newUrlOrCode: string) => {
+    const formatted = formatGoogleMeet(newUrlOrCode);
+    if (!formatted.isReal) return false;
+
+    const updated = get().sessions.map((s) => {
+      if (s.id === sessionId) {
+        return {
+          ...s,
+          googleMeetUrl: formatted.url,
+          joinUrl: formatted.url,
+          meetingCode: formatted.code
+        };
+      }
+      return s;
+    });
+
+    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    set({
+      sessions: updated,
+      activeSession: get().activeSession?.id === sessionId
+        ? {
+            ...get().activeSession!,
+            googleMeetUrl: formatted.url,
+            joinUrl: formatted.url,
+            meetingCode: formatted.code
+          }
+        : get().activeSession
+    });
+
+    if (typeof window !== "undefined") {
+      const session = updated.find((s) => s.id === sessionId);
+      if (session?.trainerId) {
+        localStorage.setItem("faculty_default_meet_" + session.trainerId, formatted.url);
+      }
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
+      try {
+        const bc = new BroadcastChannel("capacity_live_channel");
+        bc.postMessage({ type: "LIVE_UPDATE", sessionId, meetUrl: formatted.url, meetingCode: formatted.code });
+        bc.close();
+      } catch {}
+    }
+    return true;
   },
 
   findSessionByCode: (code: string) => {
