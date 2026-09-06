@@ -11,6 +11,7 @@ import { useAppStore } from "../../store/appStore";
 import { useNotificationsStore } from "../../store/notificationsStore";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
 import { formatCourseDuration, extractMediaDuration } from "../../utils/courseDuration";
+import { storeVideoBlob } from "../../utils/videoStorage";
 import type { CourseCategory, CourseLesson, Resource } from "../../types";
 
 export const TrainerCourses: React.FC = () => {
@@ -44,7 +45,8 @@ export const TrainerCourses: React.FC = () => {
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonDuration, setLessonDuration] = useState("20 Mins");
   const [isCalculatingDuration, setIsCalculatingDuration] = useState(false);
-  const [videoSourceType, setVideoSourceType] = useState<"youtube" | "url" | "file">("youtube");
+  const [videoSourceType, setVideoSourceType] = useState<"youtube" | "drive" | "url" | "file">("youtube");
+  const [selectedFileBlob, setSelectedFileBlob] = useState<File | null>(null);
   const [videoUrlInput, setVideoUrlInput] = useState("");
   const [videoDescription, setVideoDescription] = useState("");
   const [localVideoFileName, setLocalVideoFileName] = useState("");
@@ -115,6 +117,7 @@ export const TrainerCourses: React.FC = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFileBlob(file);
       setLocalVideoFileName(file.name);
       // Create local blob URL for instant preview & playback
       const objectUrl = URL.createObjectURL(file);
@@ -194,8 +197,8 @@ export const TrainerCourses: React.FC = () => {
     });
   };
 
-  // Submit Video Lesson Upload
-  const handleUploadVideoLesson = (e: React.FormEvent) => {
+  // Submit Video Lesson Upload with IndexedDB persistence for local files
+  const handleUploadVideoLesson = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isVerifiedTrainer) {
@@ -217,20 +220,34 @@ export const TrainerCourses: React.FC = () => {
 
     const existingLessons = course.lessons || [];
     const lessonNumber = existingLessons.length + 1;
+    const lessonId = "lesson-" + Date.now();
+
+    let persistentUrl = videoUrlInput.trim();
+
+    // If local file was uploaded, store it persistently in IndexedDB
+    if (videoSourceType === "file" && selectedFileBlob) {
+      try {
+        const storageKey = `vid-${course.id}-${lessonId}`;
+        await storeVideoBlob(storageKey, selectedFileBlob);
+        persistentUrl = `indexeddb://${storageKey}`;
+      } catch (err) {
+        console.warn("Failed to write to IndexedDB, fallback to direct input", err);
+      }
+    }
 
     // Extract YouTube ID if applicable
     let videoId = `v-${Date.now()}`;
-    const ytMatch = videoUrlInput.match(/(?:youtu\.be\/|watch\?v=|embed\/)([^#&?]{11})/);
+    const ytMatch = persistentUrl.match(/(?:youtu\.be\/|watch\?v=|embed\/)([^#&?]{11})/);
     if (ytMatch && ytMatch[1]) {
       videoId = ytMatch[1];
     }
 
     const newLesson: CourseLesson = {
-      id: "lesson-" + Date.now(),
+      id: lessonId,
       lessonNumber,
       title: lessonTitle.trim(),
       duration: lessonDuration.trim() || "20 Mins",
-      youtubeUrl: videoUrlInput.trim(),
+      youtubeUrl: persistentUrl,
       videoId,
       videoSource: videoSourceType,
       description: videoDescription.trim() || undefined
@@ -241,7 +258,7 @@ export const TrainerCourses: React.FC = () => {
       courseId: course.id,
       title: `${newLesson.title} (Video Lecture)`,
       type: "video",
-      url: videoUrlInput.trim(),
+      url: persistentUrl,
       uploadedAt: new Date().toISOString(),
       uploadedBy: currentUser?.name || "Faculty Trainer",
       description: videoDescription.trim() || "Course video lecture uploaded by instructor."
@@ -585,16 +602,17 @@ export const TrainerCourses: React.FC = () => {
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Video Source Method <span className="text-rose-400">*</span>
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       setVideoSourceType("youtube");
                       setVideoUrlInput("");
                       setLocalVideoFileName("");
+                      setSelectedFileBlob(null);
                     }}
                     className={
-                      "py-2 px-2.5 rounded-xl font-semibold border text-center transition cursor-pointer " +
+                      "py-2 px-2 rounded-xl font-semibold border text-center transition cursor-pointer text-xs " +
                       (videoSourceType === "youtube"
                         ? "bg-[#0071e3]/20 border-[#2997ff] text-white ring-1 ring-[#2997ff]"
                         : "bg-white/5 border-white/10 text-slate-400 hover:text-white")
@@ -605,12 +623,30 @@ export const TrainerCourses: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      setVideoSourceType("drive");
+                      setVideoUrlInput("");
+                      setLocalVideoFileName("");
+                      setSelectedFileBlob(null);
+                    }}
+                    className={
+                      "py-2 px-2 rounded-xl font-semibold border text-center transition cursor-pointer text-xs " +
+                      (videoSourceType === "drive"
+                        ? "bg-[#0071e3]/20 border-[#2997ff] text-white ring-1 ring-[#2997ff]"
+                        : "bg-white/5 border-white/10 text-slate-400 hover:text-white")
+                    }
+                  >
+                    Google Drive
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       setVideoSourceType("url");
                       setVideoUrlInput("");
                       setLocalVideoFileName("");
+                      setSelectedFileBlob(null);
                     }}
                     className={
-                      "py-2 px-2.5 rounded-xl font-semibold border text-center transition cursor-pointer " +
+                      "py-2 px-2 rounded-xl font-semibold border text-center transition cursor-pointer text-xs " +
                       (videoSourceType === "url"
                         ? "bg-[#0071e3]/20 border-[#2997ff] text-white ring-1 ring-[#2997ff]"
                         : "bg-white/5 border-white/10 text-slate-400 hover:text-white")
@@ -626,7 +662,7 @@ export const TrainerCourses: React.FC = () => {
                       setLocalVideoFileName("");
                     }}
                     className={
-                      "py-2 px-2.5 rounded-xl font-semibold border text-center transition cursor-pointer " +
+                      "py-2 px-2 rounded-xl font-semibold border text-center transition cursor-pointer text-xs " +
                       (videoSourceType === "file"
                         ? "bg-[#0071e3]/20 border-[#2997ff] text-white ring-1 ring-[#2997ff]"
                         : "bg-white/5 border-white/10 text-slate-400 hover:text-white")
@@ -653,6 +689,25 @@ export const TrainerCourses: React.FC = () => {
                   />
                   <p className="text-[10.5px] text-slate-400 mt-1">
                     Supports single YouTube videos, timestamped links, and playlist series.
+                  </p>
+                </div>
+              )}
+
+              {videoSourceType === "drive" && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Google Drive Video Share Link <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="e.g. https://drive.google.com/file/d/1A2B3C4D5E.../view?usp=sharing"
+                    value={videoUrlInput}
+                    onChange={(e) => setVideoUrlInput(e.target.value)}
+                    className="apple-input text-xs w-full"
+                  />
+                  <p className="text-[10.5px] text-slate-400 mt-1">
+                    Paste any Google Drive share link (set access to "Anyone with the link"). The player automatically embeds it securely for students.
                   </p>
                 </div>
               )}

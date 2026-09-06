@@ -147,7 +147,7 @@ export interface CourseLesson {
   duration: string;
   youtubeUrl: string;
   videoId: string;
-  videoSource?: "youtube" | "url" | "file";
+  videoSource?: "youtube" | "url" | "file" | "drive";
   description?: string;
 }
 

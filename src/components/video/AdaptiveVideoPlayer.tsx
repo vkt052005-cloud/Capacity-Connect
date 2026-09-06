@@ -3,6 +3,7 @@ import {
   Play, Pause, Volume2, VolumeX, Maximize2, Settings,
   RotateCcw, Sparkles, MessageSquare, FileText, CheckCircle2, Bookmark
 } from "lucide-react";
+import { parsePlayableVideoUrl, getVideoBlobUrl } from "../../utils/videoStorage";
 import { useAppStore } from "../../store/appStore";
 import { TranscriptItem } from "../../types";
 
@@ -30,50 +31,50 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
   const [showTranscripts, setShowTranscripts] = useState(true);
   const [savedNotes, setSavedNotes] = useState<{ time: string; note: string }[]>([]);
   const [noteInput, setNoteInput] = useState("");
+  const [resolvedStreamUrl, setResolvedStreamUrl] = useState<string | null>(null);
+  const [mediaError, setMediaError] = useState(false);
 
-  // Helper to extract YouTube embed URL if applicable (supports individual videos, playlist series, and custom lists)
-  const getYouTubeEmbedUrl = (url?: string) => {
-    if (!url) return null;
-    if (url.includes("youtube.com/embed/")) return url;
+  // Parse playable URL format (YouTube, Google Drive, Direct CDN, or IndexedDB)
+  const parsedMedia = parsePlayableVideoUrl(videoUrl);
 
-    // Support YouTube Playlist URLs (e.g. https://youtube.com/playlist?list=PLu0W_9lII9agq5TrH9XLIKQvv0iaF2X3w)
-    if (url.includes("list=")) {
-      const listMatch = url.match(/[?&]list=([^#&?]+)/);
-      const listId = listMatch ? listMatch[1] : null;
-      if (listId) {
-        // If there's also a specific video ID attached
-        const videoMatch = url.match(/(?:youtu\.be\/|watch\?v=|embed\/)([^#&?]{11})/);
-        if (videoMatch && videoMatch[1]) {
-          return `https://www.youtube-nocookie.com/embed/${videoMatch[1]}?list=${listId}&rel=0`;
+  // Resolve IndexedDB or direct stream URL
+  useEffect(() => {
+    let active = true;
+    setMediaError(false);
+
+    if (parsedMedia.type === "indexeddb" && parsedMedia.streamUrl) {
+      getVideoBlobUrl(parsedMedia.streamUrl).then((url) => {
+        if (active) {
+          if (url) {
+            setResolvedStreamUrl(url);
+          } else {
+            setMediaError(true);
+          }
         }
-        return `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&rel=0`;
-      }
+      });
+    } else if (parsedMedia.type === "direct") {
+      setResolvedStreamUrl(parsedMedia.streamUrl || null);
+    } else {
+      setResolvedStreamUrl(null);
     }
 
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      let startParam = "";
-      const startMatch = url.match(/[?&](?:t|start)=(\d+)/);
-      if (startMatch) {
-        startParam = `&start=${startMatch[1]}`;
-      }
-      return `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1&rel=0${startParam}`;
-    }
-    return null;
-  };
+    return () => {
+      active = false;
+    };
+  }, [videoUrl, parsedMedia.type, parsedMedia.streamUrl]);
 
-  const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
+  const isIframe = parsedMedia.type === "youtube" || parsedMedia.type === "drive";
+  const iframeSrc = parsedMedia.embedUrl;
 
   // Synchronize playback state with DOM element
   useEffect(() => {
-    if (youtubeEmbedUrl || !videoRef.current) return;
+    if (isIframe || !videoRef.current) return;
     if (isPlaying) {
       videoRef.current.play().catch(() => {});
     } else {
       videoRef.current.pause();
     }
-  }, [isPlaying, youtubeEmbedUrl]);
+  }, [isPlaying, isIframe]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -132,25 +133,45 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
       {/* Video Container */}
       <div className="relative rounded-2xl overflow-hidden glass-panel border border-white/15 bg-black shadow-2xl group">
         <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden">
-          {youtubeEmbedUrl ? (
+          {isIframe && iframeSrc ? (
             <iframe
-              src={youtubeEmbedUrl}
+              src={iframeSrc}
               title={title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
               className="w-full h-full border-0"
             />
-          ) : videoUrl ? (
+          ) : resolvedStreamUrl ? (
             <video
               ref={videoRef}
-              src={videoUrl}
+              src={resolvedStreamUrl}
               poster={thumbnail}
               className="w-full h-full object-cover"
               controls={false}
               onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
               onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 900)}
               onEnded={() => setIsPlaying(false)}
+              onError={() => setMediaError(true)}
             />
+          ) : mediaError ? (
+            <div className="p-6 text-center space-y-3 max-w-md">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <h4 className="text-sm font-bold text-white">Video Source Stream Unavailable</h4>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                The local session URL for this lecture is unavailable on this device. Mentors can re-upload or provide a cloud link (YouTube or Google Drive) for cross-device access.
+              </p>
+              <button
+                onClick={() => {
+                  setMediaError(false);
+                  setResolvedStreamUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
+                }}
+                className="apple-btn-primary text-xs px-4 py-2 font-semibold mx-auto flex items-center gap-1.5 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-white" /> Stream Cloud Demo Video
+              </button>
+            </div>
           ) : (
             <img
               src={thumbnail || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80"}
@@ -160,7 +181,7 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
           )}
 
           {/* Central Play Overlay if paused (for native videos) */}
-          {!isPlaying && !youtubeEmbedUrl && (
+          {!isPlaying && !isIframe && resolvedStreamUrl && !mediaError && (
             <button
               onClick={() => setIsPlaying(true)}
               className="absolute w-16 h-16 rounded-full bg-[#0071e3]/80 hover:bg-[#0071e3] text-white flex items-center justify-center backdrop-blur-md shadow-2xl shadow-blue-500/40 border border-white/20 transition-transform hover:scale-110 cursor-pointer"
@@ -183,7 +204,7 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
         </div>
 
         {/* Video Control Bar (Apple Glass Aesthetic) */}
-        {!youtubeEmbedUrl && (
+        {!isIframe && resolvedStreamUrl && (
           <div className="p-3 bg-[#0d0e14]/90 border-t border-white/10 backdrop-blur-2xl flex flex-col gap-2">
             {/* Progress Bar with seeking */}
             <div

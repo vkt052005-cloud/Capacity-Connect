@@ -149,9 +149,13 @@ export const CourseDetail: React.FC = () => {
   const [lessonSearch, setLessonSearch] = useState("");
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("");
 
-  // Ensure course is always resolved, falling back to seed data if localStorage is stale
-  const foundCourse = courses.find((c) => c.id === id);
-  const course = foundCourse || initialCourses.find((c) => c.id === id) || initialCourses.find((c) => c.id === "c6");
+  // Ensure course is accurately resolved: first check user courses store, then seed courses
+  const course = courses.find((c) => c.id === id) || initialCourses.find((c) => c.id === id);
+
+  const isBuiltInSeedCourse = Boolean(
+    id &&
+    ["c6", "c-dsa", "c-sql", "c-c-prog", "c-python", "c-cpp-dsa", "c-dbms", "c-cn", "c-daa", "c-se"].includes(id)
+  );
 
   const currentModuleFilters = useMemo(() => {
     const courseId = course?.id || id || "";
@@ -166,7 +170,10 @@ export const CourseDetail: React.FC = () => {
     if (courseId === "c-se" || title.includes("software engineering")) return SE_MODULE_FILTERS;
     if (courseId === "c-sql" || title.includes("sql") || title.includes("database")) return SQL_MODULE_FILTERS;
     if (courseId === "c-dsa" || title.includes("data structure")) return DSA_MODULE_FILTERS;
-    return WEBDEV_MODULE_FILTERS;
+    if (courseId === "c6" || title.includes("web development")) return WEBDEV_MODULE_FILTERS;
+
+    // For custom mentor courses: provide dynamic module filters based on actual lessons
+    return [{ label: "All Lessons", start: 1, end: 9999 }];
   }, [course, id]);
 
   const activeModuleFilter = selectedModuleFilter && currentModuleFilters.some(m => m.label === selectedModuleFilter)
@@ -179,7 +186,7 @@ export const CourseDetail: React.FC = () => {
   const [newQuestion, setNewQuestion] = useState("");
   const [newQuestionTitle, setNewQuestionTitle] = useState("");
 
-  // Ensure all lessons are always present and never empty
+  // Ensure lessons match the course: if mentor uploaded lessons, ALWAYS prioritize them
   const allLessons = useMemo(() => {
     if (course?.lessons && course.lessons.length > 0) {
       return course.lessons;
@@ -200,7 +207,8 @@ export const CourseDetail: React.FC = () => {
     if (seedMatch?.lessons && seedMatch.lessons.length > 0) {
       return seedMatch.lessons;
     }
-    return sigmaWebDevLessons;
+    // For custom courses that haven't uploaded lessons yet, return empty list instead of hijack
+    return [];
   }, [course, id]);
 
   if (!course) {
