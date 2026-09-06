@@ -121,6 +121,8 @@ export interface Resource {
   summary?: string;
   keyTakeaways?: string[];
   flashcards?: Flashcard[];
+  fileName?: string;
+  fileData?: string;
 }
 
 export interface Course {

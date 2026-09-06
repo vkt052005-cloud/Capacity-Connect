@@ -800,6 +800,22 @@ export const CourseDetail: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => {
+                            if (res.fileData) {
+                              const a = document.createElement("a");
+                              a.href = res.fileData;
+                              a.download = res.fileName || `${res.title.replace(/\s+/g, "_")}.${res.type === "pdf" ? "pdf" : res.type === "presentation" ? "pptx" : "mp4"}`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+
+                              addToast({
+                                title: "Download Started",
+                                message: `Saved "${res.fileName || res.title}" to your device.`,
+                                type: "success"
+                              });
+                              return;
+                            }
+
                             addToast({
                               title: "Downloading Learning Resource",
                               message: `"${res.title}" is ready for offline reading and review.`,
