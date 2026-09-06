@@ -403,26 +403,45 @@ export const HomePage: React.FC = () => {
           )}
         </section>
 
-        {/* Metrics & Operational Scale */}
+        {/* Expected Outcomes & Operational Delivery */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="glass-panel p-6 sm:p-8 border border-white/15 space-y-6">
             <div className="text-center space-y-1">
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Platform Scale & Operational Impact</h2>
-              <p className="text-[11px] text-slate-400">Institutional training metrics measured across active departments</p>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                Projected Learning & Operational Impact
+              </h2>
+              <p className="text-[11px] text-slate-400">
+                Estimated benchmarks and rough targets expected from active student batches and curricula
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
               {[
-                { num: "12,450+", label: "Certified Professionals", sub: "Active workforce trainees", icon: Users, color: "#2997ff" },
-                { num: "98.4%", label: "Proctoring Integrity", sub: "Zero-tolerance anti-cheat", icon: ShieldCheck, color: "#30d158" },
-                { num: "100%", label: "Verifiable QR Credentials", sub: "SHA-256 digital proof", icon: Award, color: "#ff9f0a" },
-                { num: "48+", label: "Capacity Domains", sub: "Cloud, AI & Leadership", icon: Brain, color: "#bf5af2" }
-              ].map((stat, i) => (
-                <div key={i} className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-1">
-                  <stat.icon className="w-5 h-5 mx-auto mb-1 text-[#2997ff]" />
-                  <p className="text-xl sm:text-2xl font-black text-white tracking-tight">{stat.num}</p>
-                  <p className="text-xs font-semibold text-slate-300">{stat.label}</p>
-                  <p className="text-[9px] text-slate-500">{stat.sub}</p>
+                {
+                  range: "~70% – 85%",
+                  title: "Target Concept Mastery",
+                  note: "Roughly expected comprehension gain across structured playlists and syllabus modules"
+                },
+                {
+                  range: "~60% – 75%",
+                  title: "Batch Completion Target",
+                  note: "Projected completion range when self-paced video learning is combined with live Meet check-ins"
+                },
+                {
+                  range: "~40% – 50%",
+                  title: "Knowledge Gap Reduction",
+                  note: "Estimated reduction in technical skill gaps identified through periodic MCQ assessments"
+                },
+                {
+                  range: "~25 – 40 Hours",
+                  title: "Estimated Curriculum Depth",
+                  note: "Rough average hours of lecture content, slide review, and evaluation per subject track"
+                }
+              ].map((item, i) => (
+                <div key={i} className="p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-2 hover:border-white/20 transition">
+                  <p className="text-xl sm:text-2xl font-black text-white font-mono tracking-tight">{item.range}</p>
+                  <h3 className="text-xs font-bold text-slate-200">{item.title}</h3>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">{item.note}</p>
                 </div>
               ))}
             </div>
@@ -455,8 +474,7 @@ export const HomePage: React.FC = () => {
                     onClick={() => setOpenFaq(isOpen ? null : index)}
                     className="w-full px-3.5 py-2.5 text-left flex items-center justify-between gap-3 cursor-pointer"
                   >
-                    <span className="text-xs font-semibold text-white flex items-center gap-2">
-                      <HelpCircle className="w-3.5 h-3.5 text-[#2997ff] shrink-0" />
+                    <span className="text-xs font-semibold text-white">
                       {faq.q}
                     </span>
                     <ChevronDown className={"w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform " + (isOpen ? "rotate-180 text-[#2997ff]" : "")} />
@@ -477,9 +495,6 @@ export const HomePage: React.FC = () => {
         {/* Monthly Capacity Bulletin Newsletter */}
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="card p-6 sm:p-8 border-[#2997ff]/30 bg-gradient-to-r from-blue-950/30 to-purple-950/20 text-center space-y-4">
-            <div className="w-10 h-10 rounded-2xl bg-[#0071e3]/20 text-[#2997ff] flex items-center justify-center mx-auto">
-              <Mail className="w-5 h-5" />
-            </div>
             <div className="space-y-1">
               <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
                 Subscribe to Monthly Capacity Bulletins & Exam Schedules
