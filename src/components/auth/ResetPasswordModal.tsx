@@ -300,7 +300,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                     <input
                       type="email"
                       required
-                      placeholder="Enter your registered email (e.g. t2005madhav@gmail.com)"
+                      placeholder="Enter your registered email"
                       className="apple-input text-xs !pl-9"
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
