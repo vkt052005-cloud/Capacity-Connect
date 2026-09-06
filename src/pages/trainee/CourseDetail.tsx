@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Video, Presentation, Sparkles, MessageSquare, Award,
   CheckCircle2, AlertTriangle, ListVideo, Search, ChevronLeft,
-  ChevronRight, Play, ExternalLink, Star, LogOut
+  ChevronRight, Play, ExternalLink, Star, LogOut, BookOpen
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
@@ -845,13 +845,41 @@ export const CourseDetail: React.FC = () => {
                 </div>
               </div>
 
-              <Link
-                to={`/trainee/feedback?courseId=${course.id}`}
-                className="apple-btn-primary text-xs px-4 py-2.5 font-bold flex items-center gap-1.5 shrink-0"
-              >
-                <Star className="w-3.5 h-3.5 fill-current" />
-                <span>Rate & Review this Course</span>
-              </Link>
+              {isEnrolled ? (
+                <Link
+                  to={`/trainee/feedback?courseId=${course.id}`}
+                  className="apple-btn-primary text-xs px-4 py-2.5 font-bold flex items-center gap-1.5 shrink-0"
+                >
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  <span>Rate & Review this Course</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!currentUser) {
+                      addToast({
+                        title: "Login Required",
+                        message: "Please log in as a student to enroll and rate this course.",
+                        type: "info"
+                      });
+                      navigate("/login");
+                      return;
+                    }
+                    enroll(currentUser.id, id || "");
+                    addToast({
+                      title: "Enrolled in Course",
+                      message: `You are now enrolled in ${course?.title}! You can now submit your quality rating and feedback.`,
+                      type: "success"
+                    });
+                  }}
+                  className="apple-btn-secondary text-xs px-4 py-2.5 font-semibold flex items-center gap-1.5 shrink-0"
+                  title="Enroll in this course to rate and review it"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-[#2997ff]" />
+                  <span>Enroll to Rate Course</span>
+                </button>
+              )}
             </div>
 
             {/* Reviews List */}

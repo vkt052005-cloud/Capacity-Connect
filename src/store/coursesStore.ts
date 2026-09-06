@@ -308,12 +308,36 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   },
 
   addFeedback: (fb) => {
-    const { feedbacks, courses } = get();
-    const updatedFeedbacks = [fb, ...feedbacks];
-    saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
-    dbService.create("feedbacks", fb).catch(() => {});
+    const { feedbacks, courses, enrollments } = get();
 
-    // Automatically recalculate the overall quality rating for this course directly from student ratings
+    // Guard: Trainee MUST be enrolled in the course to rate it
+    const isEnrolled = enrollments.some(
+      (e) => e.traineeId === fb.traineeId && e.courseId === fb.courseId
+    );
+    if (!isEnrolled) {
+      console.warn("Feedback rejected: Trainee is not enrolled in course", fb.courseId);
+      return;
+    }
+
+    // Upsert feedback: update existing rating if student previously reviewed this course
+    const existingIndex = feedbacks.findIndex(
+      (f) => f.courseId === fb.courseId && f.traineeId === fb.traineeId
+    );
+    let updatedFeedbacks: typeof feedbacks;
+    if (existingIndex >= 0) {
+      const existingId = feedbacks[existingIndex].id;
+      const updatedItem = { ...fb, id: existingId };
+      updatedFeedbacks = [...feedbacks];
+      updatedFeedbacks[existingIndex] = updatedItem;
+      dbService.update("feedbacks", existingId, updatedItem).catch(() => {});
+    } else {
+      updatedFeedbacks = [fb, ...feedbacks];
+      dbService.create("feedbacks", fb).catch(() => {});
+    }
+
+    saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
+
+    // Automatically recalculate the overall quality rating for this course directly from authentic student ratings
     const courseFeedbacks = updatedFeedbacks.filter((f) => f.courseId === fb.courseId);
     const sumRatings = courseFeedbacks.reduce((acc, f) => acc + f.rating, 0);
     const avgRating = Number((sumRatings / courseFeedbacks.length).toFixed(1));
