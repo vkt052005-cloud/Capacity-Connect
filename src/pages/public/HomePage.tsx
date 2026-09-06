@@ -199,47 +199,38 @@ export const HomePage: React.FC = () => {
               Key Platform Features
             </h2>
             <p className="text-xs text-slate-400">
-              A centralized platform built for training delivery, assessment integrity, and capability tracking.
+              A comprehensive system built for structured engineering curricula, live Google Meet teaching, proctored examinations, and verified credentials.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               {
-                icon: Brain,
                 title: "Competency Mapping Engine",
-                desc: "Matches organizational training needs with certified trainer expertise and highlights subject capacity gaps."
+                desc: "Matches organizational and student learning requirements with verified faculty competencies to pinpoint and bridge technical knowledge gaps."
               },
               {
-                icon: Video,
-                title: "Video Streaming & Live Sessions",
-                desc: "HD video lectures with synchronized interactive transcripts, slide deck viewing, and scheduled Google Meet sessions."
+                title: "Official Google Meet & Live Classes",
+                desc: "Live classes conducted on official Google Meet with automatic course enrollment verification and live attendance tracking."
               },
               {
-                icon: Sparkles,
-                title: "AI Course Summarizer & Revision",
-                desc: "Instant chapter summaries, key takeaways, and interactive revision flashcards generated from lecture materials."
+                title: "Full Video Curriculums & Video Studio",
+                desc: "Verified educators publish comprehensive video playlists, syllabus modules, slide decks, and lecture materials for self-paced learning."
               },
               {
-                icon: ShieldCheck,
                 title: "Proctored MCQ Assessment Engine",
-                desc: "Timed subject tests with question shuffling, anti-cheat tab-switch detection, and automated grading."
+                desc: "Timed subject-wise assessments with anti-cheat tab monitoring, proctoring security guard, and instant score evaluation."
               },
               {
-                icon: Award,
                 title: "Verifiable Digital Certificates",
-                desc: "Cryptographically signed certificates featuring QR code verification for third-party authenticity checks."
+                desc: "Official course completion certificates with unique verification hashes and QR codes for authentic credential verification."
               },
               {
-                icon: Flame,
                 title: "Learner Progress & Recognition",
                 desc: "Track completed courses, earn milestone badges, maintain daily learning streaks, and view departmental achievements."
               }
             ].map((f, i) => (
-              <div key={i} className="card p-5 space-y-2.5 hover:border-white/20 transition">
-                <div className="w-8 h-8 rounded-xl bg-[#0071e3]/20 text-[#2997ff] flex items-center justify-center">
-                  <f.icon className="w-4 h-4" />
-                </div>
+              <div key={i} className="card p-5 space-y-2 hover:border-white/20 transition">
                 <h3 className="text-xs font-bold text-white tracking-tight">{f.title}</h3>
                 <p className="text-[11px] text-slate-400 leading-relaxed">{f.desc}</p>
               </div>
