@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Video, Presentation, Sparkles, MessageSquare, Award,
   CheckCircle2, AlertTriangle, ListVideo, Search, ChevronLeft,
-  ChevronRight, Play, ExternalLink, Star
+  ChevronRight, Play, ExternalLink, Star, LogOut
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
@@ -138,7 +138,7 @@ const COURSE_ASSESSMENT_MAP: Record<string, string> = {
 
 export const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { courses, enrollments, enroll, completeCourse, feedbacks } = useCoursesStore();
+  const { courses, enrollments, enroll, unenroll, completeCourse, feedbacks } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
@@ -149,17 +149,24 @@ export const CourseDetail: React.FC = () => {
   const [lessonSearch, setLessonSearch] = useState("");
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("");
 
-  // Automatically enroll active student if accessing course
-  useEffect(() => {
-    if (currentUser && currentUser.role === "trainee" && id) {
-      const isAlreadyEnrolled = enrollments.some(
-        (e) => e.traineeId === currentUser.id && e.courseId === id
-      );
-      if (!isAlreadyEnrolled) {
-        enroll(currentUser.id, id);
-      }
+  const isEnrolled = Boolean(
+    currentUser &&
+    currentUser.role === "trainee" &&
+    enrollments.some((e) => e.traineeId === currentUser.id && e.courseId === id)
+  );
+
+  const handleUnenrollCourse = () => {
+    if (!currentUser || !id) return;
+    if (window.confirm(`Are you sure you want to unenroll from "${course?.title || "this course"}"?`)) {
+      unenroll(currentUser.id, id);
+      addToast({
+        title: "Unenrolled from Course",
+        message: `You have been unenrolled from ${course?.title || "the course"}.`,
+        type: "info"
+      });
+      navigate("/trainee/dashboard");
     }
-  }, [currentUser, id, enrollments, enroll]);
+  };
 
   // Ensure course is accurately resolved: first check user courses store, then seed courses
   const course = courses.find((c) => c.id === id) || initialCourses.find((c) => c.id === id);
@@ -385,7 +392,34 @@ export const CourseDetail: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {currentUser?.role === "trainee" && (
+              isEnrolled ? (
+                <button
+                  onClick={handleUnenrollCourse}
+                  className="apple-btn-secondary text-xs px-3.5 py-2 font-semibold text-rose-400 border-rose-500/30 hover:bg-rose-500/10 cursor-pointer flex items-center gap-1.5 transition"
+                  title="Unenroll from this course"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Unenroll</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    enroll(currentUser.id, id || "");
+                    addToast({
+                      title: "Enrolled in Course",
+                      message: `You are now enrolled in ${course?.title || "this course"}.`,
+                      type: "success"
+                    });
+                  }}
+                  className="apple-btn-primary text-xs px-3.5 py-2 font-semibold flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <Play className="w-3.5 h-3.5 fill-white" />
+                  <span>Enroll in Course</span>
+                </button>
+              )
+            )}
             <button
               onClick={() => navigate(`/trainee/assessment/${assessmentId}`)}
               className="apple-btn-secondary text-xs px-4 py-2 font-semibold cursor-pointer"

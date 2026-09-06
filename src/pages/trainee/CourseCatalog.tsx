@@ -10,7 +10,7 @@ import { useAppStore } from "../../store/appStore";
 import { initialCourses } from "../../data/seed";
 
 export const CourseCatalog: React.FC = () => {
-  const { courses, enrollments, enroll } = useCoursesStore();
+  const { courses, enrollments, enroll, unenroll } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
@@ -56,6 +56,18 @@ export const CourseCatalog: React.FC = () => {
       message: "You have been enrolled in this course. You can now access all lectures.",
       type: "success"
     });
+  };
+
+  const handleUnenroll = (courseId: string, courseTitle: string) => {
+    if (!currentUser) return;
+    if (window.confirm(`Are you sure you want to unenroll from "${courseTitle}"?`)) {
+      unenroll(currentUser.id, courseId);
+      addToast({
+        title: "Unenrolled from Course",
+        message: `You have successfully unenrolled from ${courseTitle}.`,
+        type: "info"
+      });
+    }
   };
 
   const handleWatchCourse = (courseId: string) => {
@@ -234,12 +246,22 @@ export const CourseCatalog: React.FC = () => {
                     {currentUser ? (
                       currentUser.role === "trainee" ? (
                         isEnrolled ? (
-                          <Link
-                            to={`/trainee/course/${c.id}`}
-                            className="apple-btn-primary text-xs px-3.5 py-1.5 font-semibold flex items-center gap-1 shadow-md"
-                          >
-                            <Play className="w-3 h-3 fill-white" /> Learn →
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleUnenroll(c.id, c.title)}
+                              className="text-[11px] text-slate-400 hover:text-rose-400 px-2.5 py-1 rounded-lg border border-white/10 hover:border-rose-500/30 transition cursor-pointer"
+                              title="Unenroll from this course"
+                            >
+                              Unenroll
+                            </button>
+                            <Link
+                              to={`/trainee/course/${c.id}`}
+                              className="apple-btn-primary text-xs px-3.5 py-1.5 font-semibold flex items-center gap-1 shadow-md"
+                            >
+                              <Play className="w-3 h-3 fill-white" /> Learn →
+                            </Link>
+                          </div>
                         ) : (
                           <button
                             onClick={() => handleEnroll(c.id)}

@@ -17,7 +17,7 @@ import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment
 
 export const TraineeDashboard: React.FC = () => {
   const { currentUser } = useAuthStore();
-  const { courses, enrollments, certificates } = useCoursesStore();
+  const { courses, enrollments, certificates, unenroll } = useCoursesStore();
   const { assessments, attempts } = useAssessmentsStore();
   const { openClassroom, sessions, launchGoogleMeet, joinByMeetUrlOrCode } = useLiveSessionsStore();
   const { addToast } = useAppStore();
@@ -341,12 +341,31 @@ export const TraineeDashboard: React.FC = () => {
 
                   <div className="pt-2 border-t border-white/10 flex items-center justify-between">
                     <span className="text-[10px] text-slate-400">{formatCourseDuration(c)} total</span>
-                    <Link
-                      to={`/trainee/course/${c.id}`}
-                      className="apple-btn-primary text-xs px-3 py-1 font-semibold"
-                    >
-                      <Play className="w-3 h-3 fill-white" /> Resume Learning
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to unenroll from "${c.title}"?`)) {
+                            unenroll(traineeId, c.id);
+                            addToast({
+                              title: "Unenrolled from Course",
+                              message: `You have been unenrolled from ${c.title}.`,
+                              type: "info"
+                            });
+                          }
+                        }}
+                        className="text-[11px] text-slate-400 hover:text-rose-400 px-2.5 py-1 rounded-lg border border-white/10 hover:border-rose-500/30 transition cursor-pointer"
+                        title="Unenroll from this course"
+                      >
+                        Unenroll
+                      </button>
+                      <Link
+                        to={`/trainee/course/${c.id}`}
+                        className="apple-btn-primary text-xs px-3 py-1 font-semibold"
+                      >
+                        <Play className="w-3 h-3 fill-white" /> Resume Learning
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
