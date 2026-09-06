@@ -10,7 +10,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useCoursesStore } from "../../store/coursesStore";
 import { useAssessmentsStore } from "../../store/assessmentsStore";
 import { useAppStore } from "../../store/appStore";
-import { useLiveSessionsStore } from "../../store/liveSessionsStore";
+import { useLiveSessionsStore, formatGoogleMeet } from "../../store/liveSessionsStore";
 import { LiveSession } from "../../types";
 import { STANDARD_SUBJECTS, getSubjectById } from "../../data/subjects";
 
@@ -104,6 +104,16 @@ export const TrainerDashboard: React.FC = () => {
 
   const handleBroadcastInstantMeet = (e: React.FormEvent) => {
     e.preventDefault();
+    const meetDetails = formatGoogleMeet(instantMeetUrl);
+    if (!meetDetails.isReal) {
+      addToast({
+        title: "Google Meet Link Required",
+        message: "Please paste your Google Meet link (e.g. meet.google.com/abc-defg-hij) before broadcasting to students.",
+        type: "error"
+      });
+      return;
+    }
+
     const sub = getSubjectById(selectedSubjectId);
     const course = courses.find((c) => c.id === selectedSubjectId);
     const subjectName = sub?.name || course?.title || "Specialized Engineering Lab";
@@ -113,13 +123,13 @@ export const TrainerDashboard: React.FC = () => {
       trainerId,
       trainerName: currentUser?.name || "Faculty Trainer",
       title: instantMeetTitle.trim() || `Live Google Meet: ${subjectName}`,
-      customMeetUrl: instantMeetUrl.trim() || undefined
+      customMeetUrl: meetDetails.url
     });
 
     setShowInstantModal(false);
     addToast({
       title: "Google Meet Class Broadcasted Live",
-      message: `"${newSess.title}" is now LIVE for ${subjectName}.`,
+      message: `"${newSess.title}" is now LIVE! Room Code: ${newSess.meetingCode}. All enrolled students alerted with auto-joining buzzer.`,
       type: "success"
     });
   };
@@ -270,9 +280,9 @@ export const TrainerDashboard: React.FC = () => {
               <div className="flex justify-center gap-3 pt-2">
                 <button
                   onClick={handleOpenInstantModal}
-                  className="apple-btn-primary text-xs px-4 py-2 font-semibold cursor-pointer"
+                  className="apple-btn-primary text-xs px-4 py-2.5 font-bold flex items-center gap-1.5 shadow-md shadow-rose-600/30 bg-gradient-to-r from-rose-600 to-red-600 hover:brightness-110 cursor-pointer text-white"
                 >
-                  Start Instant Google Meet
+                  <Radio className="w-3.5 h-3.5 text-white animate-pulse" /> Go Live (Google Meet)
                 </button>
                 <button
                   onClick={() => setShowScheduleModal(true)}
@@ -382,18 +392,21 @@ export const TrainerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Start Instant Google Meet Modal */}
+      {/* Go Live Prompt & Broadcast Modal */}
       {showInstantModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-2xl animate-fadeIn">
           <div className="glass-panel p-6 max-w-lg w-full border border-white/20 shadow-2xl space-y-4 rounded-2xl bg-[#0b0e18]">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-[#2997ff] flex items-center justify-center">
-                  <Video className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                  <Radio className="w-4 h-4 animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Start Instant Google Meet Class</h3>
-                  <p className="text-[11px] text-slate-400">Launch an authentic Google Meet room and broadcast to students</p>
+                  <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                    Go Live on Google Meet
+                    <span className="badge-red text-[8px] uppercase tracking-wider">REAL-TIME BROADCAST</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Generate your room, paste the link, and broadcast to all enrolled students</p>
                 </div>
               </div>
               <button onClick={() => setShowInstantModal(false)} className="text-slate-400 hover:text-white p-1">
@@ -404,7 +417,7 @@ export const TrainerDashboard: React.FC = () => {
             <form onSubmit={handleBroadcastInstantMeet} className="space-y-4 text-xs">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="font-semibold text-slate-300">Select Subject / Specialization</label>
+                  <label className="font-semibold text-slate-300">Select Subject / Enrolled Course</label>
                   <span className="badge-blue text-[9px]">ENGINEERING CURRICULUM</span>
                 </div>
                 <select
@@ -451,42 +464,102 @@ export const TrainerDashboard: React.FC = () => {
                 />
               </div>
 
-              {/* Google Meet Room Link / Code */}
-              <div className="p-3.5 rounded-xl bg-blue-950/25 border border-blue-500/30 space-y-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-white flex items-center gap-1.5 text-xs">
-                    <Video className="w-3.5 h-3.5 text-[#2997ff]" /> Google Meet Room Link or Code
+              {/* ─── Bulletproof 2-Step Prompt & Broadcast Box ─── */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-950/40 via-indigo-950/30 to-purple-950/30 border-2 border-[#2997ff]/40 space-y-3 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" /> Real-time Broadcast Setup
                   </span>
+                  <span className="badge-blue text-[9px]">STEP 1 & 2</span>
+                </div>
+
+                {/* Step 1: 1-click open meet.google.com/new to copy */}
+                <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                      Step 1: Open Google Meet
+                    </span>
+                    <span className="text-[10px] text-slate-400">Creates room instantly</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    Click the button below to generate an active Google Meet room in a new tab, then copy its link or 10-letter code:
+                  </p>
                   <a
                     href="https://meet.google.com/new"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="apple-btn-secondary text-[10px] px-2.5 py-1 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 flex items-center gap-1 font-semibold cursor-pointer shrink-0"
-                    title="Open Google Meet in a new tab to create a live room"
+                    className="w-full py-2.5 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-bold flex items-center justify-center gap-2 transition text-xs shadow-md cursor-pointer"
+                    title="Click to open meet.google.com/new in a new tab"
                   >
-                    <ExternalLink className="w-3 h-3" /> Create Room (meet.google.com/new) ↗
+                    <ExternalLink className="w-4 h-4 text-emerald-400" />
+                    <span>1-Click: Open Google Meet to Copy Room Link ↗</span>
                   </a>
                 </div>
-                <input
-                  type="text"
-                  placeholder="e.g. meet.google.com/abc-defg-hij or abc-defg-hij"
-                  value={instantMeetUrl}
-                  onChange={(e) => setInstantMeetUrl(e.target.value)}
-                  className="apple-input text-xs font-mono"
-                />
-                <p className="text-[10px] text-slate-300 leading-relaxed">
-                  Click <strong className="text-emerald-400">"Create Room ↗"</strong> to generate your active Google Meet call, then paste the URL or 10-letter code above. This is saved as your default room so you don&apos;t have to re-enter it next time!
-                </p>
+
+                {/* Step 2: Paste Google Meet link */}
+                <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-white flex items-center gap-1">
+                      Step 2: Paste your Google Meet link (e.g. meet.google.com/abc-defg-hij)
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      required
+                      placeholder="meet.google.com/abc-defg-hij or abc-defg-hij"
+                      value={instantMeetUrl}
+                      onChange={(e) => setInstantMeetUrl(e.target.value)}
+                      className="apple-input text-xs font-mono flex-1 border-blue-400/40 focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const clip = await navigator.clipboard.readText();
+                          if (clip) setInstantMeetUrl(clip.trim());
+                        } catch {}
+                      }}
+                      className="apple-btn-secondary text-[10px] px-3 py-2 text-blue-300 border-blue-400/30 hover:bg-blue-500/10 cursor-pointer shrink-0 font-semibold"
+                      title="Paste link from clipboard"
+                    >
+                      📋 Paste
+                    </button>
+                  </div>
+
+                  {/* Real-time Link Validation Status */}
+                  {instantMeetUrl.trim() ? (
+                    formatGoogleMeet(instantMeetUrl).isReal ? (
+                      <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 font-mono bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Valid Meet Link: <strong>{formatGoogleMeet(instantMeetUrl).url}</strong></span>
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-amber-300 flex items-center gap-1.5 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                        <span>⚠️ Please paste a valid meet link or code (e.g. meet.google.com/abc-defg-hij)</span>
+                      </div>
+                    )
+                  ) : (
+                    <p className="text-[10px] text-slate-400 leading-snug">
+                      Paste your meeting link above so the system can broadcast it to all enrolled students immediately.
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Broadcast CTA */}
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="apple-btn-primary w-full text-xs py-3.5 font-bold flex items-center justify-center gap-2 shadow-xl shadow-blue-500/30 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:brightness-110 cursor-pointer text-sm"
+                  disabled={!formatGoogleMeet(instantMeetUrl).isReal}
+                  className={`apple-btn-primary w-full text-xs py-3.5 font-bold flex items-center justify-center gap-2 shadow-xl cursor-pointer ${
+                    formatGoogleMeet(instantMeetUrl).isReal
+                      ? "shadow-rose-500/30 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110"
+                      : "opacity-60 cursor-not-allowed bg-slate-700"
+                  }`}
                 >
-                  <Radio className="w-4 h-4 text-rose-300 animate-pulse" />
-                  <span>Broadcast Live Class to All Students ↗</span>
+                  <Radio className="w-4 h-4 text-white animate-pulse" />
+                  <span>Broadcast Live Class to All Enrolled Students ↗</span>
                 </button>
               </div>
             </form>

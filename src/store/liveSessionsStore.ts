@@ -24,7 +24,7 @@ export const formatGoogleMeet = (input?: string): { url: string; code: string; i
   trimmed = trimmed.replace(/^meet\.google\.com\//i, "");
   trimmed = trimmed.split("?")[0].replace(/\/+$/, "");
 
-  if (trimmed.toLowerCase() === "new" || !trimmed) {
+  if (trimmed.toLowerCase() === "new" || !trimmed || trimmed === "xxx-yyyy-zzz") {
     return { url: "https://meet.google.com/new", code: "new", isReal: false };
   }
 
