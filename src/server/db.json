@@ -9032,5 +9032,1497 @@
   "enrollments": [],
   "feedbacks": [],
   "certificates": [],
-  "live_sessions": []
+  "live_sessions": [],
+  "assessments": [
+    {
+      "id": "a-webdev-sigma",
+      "courseId": "c6",
+      "courseTitle": "Web Development Course",
+      "title": "Full Stack Web Development Certification Assessment",
+      "description": "Proctored competency evaluation covering HTML5 semantics, CSS Flexbox/Grid, JavaScript asynchronous logic, REST APIs, and React component state.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 20,
+      "passingScore": 70,
+      "createdBy": "CodeWithHarry (Haris Khan)",
+      "createdAt": "2026-02-15T12:00:00Z",
+      "questions": [
+        {
+          "id": "q-wd-1",
+          "text": "Which HTML5 semantic element should be used to wrap major navigation links on a website?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "<menu-bar>"
+            },
+            {
+              "id": "o2",
+              "text": "<nav>"
+            },
+            {
+              "id": "o3",
+              "text": "<navigate>"
+            },
+            {
+              "id": "o4",
+              "text": "<links>"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_8c06f05a6c52a39e",
+          "points": 20,
+          "explanation": "The <nav> element represents a section of a page whose purpose is to provide navigation links.",
+          "topic": "Semantic HTML5"
+        },
+        {
+          "id": "q-wd-2",
+          "text": "In CSS Flexbox, which property aligns flex items along the cross axis (perpendicular to the main axis)?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "justify-content"
+            },
+            {
+              "id": "o2",
+              "text": "align-items"
+            },
+            {
+              "id": "o3",
+              "text": "flex-direction"
+            },
+            {
+              "id": "o4",
+              "text": "space-between"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_28a83cd56edcf0bd",
+          "points": 20,
+          "explanation": "align-items specifies the default alignment for items inside the flex container along the cross axis.",
+          "topic": "CSS Flexbox"
+        },
+        {
+          "id": "q-wd-3",
+          "text": "In modern JavaScript (ES6+), what is the primary difference between 'let' and 'var'?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "'var' is block-scoped while 'let' is function-scoped"
+            },
+            {
+              "id": "o2",
+              "text": "'let' is block-scoped while 'var' is function-scoped"
+            },
+            {
+              "id": "o3",
+              "text": "'let' cannot be reassigned"
+            },
+            {
+              "id": "o4",
+              "text": "There is no functional difference"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_49080e049d57d1dc",
+          "points": 20,
+          "explanation": "let is block-scoped (confined to the enclosing curly braces {}), whereas var is function-scoped.",
+          "topic": "JavaScript ES6+"
+        },
+        {
+          "id": "q-wd-4",
+          "text": "What HTTP method is considered idempotent and used to retrieve representation of a resource?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "POST"
+            },
+            {
+              "id": "o2",
+              "text": "GET"
+            },
+            {
+              "id": "o3",
+              "text": "PATCH"
+            },
+            {
+              "id": "o4",
+              "text": "CONNECT"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_298272e78b01c1fb",
+          "points": 20,
+          "explanation": "GET requests must be safe and idempotent, meaning repeated identical requests produce the same side effect.",
+          "topic": "REST APIs"
+        },
+        {
+          "id": "q-wd-5",
+          "text": "In React, why must hooks like useState and useEffect only be called at the top level of a component?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Because JavaScript engines cannot compile functions inside loops"
+            },
+            {
+              "id": "o2",
+              "text": "To guarantee that hooks are called in the exact same order on every render"
+            },
+            {
+              "id": "o3",
+              "text": "Because React components can only have a single hook invocation"
+            },
+            {
+              "id": "o4",
+              "text": "To prevent variables from leaking into global window scope"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_67a444be4795231a",
+          "points": 20,
+          "explanation": "React relies on the call order of Hooks across renders to associate local state with the corresponding Hook.",
+          "topic": "React State"
+        }
+      ]
+    },
+    {
+      "id": "a-dsa-striver",
+      "courseId": "c-dsa",
+      "courseTitle": "DATA STRUCTURE AND ALGORITHM",
+      "title": "Data Structures & Algorithms Mastery Certification",
+      "description": "Comprehensive proctored assessment testing core algorithmic principles: asymptotic analysis, binary search, dynamic programming, monotonic stacks, and graph algorithms.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 30,
+      "passingScore": 70,
+      "createdBy": "Raj Vikramaditya (Striver)",
+      "createdAt": "2026-03-01T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-dsa-1",
+          "text": "What is the worst-case time complexity of searching for an element in a Balanced Binary Search Tree (such as AVL or Red-Black Tree)?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "O(N)"
+            },
+            {
+              "id": "o2",
+              "text": "O(log N)"
+            },
+            {
+              "id": "o3",
+              "text": "O(N log N)"
+            },
+            {
+              "id": "o4",
+              "text": "O(1)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_2d7ec4251032e93b",
+          "points": 20,
+          "explanation": "In a balanced BST, tree height is strictly bounded by O(log N), guaranteeing O(log N) worst-case search, insertion, and deletion.",
+          "topic": "Trees & BST"
+        },
+        {
+          "id": "q-dsa-2",
+          "text": "In Dijkstra's single-source shortest path algorithm implemented with a Min-Priority Queue, what is the overall time complexity?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "O(V^3)"
+            },
+            {
+              "id": "o2",
+              "text": "O((V + E) log V)"
+            },
+            {
+              "id": "o3",
+              "text": "O(V * E)"
+            },
+            {
+              "id": "o4",
+              "text": "O(E^2)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_226645eac49ab698",
+          "points": 20,
+          "explanation": "Extracting min vertex takes O(V log V) and edge relaxations take O(E log V), yielding total O((V + E) log V) time.",
+          "topic": "Graph Algorithms"
+        },
+        {
+          "id": "q-dsa-3",
+          "text": "What is the space-optimized auxiliary space complexity for solving the 0/1 Knapsack problem using Dynamic Programming?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "O(1) space"
+            },
+            {
+              "id": "o2",
+              "text": "O(W) space using a single 1D array"
+            },
+            {
+              "id": "o3",
+              "text": "O(N * W) space only"
+            },
+            {
+              "id": "o4",
+              "text": "O(N^2) space"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_4e6f2e8361f6d779",
+          "points": 20,
+          "explanation": "By iterating weight from W down to item weight, we can update the DP state in a single 1D array of size O(W).",
+          "topic": "Dynamic Programming"
+        },
+        {
+          "id": "q-dsa-4",
+          "text": "Which algorithm can detect a cycle in a Directed Acyclic Graph (DAG) during topological sorting?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Kruskal's Algorithm"
+            },
+            {
+              "id": "o2",
+              "text": "Kahn's Algorithm (BFS using in-degrees)"
+            },
+            {
+              "id": "o3",
+              "text": "Floyd-Warshall Algorithm"
+            },
+            {
+              "id": "o4",
+              "text": "Prim's Algorithm"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_3b048898097bc8de",
+          "points": 20,
+          "explanation": "If Kahn's algorithm fails to include all V vertices in the topological sort order, the directed graph contains at least one cycle.",
+          "topic": "Graphs"
+        },
+        {
+          "id": "q-dsa-5",
+          "text": "What is the time complexity to find the Next Greater Element for all elements in an array of size N using a Monotonic Stack?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "O(N^2)"
+            },
+            {
+              "id": "o2",
+              "text": "O(N)"
+            },
+            {
+              "id": "o3",
+              "text": "O(log N)"
+            },
+            {
+              "id": "o4",
+              "text": "O(N log N)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_3265871934f069bf",
+          "points": 20,
+          "explanation": "Each element is pushed and popped from the monotonic stack at most once, resulting in amortized O(N) linear time.",
+          "topic": "Stacks & Queues"
+        }
+      ]
+    },
+    {
+      "id": "a-sql-cs50",
+      "courseId": "c-sql",
+      "courseTitle": "Databases With SQL",
+      "title": "Databases With SQL Certification Assessment",
+      "description": "Proctored Harvard CS50 curriculum examination covering SQL querying, joins, schema normalization, indexing, and ACID transactions.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 25,
+      "passingScore": 70,
+      "createdBy": "Carter Zenke (Harvard University)",
+      "createdAt": "2026-03-02T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-sql-1",
+          "text": "In SQL, which clause is specifically used to filter rows AFTER an aggregate function has grouped them?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "WHERE"
+            },
+            {
+              "id": "o2",
+              "text": "HAVING"
+            },
+            {
+              "id": "o3",
+              "text": "FILTER"
+            },
+            {
+              "id": "o4",
+              "text": "GROUP BY"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_feac12c9dc1a41a3",
+          "points": 20,
+          "explanation": "WHERE filters rows before aggregation occurs; HAVING filters grouped rows after aggregation.",
+          "topic": "SQL Syntax"
+        },
+        {
+          "id": "q-sql-2",
+          "text": "Which type of SQL JOIN returns all records from the left table and matched records from the right table, filling with NULL for unmatched rows?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "INNER JOIN"
+            },
+            {
+              "id": "o2",
+              "text": "LEFT OUTER JOIN"
+            },
+            {
+              "id": "o3",
+              "text": "FULL OUTER JOIN"
+            },
+            {
+              "id": "o4",
+              "text": "CROSS JOIN"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_82cbe47e90820f00",
+          "points": 20,
+          "explanation": "A LEFT OUTER JOIN preserves every row from the left table regardless of whether a matching record exists in the right table.",
+          "topic": "Relational Joins"
+        },
+        {
+          "id": "q-sql-3",
+          "text": "What condition is required for a relation to be in Third Normal Form (3NF)?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "It must have no composite primary keys"
+            },
+            {
+              "id": "o2",
+              "text": "It must be in 2NF and have no transitive dependencies of non-key attributes on the primary key"
+            },
+            {
+              "id": "o3",
+              "text": "It must have at least three distinct foreign keys"
+            },
+            {
+              "id": "o4",
+              "text": "All rows must be indexed in ascending chronological order"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_a6f1dba72dde2fe1",
+          "points": 20,
+          "explanation": "3NF requires a table to be in 2NF and every non-key column must depend directly and only on the primary key (no transitive dependencies).",
+          "topic": "Database Normalization"
+        },
+        {
+          "id": "q-sql-4",
+          "text": "What underlying data structure is commonly used by relational database management systems (RDBMS) to implement fast table indexes?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Linked List"
+            },
+            {
+              "id": "o2",
+              "text": "B-Tree (or B+ Tree)"
+            },
+            {
+              "id": "o3",
+              "text": "Stack"
+            },
+            {
+              "id": "o4",
+              "text": "Binary Min-Heap"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_41c4b1c4d5632146",
+          "points": 20,
+          "explanation": "B-Trees (and B+ Trees) are balanced search trees optimized for block storage, allowing O(log N) searches, insertions, and range queries.",
+          "topic": "Query Optimization"
+        },
+        {
+          "id": "q-sql-5",
+          "text": "In database transaction theory, what does 'Durability' in ACID guarantee?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Transactions are executed within 1 millisecond"
+            },
+            {
+              "id": "o2",
+              "text": "Once a transaction commits, its changes survive power loss or system crashes"
+            },
+            {
+              "id": "o3",
+              "text": "No two users can query the database at the same time"
+            },
+            {
+              "id": "o4",
+              "text": "The database will never run out of disk space"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_d96aab9500d7c227",
+          "points": 20,
+          "explanation": "Durability guarantees that once a transaction has been committed, its effects are permanently recorded (usually via WAL/disk persistence) even in the event of a crash.",
+          "topic": "Transactions & ACID"
+        }
+      ]
+    },
+    {
+      "id": "a-c-prog",
+      "courseId": "c-c-prog",
+      "courseTitle": "C Programming Complete Course",
+      "title": "C Language Fundamentals & Systems Certification",
+      "description": "Proctored examination covering pointers, dynamic memory allocation, structs, recursion, and file input/output in C.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 20,
+      "passingScore": 70,
+      "createdBy": "CodeWithHarry (Haris Khan)",
+      "createdAt": "2026-03-03T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-c-1",
+          "text": "In C, what is the operator used to obtain the memory address of a variable?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "*"
+            },
+            {
+              "id": "o2",
+              "text": "&"
+            },
+            {
+              "id": "o3",
+              "text": "->"
+            },
+            {
+              "id": "o4",
+              "text": "%"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_3fb7f47a7129bd6e",
+          "points": 20,
+          "explanation": "The address-of operator '&' returns the physical memory address of its operand.",
+          "topic": "Pointers & Memory"
+        },
+        {
+          "id": "q-c-2",
+          "text": "Which standard library function dynamically allocates memory on the heap and initializes all bytes to zero?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "malloc()"
+            },
+            {
+              "id": "o2",
+              "text": "calloc()"
+            },
+            {
+              "id": "o3",
+              "text": "realloc()"
+            },
+            {
+              "id": "o4",
+              "text": "free()"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_1fed6e758f848b8d",
+          "points": 20,
+          "explanation": "calloc(n, size) allocates memory for an array of elements and zeroes out all allocated bits.",
+          "topic": "Dynamic Memory Allocation"
+        },
+        {
+          "id": "q-c-3",
+          "text": "What does the dereference operator '*' do when applied to a pointer variable in C?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Multiplies the address by 2"
+            },
+            {
+              "id": "o2",
+              "text": "Accesses the value stored at the address contained in the pointer"
+            },
+            {
+              "id": "o3",
+              "text": "Frees the memory allocated to the pointer"
+            },
+            {
+              "id": "o4",
+              "text": "Declares a new constant"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_c91489a401b7aeac",
+          "points": 20,
+          "explanation": "The indirection or dereference operator * accesses or modifies the value located at the pointer's referenced memory address.",
+          "topic": "Pointers"
+        },
+        {
+          "id": "q-c-4",
+          "text": "What is the return value of strcmp('abc', 'abc') in C?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "1"
+            },
+            {
+              "id": "o2",
+              "text": "0"
+            },
+            {
+              "id": "o3",
+              "text": "-1"
+            },
+            {
+              "id": "o4",
+              "text": "true"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_03af4707ecbfdbcb",
+          "points": 20,
+          "explanation": "strcmp returns 0 when both null-terminated strings are completely identical.",
+          "topic": "Strings"
+        },
+        {
+          "id": "q-c-5",
+          "text": "What happens if dynamic memory allocated with malloc() is never released using free() before program termination in long-running processes?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Compiler error"
+            },
+            {
+              "id": "o2",
+              "text": "Memory leak"
+            },
+            {
+              "id": "o3",
+              "text": "Segmentation fault"
+            },
+            {
+              "id": "o4",
+              "text": "Stack overflow"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_92af7ede4c6c3cea",
+          "points": 20,
+          "explanation": "Unreleased heap memory causes memory leaks, gradually consuming available system RAM.",
+          "topic": "Memory Management"
+        }
+      ]
+    },
+    {
+      "id": "a-python-100",
+      "courseId": "c-python",
+      "courseTitle": "Python for Beginners (100 Days of Code)",
+      "title": "Python 100 Days of Code Mastery Assessment",
+      "description": "Evaluates comprehensive Python programming capabilities: list comprehensions, OOP principles, decorators, generators, and exception handling.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 20,
+      "passingScore": 70,
+      "createdBy": "CodeWithHarry (Haris Khan)",
+      "createdAt": "2026-03-03T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-py-1",
+          "text": "In Python, which data structure is ordered, mutable, and allows duplicate elements?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Set"
+            },
+            {
+              "id": "o2",
+              "text": "List"
+            },
+            {
+              "id": "o3",
+              "text": "Tuple"
+            },
+            {
+              "id": "o4",
+              "text": "Dictionary Keys"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_ab6affc2b479d524",
+          "points": 20,
+          "explanation": "Lists are ordered and mutable collections in Python that permit duplicate values.",
+          "topic": "Data Structures"
+        },
+        {
+          "id": "q-py-2",
+          "text": "What keyword is used inside a Python function to turn it into a generator function?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "return"
+            },
+            {
+              "id": "o2",
+              "text": "yield"
+            },
+            {
+              "id": "o3",
+              "text": "generate"
+            },
+            {
+              "id": "o4",
+              "text": "async"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_db88075dc43f82c7",
+          "points": 20,
+          "explanation": "The yield statement suspends function execution and yields a value to the caller, producing a generator iterator.",
+          "topic": "Generators"
+        },
+        {
+          "id": "q-py-3",
+          "text": "In Python OOP, what is the purpose of the '__init__' method?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "To destroy the object instance"
+            },
+            {
+              "id": "o2",
+              "text": "Constructor method to initialize attributes when an instance is created"
+            },
+            {
+              "id": "o3",
+              "text": "To define private package variables"
+            },
+            {
+              "id": "o4",
+              "text": "To import standard libraries"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_7e564d4c23ebe3e6",
+          "points": 20,
+          "explanation": "__init__ is Python's instance initializer method automatically invoked upon object instantiation.",
+          "topic": "Object-Oriented Programming"
+        },
+        {
+          "id": "q-py-4",
+          "text": "What is a decorator in Python?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "A GUI theme library"
+            },
+            {
+              "id": "o2",
+              "text": "A design pattern that allows modifying or extending the behavior of a function or class without permanently changing its source code"
+            },
+            {
+              "id": "o3",
+              "text": "A tool for formatting code indentation"
+            },
+            {
+              "id": "o4",
+              "text": "A syntax error detector"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_f992b42f1d893181",
+          "points": 20,
+          "explanation": "Decorators take a callable as input and return a modified wrapper callable, commonly using the @decorator syntax.",
+          "topic": "Decorators"
+        },
+        {
+          "id": "q-py-5",
+          "text": "What block in Python is guaranteed to execute regardless of whether an exception was raised in the try block?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "catch"
+            },
+            {
+              "id": "o2",
+              "text": "finally"
+            },
+            {
+              "id": "o3",
+              "text": "else"
+            },
+            {
+              "id": "o4",
+              "text": "except"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_c05d35068fbc54a0",
+          "points": 20,
+          "explanation": "The finally block always runs during cleanup, regardless of normal completion or handled/unhandled exceptions.",
+          "topic": "Exception Handling"
+        }
+      ]
+    },
+    {
+      "id": "a-cpp-dsa",
+      "courseId": "c-cpp-dsa",
+      "courseTitle": "Complete C++ DSA Course",
+      "title": "C++ Data Structures & Algorithms Certification",
+      "description": "Evaluates proficiency in C++ STL (vector, map, priority_queue), recursion, linked list operations, binary trees, and backtracking.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 25,
+      "passingScore": 70,
+      "createdBy": "Shradha Khapra (Apna College)",
+      "createdAt": "2026-03-03T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-cpp-1",
+          "text": "What is the underlying data structure of std::map in C++ Standard Template Library (STL)?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Hash Table"
+            },
+            {
+              "id": "o2",
+              "text": "Red-Black Tree (Self-Balancing BST)"
+            },
+            {
+              "id": "o3",
+              "text": "Dynamic Array"
+            },
+            {
+              "id": "o4",
+              "text": "Min-Heap"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_1aebcafaf8d68d6e",
+          "points": 20,
+          "explanation": "std::map in C++ is ordered and implemented as a Red-Black Tree providing O(log N) lookup, insertion, and deletion.",
+          "topic": "C++ STL"
+        },
+        {
+          "id": "q-cpp-2",
+          "text": "How do you pass a variable by reference in C++ to avoid expensive object copies?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "void func(Type *x)"
+            },
+            {
+              "id": "o2",
+              "text": "void func(Type &x)"
+            },
+            {
+              "id": "o3",
+              "text": "void func(Type %x)"
+            },
+            {
+              "id": "o4",
+              "text": "void func(ref Type x)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_fb2144f517315b8d",
+          "points": 20,
+          "explanation": "Type &x creates a reference parameter, allowing in-place modifications without copying data.",
+          "topic": "C++ Syntax"
+        },
+        {
+          "id": "q-cpp-3",
+          "text": "What is the worst-case time complexity of QuickSort when a poor pivot (e.g. smallest or largest element) is repeatedly chosen?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "O(N log N)"
+            },
+            {
+              "id": "o2",
+              "text": "O(N^2)"
+            },
+            {
+              "id": "o3",
+              "text": "O(N)"
+            },
+            {
+              "id": "o4",
+              "text": "O(log N)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_a448602489647eac",
+          "points": 20,
+          "explanation": "Unbalanced partitions reduce QuickSort's recursion depth to N, yielding O(N^2) quadratic time.",
+          "topic": "Algorithms"
+        },
+        {
+          "id": "q-cpp-4",
+          "text": "In Floyd's Cycle-Finding Algorithm (Tortoise and Hare), what are the step sizes of the two pointers?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Slow moves 2 steps, Fast moves 3 steps"
+            },
+            {
+              "id": "o2",
+              "text": "Slow moves 1 step, Fast moves 2 steps"
+            },
+            {
+              "id": "o3",
+              "text": "Slow moves 1 step, Fast moves 1 step"
+            },
+            {
+              "id": "o4",
+              "text": "Slow moves 2 steps, Fast moves 1 step"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_dee31d87746cabcb",
+          "points": 20,
+          "explanation": "Slow advances by 1 node while Fast advances by 2 nodes. If a cycle exists, they will collide in O(N) time.",
+          "topic": "Linked Lists"
+        },
+        {
+          "id": "q-cpp-5",
+          "text": "Which traversal of a Binary Search Tree (BST) visits nodes in strictly non-decreasing sorted numerical order?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Pre-order"
+            },
+            {
+              "id": "o2",
+              "text": "In-order (Left, Root, Right)"
+            },
+            {
+              "id": "o3",
+              "text": "Post-order"
+            },
+            {
+              "id": "o4",
+              "text": "Level-order"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_6de3555ed4190cea",
+          "points": 20,
+          "explanation": "In-order traversal of a valid BST always yields elements in sorted ascending order.",
+          "topic": "Binary Trees"
+        }
+      ]
+    },
+    {
+      "id": "a-dbms-neso",
+      "courseId": "c-dbms",
+      "courseTitle": "Database Management Systems (DBMS)",
+      "title": "Database Management Systems Academic Certification",
+      "description": "Proctored academic assessment evaluating relational algebra, Boyce-Codd Normal Form (BCNF), serializability, and 2-Phase Locking (2PL).",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 25,
+      "passingScore": 70,
+      "createdBy": "Neso Academy",
+      "createdAt": "2026-03-03T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-dbms-1",
+          "text": "Which relational algebra operator selects tuples that satisfy a given predicate condition?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Projection (Π)"
+            },
+            {
+              "id": "o2",
+              "text": "Selection (σ)"
+            },
+            {
+              "id": "o3",
+              "text": "Cartesian Product (⨯)"
+            },
+            {
+              "id": "o4",
+              "text": "Join (⨝)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_9c11f8ddf81aa7b5",
+          "points": 20,
+          "explanation": "Sigma (σ) represents the selection operator in relational algebra to filter horizontal tuples matching conditions.",
+          "topic": "Relational Algebra"
+        },
+        {
+          "id": "q-dbms-2",
+          "text": "What is the requirement for a functional dependency X -> Y to satisfy Boyce-Codd Normal Form (BCNF)?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Y must be a primary key"
+            },
+            {
+              "id": "o2",
+              "text": "X must be a superkey (or trivial dependency)"
+            },
+            {
+              "id": "o3",
+              "text": "X must be a foreign key"
+            },
+            {
+              "id": "o4",
+              "text": "The relation must contain no null values"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_6bf4f142f5905a96",
+          "points": 20,
+          "explanation": "For every non-trivial functional dependency X -> Y in BCNF, the left-hand determinant X must be a superkey.",
+          "topic": "Normalization"
+        },
+        {
+          "id": "q-dbms-3",
+          "text": "In the Two-Phase Locking (2PL) protocol, what is guaranteed if all transactions follow strict 2PL?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Freedom from deadlocks"
+            },
+            {
+              "id": "o2",
+              "text": "Conflict serializability and strict schedules (cascadeless)"
+            },
+            {
+              "id": "o3",
+              "text": "Zero disk I/O"
+            },
+            {
+              "id": "o4",
+              "text": "Infinite throughput"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_40b92d1b38fcf977",
+          "points": 20,
+          "explanation": "2PL guarantees conflict serializability, and strict 2PL additionally guarantees cascadeless recoverable schedules.",
+          "topic": "Concurrency Control"
+        },
+        {
+          "id": "q-dbms-4",
+          "text": "In database recovery, what does the Write-Ahead Logging (WAL) protocol mandate?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Log records must be written after the transaction commits"
+            },
+            {
+              "id": "o2",
+              "text": "Log records corresponding to a database modification must be flushed to stable storage before the data page is written to disk"
+            },
+            {
+              "id": "o3",
+              "text": "Logs must be stored in volatile RAM only"
+            },
+            {
+              "id": "o4",
+              "text": "Only SELECT queries generate log entries"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_f566e43001d80850",
+          "points": 20,
+          "explanation": "WAL dictates that log records describing a change must be persisted before the updated data page reaches disk.",
+          "topic": "Crash Recovery"
+        },
+        {
+          "id": "q-dbms-5",
+          "text": "What anomaly occurs when transaction T1 reads uncommitted data written by transaction T2, and T2 subsequently aborts/rolls back?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Non-repeatable read"
+            },
+            {
+              "id": "o2",
+              "text": "Dirty read (Read-Write conflict)"
+            },
+            {
+              "id": "o3",
+              "text": "Phantom read"
+            },
+            {
+              "id": "o4",
+              "text": "Lost update"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_729f3171d35d2731",
+          "points": 20,
+          "explanation": "A dirty read happens when a transaction reads uncommitted changes of another concurrent transaction that later fails.",
+          "topic": "Transaction Anomalies"
+        }
+      ]
+    },
+    {
+      "id": "a-cn-gate",
+      "courseId": "c-cn",
+      "courseTitle": "Computer Networks (Complete Course)",
+      "title": "Computer Networks Protocol Engineering Certification",
+      "description": "Proctored exam covering IPv4 subnetting, TCP flow control, Hamming codes, routing algorithms, and OSI reference model.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 25,
+      "passingScore": 70,
+      "createdBy": "Varun Singla (Gate Smashers)",
+      "createdAt": "2026-03-03T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-cn-1",
+          "text": "In IPv4 subnetting with CIDR notation /27, how many usable host addresses are available per subnet?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "32"
+            },
+            {
+              "id": "o2",
+              "text": "30"
+            },
+            {
+              "id": "o3",
+              "text": "62"
+            },
+            {
+              "id": "o4",
+              "text": "14"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_10391e24b0d1d440",
+          "points": 20,
+          "explanation": "A /27 prefix leaves 32 - 27 = 5 host bits. Total addresses = 2^5 = 32. Subtracting Network and Broadcast IDs gives 30 usable hosts.",
+          "topic": "IPv4 Subnetting"
+        },
+        {
+          "id": "q-cn-2",
+          "text": "In TCP, what mechanism is used to achieve reliable connection establishment between client and server?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Single ACK packet"
+            },
+            {
+              "id": "o2",
+              "text": "Three-way handshake (SYN, SYN-ACK, ACK)"
+            },
+            {
+              "id": "o3",
+              "text": "Four-way handshake (FIN, ACK, FIN, ACK)"
+            },
+            {
+              "id": "o4",
+              "text": "UDP broadcast"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_b7643213c33944e3",
+          "points": 20,
+          "explanation": "TCP uses a 3-way handshake: Client sends SYN, Server replies with SYN-ACK, Client completes with ACK.",
+          "topic": "Transport Layer"
+        },
+        {
+          "id": "q-cn-3",
+          "text": "Which layer of the OSI model is directly responsible for framing, physical MAC addressing, and link-level error detection?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Physical Layer"
+            },
+            {
+              "id": "o2",
+              "text": "Data Link Layer"
+            },
+            {
+              "id": "o3",
+              "text": "Network Layer"
+            },
+            {
+              "id": "o4",
+              "text": "Transport Layer"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_86dc88fa7fcca602",
+          "points": 20,
+          "explanation": "The Data Link Layer packages bit streams into frames and handles MAC addressing and CRC error detection.",
+          "topic": "OSI Model"
+        },
+        {
+          "id": "q-cn-4",
+          "text": "What major problem is associated with Distance Vector Routing algorithms (like RIP)?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "High memory consumption"
+            },
+            {
+              "id": "o2",
+              "text": "Count-to-Infinity problem"
+            },
+            {
+              "id": "o3",
+              "text": "Requires global link-state topology maps"
+            },
+            {
+              "id": "o4",
+              "text": "Inability to support IP routing"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_a8282029a71473a5",
+          "points": 20,
+          "explanation": "Distance Vector Routing suffers from the count-to-infinity issue when link failures occur, mitigated by Split Horizon and Poison Reverse.",
+          "topic": "Routing Algorithms"
+        },
+        {
+          "id": "q-cn-5",
+          "text": "Which application layer protocol automatically assigns IP addresses, default gateways, and DNS servers to client devices joining a network?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "DNS"
+            },
+            {
+              "id": "o2",
+              "text": "DHCP"
+            },
+            {
+              "id": "o3",
+              "text": "ARP"
+            },
+            {
+              "id": "o4",
+              "text": "ICMP"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_e21d28e8d58f54c4",
+          "points": 20,
+          "explanation": "DHCP (Dynamic Host Configuration Protocol) automatically assigns IP configuration parameters to network clients.",
+          "topic": "Application Layer"
+        }
+      ]
+    },
+    {
+      "id": "a-daa-kg",
+      "courseId": "c-daa",
+      "courseTitle": "Design and Analysis of Algorithms (DAA)",
+      "title": "Algorithm Design & Complexity Analysis Certification",
+      "description": "Evaluates asymptotic analysis, recurrence solutions via Master Theorem, greedy proof techniques, and NP-completeness reductions.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 25,
+      "passingScore": 70,
+      "createdBy": "Sanchit Jain (KnowledgeGATE)",
+      "createdAt": "2026-03-03T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-daa-1",
+          "text": "What is the solution of the recurrence T(n) = 2T(n/2) + O(n) according to the Master Theorem?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "O(n)"
+            },
+            {
+              "id": "o2",
+              "text": "O(n log n)"
+            },
+            {
+              "id": "o3",
+              "text": "O(n^2)"
+            },
+            {
+              "id": "o4",
+              "text": "O(log n)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_82b256f308069629",
+          "points": 20,
+          "explanation": "With a = 2, b = 2, log_b(a) = log_2(2) = 1. Since f(n) = O(n^1), case 2 of Master Theorem applies: T(n) = O(n log n) (e.g. Merge Sort).",
+          "topic": "Master Theorem"
+        },
+        {
+          "id": "q-daa-2",
+          "text": "Which algorithmic paradigm does the Fractional Knapsack problem solve optimally in O(n log n) time?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Dynamic Programming"
+            },
+            {
+              "id": "o2",
+              "text": "Greedy Technique (sorting by value-to-weight ratio)"
+            },
+            {
+              "id": "o3",
+              "text": "Branch and Bound"
+            },
+            {
+              "id": "o4",
+              "text": "Backtracking"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_80c83a04057c490a",
+          "points": 20,
+          "explanation": "Fractional Knapsack exhibits the greedy choice property: sorting items by value/weight ratio yields optimal solution.",
+          "topic": "Greedy Algorithms"
+        },
+        {
+          "id": "q-daa-3",
+          "text": "What is the time complexity to find the Longest Common Subsequence (LCS) of two strings of lengths m and n using Dynamic Programming?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "O(m + n)"
+            },
+            {
+              "id": "o2",
+              "text": "O(m * n)"
+            },
+            {
+              "id": "o3",
+              "text": "O(2^(m+n))"
+            },
+            {
+              "id": "o4",
+              "text": "O(m log n)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_606868d548e8e7eb",
+          "points": 20,
+          "explanation": "Constructing the 2D DP table of size (m+1) x (n+1) requires filling each cell in O(1), leading to O(m*n) time.",
+          "topic": "Dynamic Programming"
+        },
+        {
+          "id": "q-daa-4",
+          "text": "In complexity theory, what defines the complexity class NP?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Problems solvable in non-polynomial time"
+            },
+            {
+              "id": "o2",
+              "text": "Decision problems whose solutions can be verified in polynomial time by a deterministic Turing machine"
+            },
+            {
+              "id": "o3",
+              "text": "Problems that cannot be solved by any computer"
+            },
+            {
+              "id": "o4",
+              "text": "Problems solvable in linear logarithmic time"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_9f6470be5b3ef7cc",
+          "points": 20,
+          "explanation": "NP denotes Non-deterministic Polynomial time: problems for which a candidate certificate can be verified in polynomial time.",
+          "topic": "Complexity Theory"
+        },
+        {
+          "id": "q-daa-5",
+          "text": "Which algorithm finds the Minimum Spanning Tree (MST) of a connected edge-weighted graph by greedily adding the smallest weight edge that doesn't form a cycle?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Dijkstra's Algorithm"
+            },
+            {
+              "id": "o2",
+              "text": "Kruskal's Algorithm"
+            },
+            {
+              "id": "o3",
+              "text": "Bellman-Ford Algorithm"
+            },
+            {
+              "id": "o4",
+              "text": "Floyd-Warshall Algorithm"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_61429ee72cc416ad",
+          "points": 20,
+          "explanation": "Kruskal's algorithm sorts all edges and uses a Disjoint Set Union (DSU) structure to greedily add cycle-free minimum edges.",
+          "topic": "Graph Algorithms"
+        }
+      ]
+    },
+    {
+      "id": "a-se-iit",
+      "courseId": "c-se",
+      "courseTitle": "Software Engineering",
+      "title": "Software Engineering & Lifecycle Architectures Certification",
+      "description": "Proctored academic evaluation based on Prof. Rajib Mall's IIT Kharagpur curriculum: SDLC models, SRS standards, UML modeling, cyclomatic complexity, and software testing.",
+      "deadline": "2026-12-31T23:59:59Z",
+      "durationMinutes": 25,
+      "passingScore": 70,
+      "createdBy": "Prof. Rajib Mall (IIT Kharagpur)",
+      "createdAt": "2026-03-03T10:00:00Z",
+      "questions": [
+        {
+          "id": "q-se-1",
+          "text": "Which Software Development Life Cycle (SDLC) model incorporates risk analysis and mitigation at every iterative loop?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Classical Waterfall Model"
+            },
+            {
+              "id": "o2",
+              "text": "Spiral Model (Boehm)"
+            },
+            {
+              "id": "o3",
+              "text": "V-Model"
+            },
+            {
+              "id": "o4",
+              "text": "Rapid Application Development (RAD)"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_fed16473d0f3a73b",
+          "points": 20,
+          "explanation": "Barry Boehm's Spiral model is a risk-driven process model with four quadrants in every iteration, explicitly focusing on risk management.",
+          "topic": "SDLC Models"
+        },
+        {
+          "id": "q-se-2",
+          "text": "What is the formula for calculating McCabe's Cyclomatic Complexity V(G) of a program's Control Flow Graph with E edges, N nodes, and P connected components?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "V(G) = E + N - P"
+            },
+            {
+              "id": "o2",
+              "text": "V(G) = E - N + 2P"
+            },
+            {
+              "id": "o3",
+              "text": "V(G) = E * N / P"
+            },
+            {
+              "id": "o4",
+              "text": "V(G) = 2E - N + P"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_fce74784855b7498",
+          "points": 20,
+          "explanation": "McCabe's metric is V(G) = E - N + 2P, which also equals the number of enclosed predicate regions plus 1.",
+          "topic": "Software Metrics"
+        },
+        {
+          "id": "q-se-3",
+          "text": "In Object-Oriented software design, which design quality attribute indicates how closely elements within a single module are related to each other?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Coupling"
+            },
+            {
+              "id": "o2",
+              "text": "Cohesion"
+            },
+            {
+              "id": "o3",
+              "text": "Inheritance"
+            },
+            {
+              "id": "o4",
+              "text": "Redundancy"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_dc87765522b79579",
+          "points": 20,
+          "explanation": "High Cohesion is desirable: it measures the degree to which all elements inside a component focus on a single, well-defined objective.",
+          "topic": "Software Design"
+        },
+        {
+          "id": "q-se-4",
+          "text": "Which testing technique evaluates software functionality without examining the internal source code or implementation details?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "White-Box Testing (Structural)"
+            },
+            {
+              "id": "o2",
+              "text": "Black-Box Testing (Functional / Behavioral)"
+            },
+            {
+              "id": "o3",
+              "text": "Mutation Testing"
+            },
+            {
+              "id": "o4",
+              "text": "Basis Path Testing"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_1b837e3eca3c86de",
+          "points": 20,
+          "explanation": "Black-Box testing focuses purely on inputs and expected outputs according to specifications, without knowledge of internal logic.",
+          "topic": "Software Testing"
+        },
+        {
+          "id": "q-se-5",
+          "text": "In UML (Unified Modeling Language), which diagram models dynamic interaction between objects sequentially over time?",
+          "options": [
+            {
+              "id": "o1",
+              "text": "Class Diagram"
+            },
+            {
+              "id": "o2",
+              "text": "Sequence Diagram"
+            },
+            {
+              "id": "o3",
+              "text": "Component Diagram"
+            },
+            {
+              "id": "o4",
+              "text": "Deployment Diagram"
+            }
+          ],
+          "correctIndex": 1,
+          "answerHash": "ah_dd61ac67f5b127bf",
+          "points": 20,
+          "explanation": "Sequence diagrams capture object lifelines, activation bars, and chronological message exchanges.",
+          "topic": "UML Modeling"
+        }
+      ]
+    }
+  ]
 }

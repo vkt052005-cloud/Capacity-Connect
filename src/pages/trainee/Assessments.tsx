@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ShieldCheck, Clock, Award, CheckCircle2,
-  AlertTriangle, ArrowRight, BookOpen, Brain, Play
+  AlertTriangle, ArrowRight, BookOpen, Brain, Play, Calendar
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useAssessmentsStore } from "../../store/assessmentsStore";
@@ -42,15 +42,30 @@ export const Assessments: React.FC = () => {
             const attempt = attempts.find((att) => att.assessmentId === a.id && att.traineeId === currentUser?.id);
             const isPassed = attempt && attempt.passed;
             const isFailed = attempt && !attempt.passed;
+            const isExpired = a.deadline ? new Date(a.deadline) < new Date() : false;
+            const formattedDeadline = a.deadline ? new Date(a.deadline).toLocaleString(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short"
+            }) : "Open";
 
             return (
               <div key={a.id} className="glass-card p-5 space-y-4 border-white/10 flex flex-col justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="badge-blue text-[8px]">{a.courseTitle}</span>
-                    <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#2997ff]" /> {a.durationMinutes} Minutes Timed
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-[#2997ff]" /> {a.durationMinutes} Mins
+                      </span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                        isExpired
+                          ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                          : "bg-blue-500/15 text-blue-300 border border-blue-500/25"
+                      }`}>
+                        <Calendar className="w-3 h-3" />
+                        {isExpired ? `Closed: ${formattedDeadline}` : `Due: ${formattedDeadline}`}
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="text-sm font-bold text-white tracking-tight">{a.title}</h3>
@@ -68,12 +83,18 @@ export const Assessments: React.FC = () => {
                     )}
                   </div>
 
-                  <Link
-                    to={`/trainee/assessment/${a.id}`}
-                    className="apple-btn-primary text-xs px-3.5 py-1.5 font-semibold flex items-center gap-1.5"
-                  >
-                    <Play className="w-3 h-3 fill-white" /> Start Proctored Exam
-                  </Link>
+                  {isExpired && !isPassed ? (
+                    <span className="text-xs text-rose-400 font-semibold px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 cursor-not-allowed">
+                      Deadline Passed
+                    </span>
+                  ) : (
+                    <Link
+                      to={`/trainee/assessment/${a.id}`}
+                      className="apple-btn-primary text-xs px-3.5 py-1.5 font-semibold flex items-center gap-1.5"
+                    >
+                      <Play className="w-3 h-3 fill-white" /> {isPassed ? "Review Exam" : "Start Proctored Exam"}
+                    </Link>
+                  )}
                 </div>
               </div>
             );

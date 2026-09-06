@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Assessment, Attempt } from '../types';
 import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId } from '../data/seed';
+import { dbService } from '../services/db';
 
 interface AssessmentsState {
   assessments: Assessment[];
@@ -16,59 +17,88 @@ interface AssessmentsState {
   getTrainerAssessments: (trainerId: string) => Assessment[];
 }
 
-export const useAssessmentsStore = create<AssessmentsState>((set, get) => ({
-  assessments: getFromStorage<Assessment>(STORAGE_KEYS.ASSESSMENTS),
-  attempts: getFromStorage<Attempt>(STORAGE_KEYS.ATTEMPTS),
+export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
+  const refreshAssessments = async () => {
+    try {
+      const serverAssessments = await dbService.getAll<Assessment>('assessments');
+      if (serverAssessments && serverAssessments.length > 0) {
+        saveToStorage(STORAGE_KEYS.ASSESSMENTS, serverAssessments);
+        set({ assessments: serverAssessments });
+      }
+    } catch (e) {
+      console.warn('Could not sync assessments from central db:', e);
+    }
+  };
 
-  load: () => {
-    set({
-      assessments: getFromStorage<Assessment>(STORAGE_KEYS.ASSESSMENTS),
-      attempts: getFromStorage<Attempt>(STORAGE_KEYS.ATTEMPTS),
+  // Subscribe to real-time changes across devices
+  try {
+    dbService.subscribe('assessments', () => {
+      refreshAssessments();
     });
-  },
+    // Initial fetch on module load
+    refreshAssessments();
+  } catch (e) {
+    // SSR or offline safe
+  }
 
-  addAssessment: (a) => {
-    const { assessments } = get();
-    const newA: Assessment = { ...a, id: generateId('assess'), createdAt: new Date().toISOString() };
-    const updated = [...assessments, newA];
-    saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
-    set({ assessments: updated });
-  },
+  return {
+    assessments: getFromStorage<Assessment>(STORAGE_KEYS.ASSESSMENTS),
+    attempts: getFromStorage<Attempt>(STORAGE_KEYS.ATTEMPTS),
 
-  updateAssessment: (id, updates) => {
-    const { assessments } = get();
-    const updated = assessments.map(a => a.id === id ? { ...a, ...updates } : a);
-    saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
-    set({ assessments: updated });
-  },
+    load: () => {
+      set({
+        assessments: getFromStorage<Assessment>(STORAGE_KEYS.ASSESSMENTS),
+        attempts: getFromStorage<Attempt>(STORAGE_KEYS.ATTEMPTS),
+      });
+      refreshAssessments();
+    },
 
-  deleteAssessment: (id) => {
-    const { assessments } = get();
-    const updated = assessments.filter(a => a.id !== id);
-    saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
-    set({ assessments: updated });
-  },
+    addAssessment: (a) => {
+      const { assessments } = get();
+      const newA: Assessment = { ...a, id: generateId('assess'), createdAt: new Date().toISOString() };
+      const updated = [newA, ...assessments];
+      saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
+      set({ assessments: updated });
+      dbService.create('assessments', newA).catch(() => {});
+    },
 
-  submitAttempt: (attempt) => {
-    const { attempts } = get();
-    const newAttempt: Attempt = { ...attempt, id: generateId('att') };
-    const updated = [...attempts, newAttempt];
-    saveToStorage(STORAGE_KEYS.ATTEMPTS, updated);
-    set({ attempts: updated });
-  },
+    updateAssessment: (id, updates) => {
+      const { assessments } = get();
+      const updated = assessments.map(a => a.id === id ? { ...a, ...updates } : a);
+      saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
+      set({ assessments: updated });
+      dbService.update('assessments', id, updates).catch(() => {});
+    },
 
-  getAttemptsByTrainee: (traineeId) => get().attempts.filter(a => a.traineeId === traineeId),
-  getAttemptsByAssessment: (assessmentId) => get().attempts.filter(a => a.assessmentId === assessmentId),
-  hasAttempted: (assessmentId, traineeId) => get().attempts.some(a => a.assessmentId === assessmentId && a.traineeId === traineeId),
-  getTrainerAssessments: (trainerId) => {
-    const users = getFromStorage<{ id: string; name: string }>(STORAGE_KEYS.USERS);
-    const trainer = users.find((u) => u.id === trainerId);
-    const trainerName = trainer?.name?.toLowerCase();
-    return get().assessments.filter((a) =>
-      a.createdBy === trainerId ||
-      (trainerName && a.createdBy.toLowerCase() === trainerName) ||
-      a.createdBy === "Dr. Marcus Vance" ||
-      a.createdBy === "Faculty Trainer"
-    );
-  },
-}));
+    deleteAssessment: (id) => {
+      const { assessments } = get();
+      const updated = assessments.filter(a => a.id !== id);
+      saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
+      set({ assessments: updated });
+      dbService.remove('assessments', id).catch(() => {});
+    },
+
+    submitAttempt: (attempt) => {
+      const { attempts } = get();
+      const newAttempt: Attempt = { ...attempt, id: generateId('att') };
+      const updated = [...attempts, newAttempt];
+      saveToStorage(STORAGE_KEYS.ATTEMPTS, updated);
+      set({ attempts: updated });
+    },
+
+    getAttemptsByTrainee: (traineeId) => get().attempts.filter(a => a.traineeId === traineeId),
+    getAttemptsByAssessment: (assessmentId) => get().attempts.filter(a => a.assessmentId === assessmentId),
+    hasAttempted: (assessmentId, traineeId) => get().attempts.some(a => a.assessmentId === assessmentId && a.traineeId === traineeId),
+    getTrainerAssessments: (trainerId) => {
+      const users = getFromStorage<{ id: string; name: string }>(STORAGE_KEYS.USERS);
+      const trainer = users.find((u) => u.id === trainerId);
+      const trainerName = trainer?.name?.toLowerCase();
+      return get().assessments.filter((a) =>
+        a.createdBy === trainerId ||
+        (trainerName && a.createdBy.toLowerCase() === trainerName) ||
+        a.createdBy === "Dr. Marcus Vance" ||
+        a.createdBy === "Faculty Trainer"
+      );
+    },
+  };
+});
