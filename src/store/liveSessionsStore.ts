@@ -96,6 +96,7 @@ const sanitizeLiveSessions = (sessions: LiveSession[]): LiveSession[] => {
   return (sessions || []).filter(
     (s) =>
       s &&
+      !s.id?.startsWith("meet-seed-") &&
       s.id !== "live-01" &&
       s.id !== "live-02" &&
       s.id !== "live-03" &&
@@ -120,7 +121,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     dbService.subscribe("live_sessions", async () => {
       try {
         const cloudSessions = await dbService.getAll<LiveSession>("live_sessions");
-        if (cloudSessions && cloudSessions.length > 0) {
+        if (cloudSessions) {
           const cleaned = sanitizeLiveSessions(cloudSessions);
           saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, cleaned);
           set({ sessions: cleaned });
@@ -130,19 +131,9 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
   },
 
   load: () => {
-    let saved = getFromStorage<LiveSession>(STORAGE_KEYS.LIVE_SESSIONS);
-    if (saved && saved.length > 0) {
-      saved = sanitizeLiveSessions(saved);
-      // If none of the initial seed sessions exist, merge them
-      const hasLiveSeed = saved.some(s => s.id === "meet-seed-live-1" || s.status === "live");
-      if (!hasLiveSeed && initialLiveSessions.length > 0) {
-        saved = [...initialLiveSessions, ...saved];
-      }
-      saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
-    } else {
-      saved = initialLiveSessions;
-      saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
-    }
+    let saved = getFromStorage<LiveSession>(STORAGE_KEYS.LIVE_SESSIONS) || [];
+    saved = sanitizeLiveSessions(saved);
+    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
     set({ sessions: saved });
 
     get().initSubscription();
