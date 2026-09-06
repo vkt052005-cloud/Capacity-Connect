@@ -209,17 +209,26 @@ export const Header: React.FC = () => {
           </div>
 
           {/* User Auth Profile / Quick Role Picker */}
-          {currentUser ? (
+          {currentUser ? (() => {
+            const isRajTiwari =
+              currentUser.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
+              currentUser.id === "u-trainer-official" ||
+              currentUser.id === "trainer-mto8vdlt-rpmv8" ||
+              Boolean(currentUser.name?.toLowerCase().includes("harry")) ||
+              Boolean(currentUser.name?.toLowerCase().includes("khan"));
+            const userDisplayName = isRajTiwari ? "Raj Tiwari" : currentUser.name;
+
+            return (
             <div className="relative">
               <button
                 onClick={() => setRoleMenuOpen(!roleMenuOpen)}
                 className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs transition cursor-pointer"
               >
                 <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#0071e3] to-[#2997ff] text-white flex items-center justify-center font-bold text-[10px]">
-                  {currentUser.name.charAt(0)}
+                  {userDisplayName.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-[11px] font-semibold text-white truncate max-w-[100px] leading-tight">{currentUser.name}</p>
+                  <p className="text-[11px] font-semibold text-white truncate max-w-[100px] leading-tight">{userDisplayName}</p>
                   <p className="text-[9px] text-slate-400 capitalize -mt-0.5">{currentUser.role}</p>
                 </div>
                 <ChevronDown className="w-3 h-3 text-slate-400" />
@@ -228,7 +237,7 @@ export const Header: React.FC = () => {
               {roleMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-2xl glass-panel border border-white/15 p-2 shadow-2xl z-50 space-y-1 text-xs animate-fadeIn">
                   <div className="px-2 py-1.5 border-b border-white/10">
-                    <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
+                    <p className="text-xs font-bold text-white truncate">{userDisplayName}</p>
                     <p className="text-[10px] text-slate-400 truncate">{currentUser.email}</p>
                   </div>
 
@@ -284,7 +293,8 @@ export const Header: React.FC = () => {
                 </div>
               )}
             </div>
-          ) : (
+            );
+          })() : (
             <div className="flex items-center">
               <Link to="/login" className="apple-btn-primary text-xs px-4 py-1.5 whitespace-nowrap shrink-0 font-semibold shadow-md">
                 Sign In
