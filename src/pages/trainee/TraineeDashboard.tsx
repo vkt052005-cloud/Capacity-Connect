@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   BookOpen, Award, Video, CheckCircle2,
   Clock, ArrowRight, Play, Radio,
-  ExternalLink, Copy, Check, Calendar, Sparkles
+  ExternalLink, Copy, Check, Calendar, Sparkles, ShieldCheck
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useAuthStore } from "../../store/authStore";
@@ -13,6 +13,7 @@ import { useCoursesStore } from "../../store/coursesStore";
 import { useAssessmentsStore } from "../../store/assessmentsStore";
 import { useAppStore } from "../../store/appStore";
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
+import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment";
 
 export const TraineeDashboard: React.FC = () => {
   const { currentUser } = useAuthStore();
@@ -39,17 +40,20 @@ export const TraineeDashboard: React.FC = () => {
   const completedCount = enrollments.filter((e) => e.traineeId === traineeId && e.progress === 100).length;
   const userCertificates = certificates.filter((c) => c.traineeId === traineeId);
   const enrolledCourseIds = new Set(enrolledCourses.map((c) => c.id));
-  const liveSession = sessions.find((s) => s.status === "live");
-  const upcomingSession = sessions.find((s) => s.status === "upcoming");
+  const liveSession = sessions.find(
+    (s) => s.status === "live" && isStudentEnrolledInTeacherCourse(traineeId, s, courses, enrollments)
+  );
+  const upcomingSession = sessions.find(
+    (s) => s.status === "upcoming" && isStudentEnrolledInTeacherCourse(traineeId, s, courses, enrollments)
+  );
   const activeLiveSession = liveSession || upcomingSession;
 
   const handleJoinGoogleMeet = (session: typeof activeLiveSession) => {
     if (!session) return;
-    openClassroom(session);
-    launchGoogleMeet(session.id, currentUser?.id, currentUser?.name);
+    launchGoogleMeet(session.id, currentUser?.id, currentUser?.name, true);
     addToast({
-      title: "Joined Google Meet Classroom",
-      message: `Connected to live room. Attendance certified for ${currentUser?.name || "Trainee"}.`,
+      title: "Opening Google Meet Room",
+      message: `Redirecting to ${session.trainerName}'s live lecture (Room: ${session.meetingCode}). Attendance certified.`,
       type: "success"
     });
   };
@@ -138,15 +142,18 @@ export const TraineeDashboard: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="badge-red text-[9px] uppercase font-black tracking-wider animate-pulse">
-                    🔴 TEACHER IS LIVE NOW
+                    🔴 YOUR TEACHER IS LIVE NOW
                   </span>
                   <span className="text-[11px] text-rose-300 font-semibold">{liveSession.courseTitle}</span>
+                  <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" /> Enrolled Access
+                  </span>
                 </div>
                 <h4 className="text-base font-extrabold text-white">
                   {liveSession.title}
                 </h4>
                 <p className="text-xs text-slate-300">
-                  Instructor: <span className="text-white font-semibold">{liveSession.trainerName}</span> • <span className="text-emerald-400 font-mono">No meeting link or code needed to join</span>
+                  Instructor: <span className="text-white font-semibold">{liveSession.trainerName}</span> • Google Meet Room: <span className="text-emerald-400 font-mono font-bold">{liveSession.meetingCode}</span> (Auto-applied)
                 </p>
               </div>
             </div>
@@ -155,22 +162,15 @@ export const TraineeDashboard: React.FC = () => {
               <button
                 onClick={() => handleJoinGoogleMeet(liveSession)}
                 className="apple-btn-primary text-xs px-5 py-2.5 font-extrabold flex items-center gap-2 shadow-xl shadow-rose-600/30 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110 cursor-pointer text-white transform hover:scale-[1.02] transition-all"
-                title="Connect directly to Google Meet (No code or link needed)"
+                title="Redirect directly to Google Meet room of your teacher"
               >
-                <Video className="w-4 h-4" /> Join Live Meet (1-Click) ↗
-              </button>
-              <button
-                onClick={() => openClassroom(liveSession)}
-                className="apple-btn-secondary text-xs px-3.5 py-2.5 font-semibold cursor-pointer border border-white/20 hover:bg-white/10"
-                title="Open whiteboard notes and LMS attendance logger"
-              >
-                Classroom Hub
+                <Video className="w-4 h-4" /> Join Google Meet (1-Click) ↗
               </button>
               <Link
                 to="/trainee/live-classes"
                 className="apple-btn-secondary text-xs px-3 py-2.5 font-semibold text-slate-300 hover:text-white"
               >
-                All Classes →
+                Live Classes Hub →
               </Link>
             </div>
           </div>
@@ -205,25 +205,21 @@ export const TraineeDashboard: React.FC = () => {
               <div className="w-full lg:w-auto lg:min-w-[420px] bg-rose-950/30 p-3.5 rounded-xl border border-rose-500/40 space-y-2 shrink-0">
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-rose-300 font-bold flex items-center gap-1.5">
-                    <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" /> Active Class Ready to Join
+                    <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" /> Your Enrolled Teacher is Live
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-mono">No Code Required</span>
+                  <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" /> Authorized
+                  </span>
                 </div>
                 <p className="text-xs text-white font-semibold truncate">
                   {liveSession.title} ({liveSession.trainerName})
                 </p>
-                <div className="flex gap-2 pt-1">
+                <div className="pt-1">
                   <button
                     onClick={() => handleJoinGoogleMeet(liveSession)}
-                    className="apple-btn-primary text-xs px-4 py-2 font-bold flex-1 flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110 shadow-lg cursor-pointer"
+                    className="apple-btn-primary text-xs px-4 py-2 font-bold w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:brightness-110 shadow-lg cursor-pointer transform hover:scale-[1.01] transition-all"
                   >
-                    <Video className="w-3.5 h-3.5" /> Join Live Google Meet Now ↗
-                  </button>
-                  <button
-                    onClick={() => openClassroom(liveSession)}
-                    className="apple-btn-secondary text-xs px-3 py-2 font-semibold border-white/20"
-                  >
-                    Hub
+                    <Video className="w-3.5 h-3.5" /> Join Google Meet with Teacher (1-Click) ↗
                   </button>
                 </div>
               </div>

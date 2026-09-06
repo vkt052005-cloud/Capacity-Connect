@@ -7,6 +7,9 @@ import {
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore, ZOOM_LEVELS } from "../../store/appStore";
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
+import { useCoursesStore } from "../../store/coursesStore";
+import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment";
+import { LiveSession } from "../../types";
 
 export const Header: React.FC = () => {
   const { currentUser, logout, login } = useAuthStore();
@@ -16,11 +19,19 @@ export const Header: React.FC = () => {
     increaseZoom, decreaseZoom, resetZoom
   } = useAppStore();
   const { sessions, openClassroom, launchGoogleMeet } = useLiveSessionsStore();
+  const { courses, enrollments } = useCoursesStore();
   const [zoomMenuOpen, setZoomMenuOpen] = useState(false);
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [customZoomInput, setCustomZoomInput] = useState("");
   const navigate = useNavigate();
-  const activeLiveClass = sessions.find((s) => s.status === "live");
+
+  const liveSessions = sessions.filter((s) => s.status === "live");
+  let activeLiveClass: LiveSession | undefined = liveSessions[0];
+  if (currentUser?.role === "trainee") {
+    activeLiveClass = liveSessions.find((s) =>
+      isStudentEnrolledInTeacherCourse(currentUser.id, s, courses, enrollments)
+    );
+  }
 
   useEffect(() => {
     if (zoomMenuOpen) {
@@ -80,10 +91,10 @@ export const Header: React.FC = () => {
             activeLiveClass ? (
               <button
                 onClick={() => {
-                  launchGoogleMeet(activeLiveClass.id, currentUser?.id, currentUser?.name);
+                  launchGoogleMeet(activeLiveClass.id, currentUser?.id, currentUser?.name, true);
                   addToast({
-                    title: "Connecting to Google Meet",
-                    message: `Joined "${activeLiveClass.title}". Attendance certified.`,
+                    title: "Opening Google Meet Room",
+                    message: `Redirecting to "${activeLiveClass.title}" with ${activeLiveClass.trainerName}. Attendance certified.`,
                     type: "success"
                   });
                 }}

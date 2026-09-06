@@ -200,7 +200,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     return newSession;
   },
 
-  launchGoogleMeet: (sessionId: string, userId?: string, _userName?: string, openExternal: boolean = false) => {
+  launchGoogleMeet: (sessionId: string, userId?: string, _userName?: string, openExternal: boolean = true) => {
     const session = get().sessions.find((s) => s.id === sessionId);
     if (!session) return;
 
@@ -208,18 +208,26 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       get().joinSession(sessionId, userId);
     }
 
-    // Always launch the running classroom video suite in LMS without leaving the site
-    get().openClassroom(session);
+    set({ activeSession: session });
 
-    // Only open external window if explicitly requested
-    if (openExternal) {
-      let targetUrl = session.googleMeetUrl || session.joinUrl;
-      if (!targetUrl || targetUrl.includes("xxx-yyyy-zzz") || targetUrl.endsWith("/new")) {
-        targetUrl = `https://meet.google.com/${session.meetingCode || "cck-live-meet"}`;
-      }
-      if (!targetUrl.startsWith("http")) {
-        targetUrl = `https://meet.google.com/${targetUrl}`;
-      }
+    let targetUrl = session.googleMeetUrl || session.joinUrl;
+    let code = session.meetingCode;
+
+    if (!code || code === "xxx-yyyy-zzz" || code === "new") {
+      const generated = formatGoogleMeet(targetUrl);
+      code = generated.code;
+      targetUrl = generated.url;
+    }
+
+    if (!targetUrl || targetUrl.includes("xxx-yyyy-zzz") || targetUrl.endsWith("/new")) {
+      targetUrl = `https://meet.google.com/${code}`;
+    }
+    if (!targetUrl.startsWith("http")) {
+      targetUrl = `https://meet.google.com/${targetUrl}`;
+    }
+
+    // Directly launch Google Meet in a dedicated window/tab
+    if (typeof window !== "undefined") {
       window.open(targetUrl, "_blank", "noopener,noreferrer");
     }
   },
