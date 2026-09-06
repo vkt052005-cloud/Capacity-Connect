@@ -22,6 +22,7 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [recoveryInitialTab, setRecoveryInitialTab] = useState<"reset_password" | "recover_id">("reset_password");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -304,13 +305,29 @@ export const LoginPage: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-slate-300">Password</label>
-                    <button
-                      type="button"
-                      onClick={() => setResetModalOpen(true)}
-                      className="text-[11px] text-[#2997ff] hover:underline cursor-pointer"
-                    >
-                      Forgot Password?
-                    </button>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRecoveryInitialTab("recover_id");
+                          setResetModalOpen(true);
+                        }}
+                        className="text-slate-400 hover:text-[#2997ff] hover:underline cursor-pointer"
+                      >
+                        Forgot Login ID?
+                      </button>
+                      <span className="text-slate-600">•</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRecoveryInitialTab("reset_password");
+                          setResetModalOpen(true);
+                        }}
+                        className="text-[#2997ff] hover:underline cursor-pointer font-medium"
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
                   </div>
                   <div className="relative flex items-center">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none z-10" />
@@ -459,7 +476,21 @@ export const LoginPage: React.FC = () => {
 
       <Footer />
       <ToastContainer />
-      <ResetPasswordModal isOpen={resetModalOpen} onClose={() => setResetModalOpen(false)} />
+      <ResetPasswordModal
+        isOpen={resetModalOpen}
+        onClose={() => setResetModalOpen(false)}
+        initialTab={recoveryInitialTab}
+        defaultRole={role}
+        onSelectRecoveredEmail={(recoveredEmail, recoveredRole) => {
+          setEmail(recoveredEmail);
+          setRole(recoveredRole);
+          addToast({
+            title: "Account Identifier Applied",
+            message: `Sign in email set to ${recoveredEmail}. Enter your password to continue.`,
+            type: "info"
+          });
+        }}
+      />
     </div>
   );
 };

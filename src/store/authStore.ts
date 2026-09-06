@@ -13,6 +13,33 @@ interface AuthState {
   register: (data: Omit<User, "id" | "createdAt" | "status">) => { success: boolean; message: string };
   updateProfile: (updates: Partial<User>) => void;
   loadFromStorage: () => void;
+  findUserForRecovery: (query: { phone?: string; name?: string; department?: string; role?: User["role"] }) => {
+    success: boolean;
+    message: string;
+    accounts: Array<{
+      id: string;
+      name: string;
+      maskedEmail: string;
+      rawEmail: string;
+      role: User["role"];
+      department: string;
+      status: User["status"];
+      phone?: string;
+    }>;
+  };
+  resetUserPassword: (email: string, newPassword: string, requiredRole?: User["role"]) => {
+    success: boolean;
+    message: string;
+  };
+  submitRecoveryTicket: (ticket: {
+    name: string;
+    contactInfo: string;
+    role: User["role"];
+    description: string;
+  }) => {
+    success: boolean;
+    message: string;
+  };
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -187,5 +214,147 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ currentUser: updatedUser });
     localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({ userId: updatedUser.id }));
     dbService.update('users', currentUser.id, updates);
+  },
+
+  findUserForRecovery: (query) => {
+    const users = getFromStorage<User>(STORAGE_KEYS.USERS);
+    const cleanPhone = (p?: string) => (p || "").replace(/\D/g, "").slice(-10);
+    const targetPhoneDigits = cleanPhone(query.phone);
+
+    const matches = users.filter((u) => {
+      if (query.role && u.role !== query.role) {
+        return false;
+      }
+
+      // Check phone if provided (match last 10 or partial digits)
+      if (targetPhoneDigits && targetPhoneDigits.length >= 6) {
+        const uPhone = cleanPhone(u.phone || u.traineeProfile?.phone || u.trainerProfile?.phone);
+        if (uPhone && uPhone.includes(targetPhoneDigits)) {
+          return true;
+        }
+      }
+
+      // Check name + department if provided
+      if (query.name && query.name.trim().length >= 2) {
+        const nameMatch = u.name.toLowerCase().includes(query.name.trim().toLowerCase());
+        const uDept = (u.department || u.traineeProfile?.department || u.trainerProfile?.department || "").toLowerCase();
+        const deptMatch = query.department && query.department.trim().length > 0
+          ? uDept.includes(query.department.trim().toLowerCase())
+          : true;
+        if (nameMatch && deptMatch) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    if (matches.length === 0) {
+      return {
+        success: false,
+        message: "No registered account matches the provided criteria. Please verify your details or file an admin ticket.",
+        accounts: []
+      };
+    }
+
+    const accounts = matches.map((u) => {
+      const parts = u.email.split("@");
+      let maskedEmail = u.email;
+      if (parts.length === 2) {
+        const [n, d] = parts;
+        const prefix = n.length > 3 ? n.slice(0, 3) : n.slice(0, 1);
+        const suffix = n.length > 3 ? n.slice(-2) : "";
+        maskedEmail = `${prefix}*****${suffix}@${d}`;
+      }
+
+      return {
+        id: u.id,
+        name: u.name,
+        maskedEmail,
+        rawEmail: u.email,
+        role: u.role,
+        department: u.department || u.traineeProfile?.department || u.trainerProfile?.department || "Computer Science & Engineering",
+        status: u.status,
+        phone: u.phone || u.traineeProfile?.phone || u.trainerProfile?.phone
+      };
+    });
+
+    return {
+      success: true,
+      message: `Found ${accounts.length} verified account(s).`,
+      accounts
+    };
+  },
+
+  resetUserPassword: (email, newPassword, requiredRole) => {
+    const users = getFromStorage<User>(STORAGE_KEYS.USERS);
+    const userIndex = users.findIndex((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+    if (userIndex === -1) {
+      return { success: false, message: "Account not found with this official email address." };
+    }
+
+    const user = users[userIndex];
+    if (requiredRole && user.role !== requiredRole) {
+      return {
+        success: false,
+        message: `Account role mismatch: This email is registered as an ${user.role.toUpperCase()}.`
+      };
+    }
+
+    if (user.status === "suspended" || user.status === "inactive") {
+      return { success: false, message: "This account is inactive or suspended. Please contact an administrator." };
+    }
+
+    user.password = newPassword;
+    users[userIndex] = user;
+    saveToStorage(STORAGE_KEYS.USERS, users);
+    dbService.update('users', user.id, { password: newPassword });
+
+    recordAuditEvent({
+      actor: user.name,
+      role: user.role,
+      action: "PASSWORD_RESET_SUCCESS",
+      target: "Auth Credentials Service",
+      status: "SUCCESS"
+    });
+
+    const current = get().currentUser;
+    if (current && current.id === user.id) {
+      set({ currentUser: { ...user, password: newPassword } });
+    }
+
+    return {
+      success: true,
+      message: "Password updated successfully. You can now sign in with your new credentials."
+    };
+  },
+
+  submitRecoveryTicket: (ticket) => {
+    recordAuditEvent({
+      actor: ticket.name,
+      role: ticket.role,
+      action: "ACCOUNT_RECOVERY_TICKET_FILED",
+      target: "Admin Governance Ledger",
+      status: "WARNING"
+    });
+
+    try {
+      const notifs = getFromStorage<any>(STORAGE_KEYS.NOTIFICATIONS);
+      const newNotif = {
+        id: generateId("notif-recovery"),
+        type: "alert",
+        title: `Credential Assistance Request: ${ticket.name} (${ticket.role.toUpperCase()})`,
+        content: `User reported inaccessible credentials. Contact: ${ticket.contactInfo}. Details: ${ticket.description}`,
+        createdAt: new Date().toISOString(),
+        pinned: true,
+        author: "Security & Recovery Sentinel"
+      };
+      saveToStorage(STORAGE_KEYS.NOTIFICATIONS, [newNotif, ...notifs]);
+    } catch (e) {}
+
+    return {
+      success: true,
+      message: "Your recovery ticket has been submitted to the platform administrator for manual verification."
+    };
   }
 }));

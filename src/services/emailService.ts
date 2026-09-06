@@ -10,7 +10,7 @@ export interface SendOtpParams {
   email: string;
   name: string;
   otp: string;
-  purpose?: 'register' | 'login';
+  purpose?: 'register' | 'login' | 'reset_password' | 'recover_id';
 }
 
 export interface SendOtpResponse {
