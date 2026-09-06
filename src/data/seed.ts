@@ -1,6 +1,6 @@
 import {
   User, Course, Assessment, Notification, Certificate,
-  SubjectCompetency, LiveSession, LeaderboardEntry, Badge, DiscussionThread, AuditLog
+  SubjectCompetency, LiveSession, LeaderboardEntry, Badge, DiscussionThread, AuditLog, Feedback
 } from "../types";
 import { generateAnswerHash } from "../utils/quizSecurity";
 import { sigmaWebDevLessons } from "./sigmaWebDevPlaylist";
@@ -1932,6 +1932,57 @@ export const initialDiscussions: DiscussionThread[] = [
   }
 ];
 
+export const initialFeedbacks: Feedback[] = [
+  {
+    id: "fb-1",
+    traineeId: "u-trainee-1",
+    traineeName: "Madhav Kumar",
+    courseId: "c6",
+    courseTitle: "Web Development Course",
+    trainerId: "u-trainer-codewithharry",
+    trainerName: "CodeWithHarry (Haris Khan)",
+    rating: 5,
+    comment: "The explanation of JavaScript DOM and async/await is world-class. Very thorough lectures and hands-on exercises!",
+    createdAt: "2026-09-06T14:30:00Z"
+  },
+  {
+    id: "fb-2",
+    traineeId: "u-trainee-2",
+    traineeName: "Aarav Sharma",
+    courseId: "c-dsa",
+    courseTitle: "DATA STRUCTURE AND ALGORITHM",
+    trainerId: "u-trainer-striver",
+    trainerName: "take U forward (Striver / Raj Vikramaditya)",
+    rating: 5,
+    comment: "Outstanding roadmap for Binary Trees and Dynamic Programming. Clear step-by-step intuition before coding.",
+    createdAt: "2026-09-06T11:15:00Z"
+  },
+  {
+    id: "fb-3",
+    traineeId: "u-trainee-3",
+    traineeName: "Priya Patel",
+    courseId: "c-sql",
+    courseTitle: "Databases With SQL",
+    trainerId: "u-trainer-cs50",
+    trainerName: "Harvard CS50 / Carter Zenke",
+    rating: 5,
+    comment: "Concise yet powerful lectures on normalization, JOINs, and indexing. The slide decks are exceptionally clear.",
+    createdAt: "2026-09-06T16:45:00Z"
+  },
+  {
+    id: "fb-4",
+    traineeId: "u-trainee-1",
+    traineeName: "Madhav Kumar",
+    courseId: "c-c-prog",
+    courseTitle: "C Programming Complete Course",
+    trainerId: "u-trainer-codewithharry",
+    trainerName: "CodeWithHarry (Haris Khan)",
+    rating: 5,
+    comment: "Pointers and memory management concepts were explained with incredible visual clarity. Highly recommended.",
+    createdAt: "2026-09-06T09:20:00Z"
+  }
+];
+
 export const initialNotifications: Notification[] = [
   {
     id: "n1",
@@ -2138,6 +2189,9 @@ export function initializeStorage() {
   if (!localStorage.getItem("cc_leaderboard")) {
     localStorage.setItem("cc_leaderboard", JSON.stringify(initialLeaderboard));
   }
+  if (!localStorage.getItem("cc_feedbacks")) {
+    localStorage.setItem("cc_feedbacks", JSON.stringify(initialFeedbacks));
+  }
   if (!localStorage.getItem("cc_audit_logs")) {
     localStorage.setItem("cc_audit_logs", JSON.stringify([]));
   }
@@ -2321,6 +2375,10 @@ export function getFromStorage<T>(key: string): T[] {
   if (key === STORAGE_KEYS.BADGES) {
     saveToStorage(key, initialBadges);
     return initialBadges as any;
+  }
+  if (key === STORAGE_KEYS.FEEDBACKS) {
+    saveToStorage(key, initialFeedbacks);
+    return initialFeedbacks as any;
   }
 
   return [];

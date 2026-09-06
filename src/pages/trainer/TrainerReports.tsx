@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Users, Award, TrendingUp, CheckCircle2 } from "lucide-react";
+import { BarChart3, Users, Award, TrendingUp, CheckCircle2, Star, MessageSquare } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useAssessmentsStore } from "../../store/assessmentsStore";
 import { useCoursesStore } from "../../store/coursesStore";
@@ -8,12 +8,12 @@ import { useAuthStore } from "../../store/authStore";
 
 export const TrainerReports: React.FC = () => {
   const { attempts, assessments } = useAssessmentsStore();
-  const { courses, enrollments, certificates } = useCoursesStore();
+  const { courses, enrollments, certificates, feedbacks } = useCoursesStore();
   const { users } = useUsersStore();
   const { currentUser } = useAuthStore();
 
   const trainerId = currentUser?.id || "";
-  const trainerCourses = courses.filter((c) => c.trainerId === trainerId);
+  const trainerCourses = courses.filter((c) => c.trainerId === trainerId || (currentUser?.name && c.trainerName === currentUser.name));
   const trainerCourseIds = new Set(trainerCourses.map((c) => c.id));
 
   // Real enrollments for this trainer's courses
@@ -36,6 +36,19 @@ export const TrainerReports: React.FC = () => {
     (c) => trainerCourseIds.has(c.courseId) || (currentUser?.name && c.trainerName === currentUser.name)
   );
 
+  // Student Quality Ratings & Feedback for this trainer's courses
+  const relevantFeedbacks = feedbacks.filter(
+    (f) =>
+      trainerCourseIds.has(f.courseId) ||
+      (f.trainerId && f.trainerId === trainerId) ||
+      (currentUser?.name && f.trainerName === currentUser.name)
+  );
+
+  const avgStudentRating =
+    relevantFeedbacks.length > 0
+      ? (relevantFeedbacks.reduce((acc, f) => acc + f.rating, 0) / relevantFeedbacks.length).toFixed(1)
+      : "5.0";
+
   return (
     <DashboardLayout
       pageTitle="Trainee Gradebook & Analytics"
@@ -45,7 +58,7 @@ export const TrainerReports: React.FC = () => {
       ]}
     >
       <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="card p-4 space-y-1">
             <span className="text-xs text-slate-400">Total Enrolled Trainees</span>
             <p className="text-2xl font-bold text-white">{uniqueTraineeIds.size}</p>
@@ -58,8 +71,92 @@ export const TrainerReports: React.FC = () => {
             <span className="text-xs text-slate-400">Certificates Issued</span>
             <p className="text-2xl font-bold text-[#2997ff]">{issuedCerts.length}</p>
           </div>
+          <div className="card p-4 space-y-1">
+            <span className="text-xs text-slate-400 flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <span>Student Quality Rating</span>
+            </span>
+            <p className="text-2xl font-bold text-amber-300">
+              {avgStudentRating} <span className="text-xs text-slate-400 font-normal">/ 5.0 ({relevantFeedbacks.length} reviews)</span>
+            </p>
+          </div>
         </div>
 
+        {/* Student Quality Ratings & Feedback Roster */}
+        <div className="card p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <span>Student Quality Ratings & Course Reviews ({relevantFeedbacks.length})</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Authentic feedback and star ratings submitted directly by trainees enrolled in your courses.
+              </p>
+            </div>
+            <span className="text-xs text-emerald-400 font-semibold">
+              Instructor Overall: {avgStudentRating} / 5.0
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="table-header">
+                <tr>
+                  <th className="py-2.5 px-3">Student</th>
+                  <th className="py-2.5 px-3">Course</th>
+                  <th className="py-2.5 px-3">Quality Rating</th>
+                  <th className="py-2.5 px-3">Review & Suggestions</th>
+                  <th className="py-2.5 px-3">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {relevantFeedbacks.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-xs text-slate-400 italic">
+                      No student ratings or reviews submitted yet for your courses.
+                    </td>
+                  </tr>
+                ) : (
+                  relevantFeedbacks.map((fb) => (
+                    <tr key={fb.id} className="hover:bg-white/[0.02]">
+                      <td className="py-3 px-3">
+                        <p className="font-bold text-white">{fb.traineeName}</p>
+                        <p className="text-[10px] text-slate-400">ID: {fb.traineeId}</p>
+                      </td>
+                      <td className="py-3 px-3 text-slate-300 font-medium">
+                        {fb.courseTitle || trainerCourses.find((c) => c.id === fb.courseId)?.title || fb.courseId}
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex text-amber-400">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`w-3.5 h-3.5 ${
+                                  star <= fb.rating ? "text-amber-400 fill-amber-400" : "text-slate-600"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="font-bold text-white text-[11px]">{fb.rating}.0</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-slate-300 max-w-md">
+                        <p className="line-clamp-3 leading-relaxed">{fb.comment}</p>
+                      </td>
+                      <td className="py-3 px-3 text-slate-400 whitespace-nowrap">
+                        {new Date(fb.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Assessment Results & Verification Roster */}
         <div className="card p-6 space-y-4">
           <h3 className="text-sm font-bold text-white">Assessment Results & Verification Roster</h3>
           <div className="overflow-x-auto">

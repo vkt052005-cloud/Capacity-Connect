@@ -279,6 +279,8 @@ export interface Feedback {
   traineeName: string;
   courseId: string;
   courseTitle: string;
+  trainerId?: string;
+  trainerName?: string;
   rating: number;
   comment: string;
   createdAt: string;

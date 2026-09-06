@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Video, Presentation, Sparkles, MessageSquare, Award,
   CheckCircle2, AlertTriangle, ListVideo, Search, ChevronLeft,
-  ChevronRight, Play, ExternalLink
+  ChevronRight, Play, ExternalLink, Star
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
@@ -138,13 +138,13 @@ const COURSE_ASSESSMENT_MAP: Record<string, string> = {
 
 export const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { courses, enrollments, enroll, completeCourse } = useCoursesStore();
+  const { courses, enrollments, enroll, completeCourse, feedbacks } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
   const playerRef = useRef<HTMLDivElement>(null);
 
-  const [activeTab, setActiveTab] = useState<"video" | "slides" | "ai" | "discussions">("video");
+  const [activeTab, setActiveTab] = useState<"video" | "slides" | "ai" | "discussions" | "reviews">("video");
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
   const [lessonSearch, setLessonSearch] = useState("");
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("");
@@ -320,6 +320,12 @@ export const CourseDetail: React.FC = () => {
 
   const assessmentId = (course && COURSE_ASSESSMENT_MAP[course.id]) || "a-webdev-sigma";
 
+  const courseFeedbacks = feedbacks.filter((f) => f.courseId === course.id || f.courseId === id);
+  const avgCourseRating =
+    courseFeedbacks.length > 0
+      ? (courseFeedbacks.reduce((acc, f) => acc + f.rating, 0) / courseFeedbacks.length).toFixed(1)
+      : course.rating?.toFixed(1) || "5.0";
+
   return (
     <DashboardLayout
       pageTitle={course.title}
@@ -367,6 +373,15 @@ export const CourseDetail: React.FC = () => {
               }
             >
               <MessageSquare className="w-3.5 h-3.5" /> Peer Q&A ({discussions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("reviews")}
+              className={
+                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " +
+                (activeTab === "reviews" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")
+              }
+            >
+              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Student Reviews ({courseFeedbacks.length})
             </button>
           </div>
 
@@ -747,6 +762,82 @@ export const CourseDetail: React.FC = () => {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 5: Student Quality Ratings & Feedback Reviews */}
+        {activeTab === "reviews" && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  <span>Student Quality Rating Summary</span>
+                </h4>
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl font-extrabold text-amber-300 font-mono">{avgCourseRating}</span>
+                  <div>
+                    <div className="flex text-amber-400">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-4 h-4 ${
+                            star <= Math.round(Number(avgCourseRating))
+                              ? "text-amber-400 fill-amber-400"
+                              : "text-slate-600"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Based on {courseFeedbacks.length} student reviews
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                to={`/trainee/feedback?courseId=${course.id}`}
+                className="apple-btn-primary text-xs px-4 py-2.5 font-bold flex items-center gap-1.5 shrink-0"
+              >
+                <Star className="w-3.5 h-3.5 fill-current" />
+                <span>Rate & Review this Course</span>
+              </Link>
+            </div>
+
+            {/* Reviews List */}
+            <div className="space-y-3">
+              {courseFeedbacks.length === 0 ? (
+                <div className="card p-8 text-center text-xs text-slate-400 italic">
+                  No student reviews submitted for this course yet. Be the first to leave feedback!
+                </div>
+              ) : (
+                courseFeedbacks.map((fb) => (
+                  <div key={fb.id} className="card p-5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-white text-xs">{fb.traineeName}</p>
+                        <p className="text-[10px] text-slate-400">{new Date(fb.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="flex text-amber-400">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-3.5 h-3.5 ${
+                                star <= fb.rating ? "text-amber-400 fill-amber-400" : "text-slate-600"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs font-bold text-white ml-1">{fb.rating}.0</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{fb.comment}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}

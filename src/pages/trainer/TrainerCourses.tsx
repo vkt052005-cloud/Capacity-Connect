@@ -2,7 +2,8 @@ import React, { useState, useRef } from "react";
 import {
   BookOpen, Plus, Trash2, CheckCircle2, Video, ShieldCheck,
   ShieldAlert, Play, X, ExternalLink, Film, UploadCloud,
-  ChevronDown, ChevronUp, Clock, AlertTriangle, Sparkles, FileVideo
+  ChevronDown, ChevronUp, Clock, AlertTriangle, Sparkles, FileVideo,
+  Star, MessageSquare
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useCoursesStore } from "../../store/coursesStore";
@@ -15,10 +16,13 @@ import { storeVideoBlob } from "../../utils/videoStorage";
 import type { CourseCategory, CourseLesson, Resource } from "../../types";
 
 export const TrainerCourses: React.FC = () => {
-  const { courses, addCourse, updateCourse, deleteCourse } = useCoursesStore();
+  const { courses, addCourse, updateCourse, deleteCourse, feedbacks } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const { addNotification } = useNotificationsStore();
+
+  // Selected Course for reviews modal
+  const [reviewsModalCourseId, setReviewsModalCourseId] = useState<string | null>(null);
 
   // Verification Gate: Only admin-verified trainers can upload videos
   const isVerifiedTrainer = Boolean(
@@ -440,6 +444,36 @@ export const TrainerCourses: React.FC = () => {
                       <h4 className="text-sm font-bold text-white line-clamp-1">{c.title}</h4>
                       <p className="text-xs text-slate-400 line-clamp-2 mt-1">{c.description}</p>
                     </div>
+
+                    {/* Student Quality Rating & Reviews trigger */}
+                    {(() => {
+                      const courseFbs = feedbacks.filter((f) => f.courseId === c.id);
+                      const avgRating =
+                        courseFbs.length > 0
+                          ? (courseFbs.reduce((acc, f) => acc + f.rating, 0) / courseFbs.length).toFixed(1)
+                          : c.rating?.toFixed(1) || "5.0";
+                      return (
+                        <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setReviewsModalCourseId(c.id)}
+                            className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 transition cursor-pointer"
+                            title="Click to view student reviews"
+                          >
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            <span className="font-bold">{avgRating}</span>
+                            <span className="text-[11px] text-slate-400">({courseFbs.length} student reviews)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReviewsModalCourseId(c.id)}
+                            className="text-[11px] text-[#2997ff] hover:underline font-medium cursor-pointer"
+                          >
+                            View Reviews
+                          </button>
+                        </div>
+                      );
+                    })()}
 
                     {/* Expand Video Lessons Manager Drawer */}
                     <div className="pt-2 border-t border-white/5">
@@ -975,6 +1009,84 @@ export const TrainerCourses: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ─── Modal 3: Student Quality Ratings & Feedback Reviews Modal ─────────── */}
+      {reviewsModalCourseId && (() => {
+        const modalCourse = courses.find((c) => c.id === reviewsModalCourseId);
+        const modalFeedbacks = feedbacks.filter((f) => f.courseId === reviewsModalCourseId);
+        const modalAvg =
+          modalFeedbacks.length > 0
+            ? (modalFeedbacks.reduce((acc, f) => acc + f.rating, 0) / modalFeedbacks.length).toFixed(1)
+            : modalCourse?.rating?.toFixed(1) || "5.0";
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-2xl animate-fadeIn overflow-y-auto">
+            <div className="glass-panel p-5 sm:p-6 max-w-xl w-full border border-white/20 shadow-2xl space-y-4 my-auto">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="space-y-0.5">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    <span>Student Reviews: {modalCourse?.title}</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Direct feedback from students enrolled in your course • Average: <strong className="text-amber-300">{modalAvg} / 5.0</strong> ({modalFeedbacks.length} ratings)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReviewsModalCourseId(null)}
+                  className="p-1 text-slate-400 hover:text-white rounded-lg transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
+                {modalFeedbacks.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400 italic">
+                    No student reviews recorded for this course yet.
+                  </div>
+                ) : (
+                  modalFeedbacks.map((fb) => (
+                    <div key={fb.id} className="p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-white text-xs">{fb.traineeName}</p>
+                          <p className="text-[10px] text-slate-400">{new Date(fb.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="flex text-amber-400">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`w-3 h-3 ${
+                                  star <= fb.rating ? "text-amber-400 fill-amber-400" : "text-slate-600"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs font-bold text-white ml-1">{fb.rating}.0</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">{fb.comment}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-white/10 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setReviewsModalCourseId(null)}
+                  className="apple-btn-secondary text-xs px-4 py-2 cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </DashboardLayout>
   );
 };

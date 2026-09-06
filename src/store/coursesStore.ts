@@ -23,6 +23,8 @@ interface CoursesState {
   updateCourse: (courseId: string, updates: Partial<Course>) => void;
   deleteCourse: (courseId: string) => void;
   addFeedback: (fb: Feedback) => void;
+  getCourseFeedbacks: (courseId: string) => Feedback[];
+  getTrainerFeedbacks: (trainerId: string) => Feedback[];
   isEnrolled: (traineeId: string, courseId: string) => boolean;
   getEnrollment: (traineeId: string, courseId: string) => Enrollment | undefined;
   getTraineeCertificates: (traineeId: string) => Certificate[];
@@ -174,10 +176,38 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   },
 
   addFeedback: (fb) => {
-    const { feedbacks } = get();
-    const updated = [...feedbacks, fb];
-    saveToStorage(STORAGE_KEYS.FEEDBACKS, updated);
-    set({ feedbacks: updated });
+    const { feedbacks, courses } = get();
+    const updatedFeedbacks = [fb, ...feedbacks];
+    saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
+
+    // Automatically recalculate the overall quality rating for this course directly from student ratings
+    const courseFeedbacks = updatedFeedbacks.filter((f) => f.courseId === fb.courseId);
+    const sumRatings = courseFeedbacks.reduce((acc, f) => acc + f.rating, 0);
+    const avgRating = Number((sumRatings / courseFeedbacks.length).toFixed(1));
+
+    const updatedCourses = courses.map((c) => {
+      if (c.id === fb.courseId) {
+        return {
+          ...c,
+          rating: avgRating,
+          totalRatings: courseFeedbacks.length
+        };
+      }
+      return c;
+    });
+
+    saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
+    set({ feedbacks: updatedFeedbacks, courses: updatedCourses });
+  },
+
+  getCourseFeedbacks: (courseId) => {
+    return get().feedbacks.filter((f) => f.courseId === courseId);
+  },
+
+  getTrainerFeedbacks: (trainerId) => {
+    const { courses, feedbacks } = get();
+    const trainerCourseIds = new Set(courses.filter((c) => c.trainerId === trainerId).map((c) => c.id));
+    return feedbacks.filter((f) => f.trainerId === trainerId || trainerCourseIds.has(f.courseId));
   },
 
   isEnrolled: (traineeId, courseId) => {
