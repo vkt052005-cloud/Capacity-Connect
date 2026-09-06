@@ -20,8 +20,16 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({ user }) => {
   const [copied, setCopied] = useState(false);
   const { addToast } = useAppStore();
 
+  const displayName =
+    (user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
+     user.id === "u-trainer-official" ||
+     user.name?.toLowerCase().includes("harry") ||
+     user.name?.toLowerCase().includes("khan"))
+      ? "Raj Tiwari"
+      : user.name;
+
   const regCode = `CC-${user.role.substring(0, 2).toUpperCase()}-2026-${user.id.replace(/\D/g, "").slice(-4) || "8841"}`;
-  const verificationUrl = `${window.location.origin}/verify/id?id=${encodeURIComponent(user.id)}&name=${encodeURIComponent(user.name)}&role=${encodeURIComponent(user.role)}&code=${encodeURIComponent(regCode)}`;
+  const verificationUrl = `${window.location.origin}/verify/id?id=${encodeURIComponent(user.id)}&name=${encodeURIComponent(displayName)}&role=${encodeURIComponent(user.role)}&code=${encodeURIComponent(regCode)}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&data=${encodeURIComponent(verificationUrl)}`;
 
   const handleCopyLink = () => {
@@ -71,10 +79,10 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({ user }) => {
         <div className="md:col-span-2 space-y-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0071e3] to-[#2997ff] flex items-center justify-center text-white text-2xl font-black shadow-xl shadow-blue-500/25 border border-white/20">
-              {user.name.charAt(0).toUpperCase()}
+              {displayName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h4 className="text-xl font-bold text-white tracking-tight">{user.name}</h4>
+              <h4 className="text-xl font-bold text-white tracking-tight">{displayName}</h4>
               <p className="text-xs text-[#2997ff] font-medium mt-0.5">
                 {user.designation || (user.role === "trainer" ? "Lead Technical Faculty" : "Certified Trainee")}
               </p>

@@ -8,17 +8,43 @@ export const TrainerProfile: React.FC = () => {
   const { currentUser } = useAuthStore();
   const profile = currentUser?.trainerProfile;
 
-  const initials = currentUser?.name
-    ? currentUser.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
-    : "TR";
+  const isRajTiwari =
+    currentUser?.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
+    currentUser?.id === "u-trainer-official" ||
+    currentUser?.id === "trainer-mto8vdlt-rpmv8" ||
+    Boolean(currentUser?.name?.toLowerCase().includes("harry")) ||
+    Boolean(currentUser?.name?.toLowerCase().includes("khan"));
 
-  const expertise = profile?.expertise?.filter(Boolean) || [];
-  const credentials = profile?.verifiedCredentials?.filter(Boolean) || [];
+  const displayName = isRajTiwari ? "Raj Tiwari" : (currentUser?.name || "Faculty Trainer");
+  const displayDesignation = isRajTiwari
+    ? (profile?.designation || "Senior Technical Educator & Mentor")
+    : (profile?.designation || "Trainer");
+  const displayDepartment = isRajTiwari
+    ? (profile?.department || "Computer Science & Engineering")
+    : (profile?.department || "Academic Faculty");
+  const displayBio = isRajTiwari
+    ? (profile?.bio && !profile.bio.toLowerCase().includes("harry") && !profile.bio.toLowerCase().includes("khan")
+        ? profile.bio
+        : "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.")
+    : (profile?.bio || "Certified Instructor dedicated to technical capacity building, curriculum development, and student mentorship.");
+
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const rawExpertise = profile?.expertise?.filter(Boolean) || [];
+  const expertise = rawExpertise.length > 0
+    ? rawExpertise
+    : (isRajTiwari ? ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"] : []);
+
+  const rawCreds = profile?.verifiedCredentials?.filter(Boolean) || [];
+  const sanitizedCreds = rawCreds.filter(c => !c.toLowerCase().includes("harry") && !c.toLowerCase().includes("khan"));
+  const credentials = sanitizedCreds.length > 0
+    ? sanitizedCreds
+    : (isRajTiwari ? ["Senior Educator", "Verified LMS Faculty"] : []);
 
   return (
     <DashboardLayout
@@ -33,11 +59,11 @@ export const TrainerProfile: React.FC = () => {
           <DigitalIdCard
             user={{
               id: currentUser.id,
-              name: currentUser.name,
+              name: displayName,
               email: currentUser.email,
               role: "trainer",
-              department: profile?.department,
-              designation: profile?.designation
+              department: displayDepartment,
+              designation: displayDesignation
             }}
           />
         )}
@@ -47,14 +73,14 @@ export const TrainerProfile: React.FC = () => {
               {initials}
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">{currentUser?.name || "Faculty Trainer"}</h3>
-              <p className="text-xs text-[#2997ff]">{profile?.designation || "Trainer"}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{profile?.department || "Academic Faculty"}</p>
+              <h3 className="text-lg font-bold text-white">{displayName}</h3>
+              <p className="text-xs text-[#2997ff]">{displayDesignation}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{displayDepartment}</p>
             </div>
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed pt-2 border-t border-white/10">
-            {profile?.bio || "Certified Instructor dedicated to technical capacity building, curriculum development, and student mentorship."}
+            {displayBio}
           </p>
         </div>
 

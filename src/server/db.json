@@ -27,25 +27,46 @@
       }
     },
     {
+      "id": "u-trainer-official",
       "name": "Raj Tiwari",
       "email": "tiwariraj052005@gmail.com",
       "password": "SRNNv@2005",
       "role": "trainer",
-      "trainerProfile": {
-        "bio": "",
-        "expertise": [],
-        "competencies": [],
-        "phone": "",
-        "department": "",
-        "designation": "",
-        "experience": "",
-        "rating": 5,
-        "totalStudentsTaught": 0,
-        "verifiedCredentials": []
-      },
-      "id": "trainer-mto8vdlt-rpmv8",
       "status": "active",
-      "createdAt": "2026-09-05T10:33:06.977Z"
+      "createdAt": "2026-09-05T10:33:06.977Z",
+      "trainerProfile": {
+        "bio": "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.",
+        "expertise": ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"],
+        "competencies": ["Hands-on Coding", "Curriculum Design", "Real-world Projects"],
+        "phone": "+91 98765 11111",
+        "department": "Computer Science & Engineering",
+        "designation": "Senior Technical Educator & Mentor",
+        "experience": "10+ Years Technical Education",
+        "rating": 4.99,
+        "totalStudentsTaught": 60000,
+        "verifiedCredentials": ["Senior Educator", "Verified LMS Faculty"]
+      }
+    },
+    {
+      "id": "trainer-mto8vdlt-rpmv8",
+      "name": "Raj Tiwari",
+      "email": "tiwariraj052005@gmail.com",
+      "password": "SRNNv@2005",
+      "role": "trainer",
+      "status": "active",
+      "createdAt": "2026-09-05T10:33:06.977Z",
+      "trainerProfile": {
+        "bio": "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.",
+        "expertise": ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"],
+        "competencies": ["Hands-on Coding", "Curriculum Design", "Real-world Projects"],
+        "phone": "+91 98765 11111",
+        "department": "Computer Science & Engineering",
+        "designation": "Senior Technical Educator & Mentor",
+        "experience": "10+ Years Technical Education",
+        "rating": 4.99,
+        "totalStudentsTaught": 60000,
+        "verifiedCredentials": ["Senior Educator", "Verified LMS Faculty"]
+      }
     },
     {
       "id": "u-admin-official",

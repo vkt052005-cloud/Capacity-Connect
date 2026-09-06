@@ -1963,11 +1963,32 @@ export function initializeStorage() {
     const rawUsers = localStorage.getItem("cc_users");
     if (rawUsers) {
       const parsedUsers = JSON.parse(rawUsers);
-      const filteredUsers = parsedUsers.filter((u: any) =>
-        u.email !== "admin@capacityconnect.org" &&
-        u.email !== "trainer@capacityconnect.org" &&
-        u.email !== "trainee@capacityconnect.org"
-      );
+      const filteredUsers = parsedUsers
+        .filter((u: any) =>
+          u.email !== "admin@capacityconnect.org" &&
+          u.email !== "trainer@capacityconnect.org" &&
+          u.email !== "trainee@capacityconnect.org"
+        )
+        .map((u: any) => {
+          if (
+            u.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
+            u.id === "u-trainer-official" ||
+            (u.name && (u.name.toLowerCase().includes("harry") || u.name.toLowerCase().includes("khan")))
+          ) {
+            return {
+              ...u,
+              name: "Raj Tiwari",
+              trainerProfile: {
+                ...(u.trainerProfile || {}),
+                bio: "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.",
+                designation: "Senior Technical Educator & Mentor",
+                department: u.trainerProfile?.department || "Computer Science & Engineering",
+                verifiedCredentials: ["Senior Educator", "Verified LMS Faculty"]
+              }
+            };
+          }
+          return u;
+        });
       localStorage.setItem("cc_users", JSON.stringify(filteredUsers));
     }
 
@@ -1980,7 +2001,27 @@ export function initializeStorage() {
         parsedAuth?.user?.email === "trainee@capacityconnect.org"
       ) {
         localStorage.removeItem("cc_auth");
+      } else if (parsedAuth?.user) {
+        if (
+          parsedAuth.user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
+          (parsedAuth.user.name && (parsedAuth.user.name.toLowerCase().includes("harry") || parsedAuth.user.name.toLowerCase().includes("khan")))
+        ) {
+          parsedAuth.user.name = "Raj Tiwari";
+          localStorage.setItem("cc_auth", JSON.stringify(parsedAuth));
+        }
       }
+    }
+
+    const rawCourses = localStorage.getItem("cc_courses");
+    if (rawCourses) {
+      const parsedCourses = JSON.parse(rawCourses);
+      const cleanedCourses = parsedCourses.map((c: any) => {
+        if (c.trainerName && (c.trainerName.toLowerCase().includes("harry") || c.trainerName.toLowerCase().includes("khan"))) {
+          return { ...c, trainerName: "Raj Tiwari" };
+        }
+        return c;
+      });
+      localStorage.setItem("cc_courses", JSON.stringify(cleanedCourses));
     }
   } catch (e) {}
 

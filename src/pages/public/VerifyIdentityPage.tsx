@@ -10,10 +10,17 @@ import { Footer } from "../../components/layout/Footer";
 export const VerifyIdentityPage: React.FC = () => {
   const [searchParams] = useSearchParams();
 
+  const rawName = searchParams.get("name") || "Officer / Trainee";
   const id = searchParams.get("id") || "u-trainee-1";
-  const name = searchParams.get("name") || "Officer / Trainee";
   const role = searchParams.get("role") || "trainee";
   const code = searchParams.get("code") || `CC-${role.slice(0, 2).toUpperCase()}-2026-8841`;
+
+  const name = (
+    rawName.toLowerCase().includes("harry") ||
+    rawName.toLowerCase().includes("khan") ||
+    id === "u-trainer-official" ||
+    id === "trainer-mto8vdlt-rpmv8"
+  ) ? "Raj Tiwari" : rawName;
 
   const formattedDate = new Date().toLocaleDateString("en-US", {
     month: "long",
