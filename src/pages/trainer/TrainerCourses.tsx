@@ -170,7 +170,8 @@ export const TrainerCourses: React.FC = () => {
     if (!title.trim()) return;
 
     const modNum = typeof modulesCount === "number" && modulesCount > 0 ? modulesCount : undefined;
-    const initialDuration = modNum ? `0 Mins • ${modNum} Modules` : "0 Mins";
+    const baseDuration = duration.trim() || "0 Mins";
+    const initialDuration = modNum ? `${baseDuration} • ${modNum} Modules` : baseDuration;
 
     const trainerDisplayName = currentUser?.name || "Faculty Trainer";
     const courseTitle = title.trim();
@@ -206,6 +207,7 @@ export const TrainerCourses: React.FC = () => {
     setTitle("");
     setDescription("");
     setModulesCount("");
+    setDuration("0 Mins");
     addToast({
       title: "Course Created Successfully",
       message: "New curriculum published to catalog and trainees notified.",
@@ -982,6 +984,19 @@ export const TrainerCourses: React.FC = () => {
                     <option value="Advanced">Advanced</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Estimated Initial Duration <span className="text-slate-500 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 2 Hours, 45 Mins (auto-calculated as video lessons are added)"
+                  className="apple-input text-xs w-full"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                />
               </div>
 
               <div>
