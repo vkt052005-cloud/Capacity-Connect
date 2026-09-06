@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { User, TrainerProfile } from "../types";
-import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId } from "../data/seed";
+import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId, initialUsers } from "../data/seed";
 import { dbService } from "../services/db";
 import { recordAuditEvent } from "./auditStore";
 
@@ -18,8 +18,82 @@ const defaultRajTrainerProfile: TrainerProfile = {
   isVerifiedByAdmin: true
 };
 
+function sanitizeUserForSession(user: User): User {
+  if (
+    user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
+    (user.id === "u-trainer-official" && !user.email?.toLowerCase().includes("harry")) ||
+    user.id === "trainer-mto8vdlt-rpmv8"
+  ) {
+    return {
+      ...user,
+      id: "u-trainer-official",
+      name: "Raj Tiwari",
+      email: "tiwariraj052005@gmail.com",
+      trainerProfile: {
+        ...defaultRajTrainerProfile,
+        ...(user.trainerProfile || {}),
+        bio: defaultRajTrainerProfile.bio,
+        designation: defaultRajTrainerProfile.designation,
+        verifiedCredentials: defaultRajTrainerProfile.verifiedCredentials,
+        isVerifiedByAdmin: true
+      }
+    };
+  } else if (user.email?.toLowerCase() === "codewithharry@gmail.com" || user.id === "u-trainer-codewithharry") {
+    return {
+      ...user,
+      id: "u-trainer-codewithharry",
+      name: "CodeWithHarry (Haris Khan)",
+      email: "codewithharry@gmail.com"
+    };
+  }
+  return user;
+}
+
+function getInitialAuthUser(): User | null {
+  try {
+    const rawAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
+    if (!rawAuth) return null;
+    const parsed = JSON.parse(rawAuth);
+    const targetId = parsed?.userId || parsed?.user?.id || parsed?.id;
+    const targetEmail = (parsed?.user?.email || parsed?.email || "").toLowerCase();
+
+    const rawUsers = localStorage.getItem(STORAGE_KEYS.USERS);
+    let users: User[] = [];
+    if (rawUsers) {
+      try {
+        users = JSON.parse(rawUsers);
+      } catch (e) {}
+    }
+    if (!users || !users.length) {
+      users = initialUsers;
+    }
+
+    let user: User | undefined;
+    if (targetId) {
+      user = users.find((u) => u.id === targetId);
+    }
+    if (!user && targetEmail) {
+      user = users.find((u) => u.email?.toLowerCase() === targetEmail);
+    }
+    if (!user && targetId) {
+      user = initialUsers.find((u) => u.id === targetId);
+    }
+    if (!user && parsed?.user && parsed.user.name && parsed.user.role) {
+      user = parsed.user;
+    }
+
+    if (user) {
+      return sanitizeUserForSession(user);
+    }
+  } catch (e) {
+    console.error("Failed to load initial auth user", e);
+  }
+  return null;
+}
+
 interface AuthState {
   currentUser: User | null;
+  isInitialized: boolean;
   login: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User };
   validateCredentials: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User };
   completeLogin: (user: User) => { success: boolean; message: string; user: User };
@@ -57,41 +131,19 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  currentUser: null,
+  currentUser: getInitialAuthUser(),
+  isInitialized: true,
 
   loadFromStorage: () => {
-    const auth = localStorage.getItem(STORAGE_KEYS.AUTH);
-    if (auth) {
-      const { userId } = JSON.parse(auth);
-      const users = getFromStorage<User>(STORAGE_KEYS.USERS);
-      let user = users.find((u) => u.id === userId);
-      if (!user) {
-        user = users.find((u) => u.email?.toLowerCase() === "tiwariraj052005@gmail.com");
-      }
-      if (user) {
-        if (
-          user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-          (user.id === "u-trainer-official" && !user.email?.toLowerCase().includes("harry")) ||
-          user.id === "trainer-mto8vdlt-rpmv8"
-        ) {
-          user = {
-            ...user,
-            id: "u-trainer-official",
-            name: "Raj Tiwari",
-            email: "tiwariraj052005@gmail.com",
-            trainerProfile: {
-              ...defaultRajTrainerProfile,
-              ...(user.trainerProfile || {}),
-              bio: defaultRajTrainerProfile.bio,
-              designation: defaultRajTrainerProfile.designation,
-              verifiedCredentials: defaultRajTrainerProfile.verifiedCredentials,
-              isVerifiedByAdmin: true
-            }
-          };
-        } else if (user.email?.toLowerCase() === "codewithharry@gmail.com" || user.id === "u-trainer-codewithharry") {
-          user.name = "CodeWithHarry (Haris Khan)";
-        }
-        set({ currentUser: user });
+    const user = getInitialAuthUser();
+    if (user) {
+      set({ currentUser: user, isInitialized: true });
+    } else {
+      const rawAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
+      if (!rawAuth) {
+        set({ currentUser: null, isInitialized: true });
+      } else {
+        set({ isInitialized: true });
       }
     }
   },
@@ -159,34 +211,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   completeLogin: (user) => {
-    let sanitizedUser = user;
-    if (
-      user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-      (user.id === "u-trainer-official" && !user.email?.toLowerCase().includes("harry")) ||
-      user.id === "trainer-mto8vdlt-rpmv8"
-    ) {
-      sanitizedUser = {
-        ...user,
-        id: "u-trainer-official",
-        name: "Raj Tiwari",
-        email: "tiwariraj052005@gmail.com",
-        trainerProfile: {
-          ...defaultRajTrainerProfile,
-          ...(user.trainerProfile || {}),
-          bio: defaultRajTrainerProfile.bio,
-          designation: defaultRajTrainerProfile.designation,
-          verifiedCredentials: defaultRajTrainerProfile.verifiedCredentials,
-          isVerifiedByAdmin: true
-        }
-      };
-    } else if (user.email?.toLowerCase() === "codewithharry@gmail.com" || user.id === "u-trainer-codewithharry") {
-      sanitizedUser = {
-        ...user,
-        name: "CodeWithHarry (Haris Khan)"
-      };
-    }
-    set({ currentUser: sanitizedUser });
-    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({ userId: sanitizedUser.id }));
+    const sanitizedUser = sanitizeUserForSession(user);
+    set({ currentUser: sanitizedUser, isInitialized: true });
+    localStorage.setItem(
+      STORAGE_KEYS.AUTH,
+      JSON.stringify({ userId: sanitizedUser.id, user: sanitizedUser })
+    );
     recordAuditEvent({
       actor: sanitizedUser.name,
       role: sanitizedUser.role,
@@ -279,7 +309,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     saveToStorage(STORAGE_KEYS.USERS, updated);
     const updatedUser = { ...currentUser, ...updates };
     set({ currentUser: updatedUser });
-    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({ userId: updatedUser.id }));
+    localStorage.setItem(
+      STORAGE_KEYS.AUTH,
+      JSON.stringify({ userId: updatedUser.id, user: updatedUser })
+    );
     dbService.update('users', currentUser.id, updates);
   },
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import type { UserRole } from '../../types';
 
@@ -9,9 +9,25 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-  const { currentUser } = useAuthStore();
-  if (!currentUser) return <Navigate to="/login" replace />;
-  if (currentUser.status !== "active") return <Navigate to="/login?pending=true" replace />;
+  const { currentUser, isInitialized } = useAuthStore();
+  const location = useLocation();
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (currentUser.status !== "active") {
+    return <Navigate to="/login?pending=true" replace />;
+  }
+
   // Administrators have global oversight and can inspect all portals and features
   if (currentUser.role === "admin") {
     return <>{children}</>;
@@ -25,5 +41,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     };
     return <Navigate to={redirects[currentUser.role]} replace />;
   }
+
   return <>{children}</>;
 };
+

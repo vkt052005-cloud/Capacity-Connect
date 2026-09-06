@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import {
   Mail, Lock, Eye, EyeOff, Shield, Users, GraduationCap,
   ArrowRight, KeyRound, RotateCw, ArrowLeft, CheckCircle2
@@ -33,12 +33,30 @@ export const LoginPage: React.FC = () => {
   const [canResend, setCanResend] = useState(false);
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-  const { validateCredentials, completeLogin } = useAuthStore();
+  const { currentUser, validateCredentials, completeLogin } = useAuthStore();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const isPendingNotice = searchParams.get("pending") === "true";
   const pendingEmail = searchParams.get("email") || "";
+
+  // If already authenticated and active, redirect to requested page or role dashboard
+  useEffect(() => {
+    if (currentUser && currentUser.status === "active") {
+      const from = (location.state as any)?.from?.pathname;
+      if (from && from !== "/login") {
+        navigate(from, { replace: true });
+        return;
+      }
+      const redirects: Record<string, string> = {
+        admin: "/admin/dashboard",
+        trainer: "/trainer/dashboard",
+        trainee: "/trainee/dashboard",
+      };
+      navigate(redirects[currentUser.role] || "/trainee/dashboard", { replace: true });
+    }
+  }, [currentUser, navigate, location.state]);
 
   useEffect(() => {
     const urlRole = searchParams.get("role") as "trainee" | "trainer" | "admin" | null;
