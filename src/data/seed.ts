@@ -39,7 +39,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "admin",
     status: "active",
-    createdAt: "2026-08-01T09:00:00Z"
+    createdAt: "2026-09-05T08:00:00Z"
   },
   {
     id: "u-trainer-official",
@@ -49,7 +49,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-06T09:00:00Z",
     trainerProfile: {
       bio: "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.",
       expertise: ["Full-Stack Architecture", "Data Structures", "System Design", "Cloud Systems"],
@@ -72,7 +72,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-06T10:00:00Z",
     trainerProfile: {
       bio: "Master Software Educator, Creator of Sigma Web Development & Python 100 Days. Over 6M+ students trained globally.",
       expertise: ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"],
@@ -94,7 +94,7 @@ export const initialUsers: User[] = [
     password: "SRNNv@2005",
     role: "trainee",
     status: "active",
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-05T15:30:00Z",
     traineeProfile: {
       bio: "Dedicated Engineering scholar actively acquiring advanced competencies on Capacity Connect.",
       phone: "+91 98765 00000",
@@ -119,7 +119,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-05T09:00:00Z",
     trainerProfile: {
       bio: "Ex-Google, Ex-Amazon Software Engineer. Founder of take U forward and creator of the A2Z DSA Course.",
       expertise: ["Data Structures & Algorithms", "Competitive Programming", "System Design"],
@@ -142,7 +142,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-05T09:15:00Z",
     trainerProfile: {
       bio: "Lecturer on Computer Science at Harvard University & Lead Instructor for CS50's Introduction to Databases with SQL.",
       expertise: ["Relational Databases", "SQL", "Database Design", "PostgreSQL", "SQLite"],
@@ -165,7 +165,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-05T09:30:00Z",
     trainerProfile: {
       bio: "Ex-Microsoft Software Engineer, Co-Founder of Apna College. One of India's most recognized programming educators.",
       expertise: ["C++", "Data Structures & Algorithms", "Full Stack Development"],
@@ -188,7 +188,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-05T09:45:00Z",
     trainerProfile: {
       bio: "Globally acclaimed engineering education platform delivering foundational computer science and electrical engineering courses.",
       expertise: ["Database Management Systems", "Digital Electronics", "Operating Systems"],
@@ -211,7 +211,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-05T10:00:00Z",
     trainerProfile: {
       bio: "Founder of Gate Smashers, India's most popular GATE CSE educator known for intuitive, high-yield conceptual explanations.",
       expertise: ["Computer Networks", "Operating Systems", "Theory of Computation"],
@@ -234,7 +234,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-05T10:15:00Z",
     trainerProfile: {
       bio: "Founder of KnowledgeGATE, renowned educator specializing in Algorithm Design, Theory of Computation, and GATE CS.",
       expertise: ["Design & Analysis of Algorithms", "Asymptotic Analysis", "Dynamic Programming", "Greedy Techniques"],
@@ -257,7 +257,7 @@ export const initialUsers: User[] = [
     role: "trainer",
     status: "active",
     isVerifiedByAdmin: true,
-    createdAt: "2026-08-01T09:00:00Z",
+    createdAt: "2026-09-05T10:30:00Z",
     trainerProfile: {
       bio: "Professor in the Department of Computer Science & Engineering at IIT Kharagpur. World-renowned authority and author on Software Engineering.",
       expertise: ["Software Engineering", "Object-Oriented Design", "Software Testing", "Agile & Waterfall Models"],
@@ -1994,27 +1994,37 @@ export function initializeStorage() {
           u.email !== "trainee@capacityconnect.org"
         )
         .map((u: any) => {
-          if (u.email?.toLowerCase() === "tiwariraj052005@gmail.com") {
+          let updated = { ...u };
+          const initMatch = initialUsers.find((iu) => iu.email.toLowerCase() === u.email?.toLowerCase());
+          if (initMatch && (!updated.createdAt || updated.createdAt.startsWith("2026-08-01"))) {
+            updated.createdAt = initMatch.createdAt;
+          } else if (updated.createdAt && updated.createdAt.startsWith("2026-08-01")) {
+            updated.createdAt = "2026-09-05T09:00:00Z";
+          }
+
+          if (updated.email?.toLowerCase() === "tiwariraj052005@gmail.com") {
             return {
-              ...u,
+              ...updated,
               id: "u-trainer-official",
               name: "Raj Tiwari",
+              createdAt: "2026-09-06T09:00:00Z",
               trainerProfile: {
-                ...(u.trainerProfile || {}),
+                ...(updated.trainerProfile || {}),
                 bio: "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.",
                 designation: "Senior Technical Educator & Mentor",
-                department: u.trainerProfile?.department || "Computer Science & Engineering",
+                department: updated.trainerProfile?.department || "Computer Science & Engineering",
                 verifiedCredentials: ["Senior Technical Faculty", "Verified LMS Instructor"]
               }
             };
           }
-          if (u.email?.toLowerCase() === "codewithharry@gmail.com") {
+          if (updated.email?.toLowerCase() === "codewithharry@gmail.com") {
             return {
-              ...u,
+              ...updated,
               id: "u-trainer-codewithharry",
               name: "CodeWithHarry (Haris Khan)",
+              createdAt: "2026-09-06T10:00:00Z",
               trainerProfile: {
-                ...(u.trainerProfile || {}),
+                ...(updated.trainerProfile || {}),
                 bio: "Master Software Educator, Creator of Sigma Web Development & Python 100 Days. Over 6M+ students trained globally.",
                 designation: "Principal Technical Educator & Founder, CodeWithHarry",
                 department: "Computer Science & Engineering",
@@ -2022,7 +2032,7 @@ export function initializeStorage() {
               }
             };
           }
-          return u;
+          return updated;
         });
 
       if (!filteredUsers.some((u: any) => u.email?.toLowerCase() === "codewithharry@gmail.com")) {
@@ -2160,6 +2170,10 @@ export function getFromStorage<T>(key: string): T[] {
                 if (initUser.role === "trainer" && initUser.isVerifiedByAdmin && (match.isVerifiedByAdmin === undefined || !match.isVerifiedByAdmin)) {
                   match.isVerifiedByAdmin = true;
                   if (match.trainerProfile) match.trainerProfile.isVerifiedByAdmin = true;
+                  modified = true;
+                }
+                if (initUser.createdAt && match.createdAt?.startsWith("2026-08-01")) {
+                  match.createdAt = initUser.createdAt;
                   modified = true;
                 }
               }

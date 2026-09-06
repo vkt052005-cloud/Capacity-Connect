@@ -75,7 +75,7 @@
       "password": "SRNNv@2005",
       "role": "trainer",
       "status": "active",
-      "createdAt": "2026-08-01T09:00:00Z",
+      "createdAt": "2026-09-06T10:00:00Z",
       "trainerProfile": {
         "bio": "Master Software Educator, Creator of Sigma Web Development & Python 100 Days. Over 6M+ students trained globally.",
         "expertise": ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"],
@@ -96,7 +96,7 @@
       "password": "SRNNv@2005",
       "role": "admin",
       "status": "active",
-      "createdAt": "2026-08-01T09:00:00Z"
+      "createdAt": "2026-09-05T08:00:00Z"
     }
   ],
   "updatedAt": "2026-09-04T14:17:43.715Z",
