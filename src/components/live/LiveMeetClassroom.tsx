@@ -367,15 +367,10 @@ export const LiveMeetClassroom: React.FC = () => {
               </span>
             )}
 
-            <button
-              onClick={handleLaunchMeet}
-              className="apple-btn-primary text-xs px-3.5 py-1.5 font-bold flex items-center gap-1.5 shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer"
-              title="Launch official Google Meet room in new tab"
-            >
-              <Video className="w-3.5 h-3.5" />
-              <span>Enter Google Meet</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>In-Portal Live Classroom</span>
+            </div>
 
             <button
               onClick={copyMeetUrl}
@@ -587,9 +582,16 @@ export const LiveMeetClassroom: React.FC = () => {
 
                         {/* End / Leave Call */}
                         <button
-                          onClick={closeClassroom}
+                          onClick={() => {
+                            if (currentUser?.id === activeSession.trainerId || currentUser?.role === "trainer") {
+                              endSession(activeSession.id);
+                              addToast({ title: "Class Completed", message: "Class ended and attendance certified for all attendees.", type: "info" });
+                            } else {
+                              closeClassroom();
+                            }
+                          }}
                           className="p-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white transition cursor-pointer shadow-lg shadow-rose-600/30"
-                          title="Leave Call (Attendance is Logged)"
+                          title={currentUser?.id === activeSession.trainerId || currentUser?.role === "trainer" ? "End Class for All" : "Leave Call"}
                         >
                           <PhoneOff className="w-4 h-4" />
                         </button>

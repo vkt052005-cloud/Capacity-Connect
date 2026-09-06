@@ -81,7 +81,7 @@ interface LiveSessionsState {
     description?: string;
     customMeetUrl?: string;
   }) => LiveSession;
-  launchGoogleMeet: (sessionId: string, userId?: string, userName?: string) => void;
+  launchGoogleMeet: (sessionId: string, userId?: string, userName?: string, openExternal?: boolean) => void;
   startSession: (id: string) => void;
   endSession: (id: string) => void;
   cancelSession: (id: string) => void;
@@ -185,11 +185,10 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
 
     const updated = [newSession, ...get().sessions];
     saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    // Open in-portal live video classroom directly on the website without opening any external Meet tab
     set({ sessions: updated, activeSession: newSession, isClassroomOpen: true });
     
-    // Automatically launch Google Meet in a new tab for the teacher
     if (typeof window !== "undefined") {
-      window.open(meetDetails.url, "_blank", "noopener,noreferrer");
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
       try {
@@ -201,7 +200,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     return newSession;
   },
 
-  launchGoogleMeet: (sessionId: string, userId?: string, _userName?: string) => {
+  launchGoogleMeet: (sessionId: string, userId?: string, _userName?: string, openExternal: boolean = false) => {
     const session = get().sessions.find((s) => s.id === sessionId);
     if (!session) return;
 
@@ -209,18 +208,20 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       get().joinSession(sessionId, userId);
     }
 
-    // Always launch the running classroom video suite in LMS
+    // Always launch the running classroom video suite in LMS without leaving the site
     get().openClassroom(session);
 
-    // Open real Google Meet room in new tab for participant
-    let targetUrl = session.googleMeetUrl || session.joinUrl;
-    if (!targetUrl || targetUrl.includes("xxx-yyyy-zzz") || targetUrl.endsWith("/new")) {
-      targetUrl = `https://meet.google.com/${session.meetingCode || "cck-live-meet"}`;
+    // Only open external window if explicitly requested
+    if (openExternal) {
+      let targetUrl = session.googleMeetUrl || session.joinUrl;
+      if (!targetUrl || targetUrl.includes("xxx-yyyy-zzz") || targetUrl.endsWith("/new")) {
+        targetUrl = `https://meet.google.com/${session.meetingCode || "cck-live-meet"}`;
+      }
+      if (!targetUrl.startsWith("http")) {
+        targetUrl = `https://meet.google.com/${targetUrl}`;
+      }
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
     }
-    if (!targetUrl.startsWith("http")) {
-      targetUrl = `https://meet.google.com/${targetUrl}`;
-    }
-    window.open(targetUrl, "_blank", "noopener,noreferrer");
   },
 
   startSession: (id: string) => {
