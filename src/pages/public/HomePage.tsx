@@ -54,20 +54,28 @@ export const HomePage: React.FC = () => {
 
   const faqs = [
     {
-      q: "How does the automated Competency Mapping algorithm work?",
-      a: "The Competency Mapping Engine dynamically analyzes departmental workforce skill demands and calculates an internal capability coverage index. It automatically matches certified faculty based on domain taxonomy, ratings, and verified credentials to highlight high-priority subject gaps."
+      q: "What is the CAPACITY CONNECT portal?",
+      a: "CAPACITY CONNECT is a centralized, digital capacity building and learning management platform designed for the Ministry of Earth Sciences (MoES) and India Meteorological Department (IMD). It streamlines organizational upskilling, structured curricula, live interactive masterclasses, knowledge sharing, and competency tracking across departments."
     },
     {
-      q: "How does the Anti-Cheat Proctoring Guard ensure test integrity?",
-      a: "During timed MCQ assessments, the Proctoring Guard monitors tab-switching, browser window focus loss, and developer console events in real-time. Unauthorized focus shifts are logged as infractions on the candidate transcript with automated timeout enforcement."
+      q: "Who can use the CAPACITY CONNECT portal and what roles are supported?",
+      a: "The portal supports three distinct, role-governed user workspaces: \n• Trainees: Build professional profiles (qualifications, work experience, interests, skills), enroll in specialized courses, attend live Google Meet lectures, and take proctored MCQ assessments to earn certified credentials.\n• Trainers: Upload recorded lectures, presentations, and study materials to the Trainer Library, author questionnaires with submission deadlines, and monitor trainee participation.\n• Administrators: Manage user registrations and approvals, execute organizational competency mapping to bridge skill gaps, and broadcast official announcements."
     },
     {
-      q: "How is live Google Meet lecture attendance synchronized with gradebooks?",
-      a: "When a faculty member launches or joins a live Google Meet class, participant join timestamps are captured through the automated attendance engine. Verified attendees are automatically marked present and synced to the LMS gradebook and certification ledger."
+      q: "How do trainees enroll in courses and access learning resources?",
+      a: "Trainees can explore the Course Catalog, enroll in curriculum-backed programs with a single click, access lecture slides and downloadable PDFs from the Trainer Library, and join live interactive Google Meet sessions with automated attendance tracking."
     },
     {
-      q: "What role types are supported on the portal?",
-      a: "The portal strictly enforces three isolated role workspaces: Trainee (learning, proctored exams, Google Meet classes, certificates), Trainer (Google Meet console, library manager, AI quiz generator, gradebook), and Administrator (user approvals, competency mapping, bulletins, audit logs)."
+      q: "How does the portal handle assessments, deadlines, and certifications?",
+      a: "Trainers create subject-wise MCQ evaluations with strict submission deadlines and passing thresholds (e.g. 70%). Trainees complete these tests within an anti-cheat proctored environment. Achieving a passing score automatically issues an instant, cryptographically verifiable digital certificate complete with a QR code and ledger record."
+    },
+    {
+      q: "How does Competency Mapping work on CAPACITY CONNECT?",
+      a: "Competency Mapping is an intelligent executive tool that compares departmental operational demands against verified faculty skills and ratings. It highlights high-priority knowledge gaps and recommends the most qualified internal or visiting trainers for specialized training programs."
+    },
+    {
+      q: "Is CAPACITY CONNECT accessible on mobile devices and low-bandwidth environments?",
+      a: "Yes. CAPACITY CONNECT is fully responsive across smartphones, tablets, and desktop workstations. It features seamless QR-code instant mobile login, real-time multi-device cloud synchronization, and a built-in Data-Saver mode designed for field officers and low-bandwidth remote meteorological stations."
     }
   ];
 
@@ -461,7 +469,7 @@ export const HomePage: React.FC = () => {
               Frequently Asked Questions
             </h2>
             <p className="text-[11.5px] text-slate-400">
-              Answers to common questions regarding capacity workflows, proctored exams, and certification.
+              Everything you need to know about the CAPACITY CONNECT digital learning & capacity building portal.
             </p>
           </div>
 
@@ -484,7 +492,7 @@ export const HomePage: React.FC = () => {
                     <ChevronDown className={"w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform " + (isOpen ? "rotate-180 text-[#2997ff]" : "")} />
                   </button>
                   {isOpen && (
-                    <div className="px-3.5 pb-3 pt-1 text-[11px] text-slate-300 leading-relaxed border-t border-white/5 animate-fadeIn">
+                    <div className="px-3.5 pb-3 pt-1 text-[11px] text-slate-300 leading-relaxed border-t border-white/5 animate-fadeIn whitespace-pre-line">
                       {faq.a}
                     </div>
                   )}
