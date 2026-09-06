@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Video, Calendar, Clock, Users, ArrowRight, Play,
   CheckCircle2, Radio, Search, Shield, ShieldCheck, Copy, Check,
-  ExternalLink, Sparkles, BookOpen, AlertCircle, Lock
+  ExternalLink, Sparkles, BookOpen, AlertCircle, Lock, Trash2
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
@@ -13,7 +13,7 @@ import { useAppStore } from "../../store/appStore";
 import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment";
 
 export const TraineeLiveClasses: React.FC = () => {
-  const { sessions, openClassroom, findSessionByCode, launchGoogleMeet } = useLiveSessionsStore();
+  const { sessions, openClassroom, findSessionByCode, launchGoogleMeet, deleteSession, clearCompletedSessions } = useLiveSessionsStore();
   const { courses, enrollments } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
@@ -489,7 +489,19 @@ export const TraineeLiveClasses: React.FC = () => {
         {/* ─── Past Recorded Lectures Archive ─── */}
         {pastSessions.length > 0 && (
           <div className="space-y-3 pt-4">
-            <h3 className="text-sm font-bold text-white tracking-tight">Archived & Completed Lectures</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white tracking-tight">Archived & Completed Lectures</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  clearCompletedSessions();
+                  addToast({ title: "Archive Cleared", message: "Completed lectures history has been cleared.", type: "info" });
+                }}
+                className="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 rounded border border-rose-500/20 hover:bg-rose-500/10 transition cursor-pointer"
+              >
+                Clear History
+              </button>
+            </div>
             <div className="glass-card divide-y divide-white/10 border border-white/10">
               {pastSessions.map((session) => (
                 <div key={session.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -499,7 +511,20 @@ export const TraineeLiveClasses: React.FC = () => {
                       {session.courseTitle} • Instructor: {session.trainerName} • {session.durationMinutes} min
                     </p>
                   </div>
-                  <span className="badge-gray text-[10px] self-start sm:self-auto">Completed</span>
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <span className="badge-gray text-[10px]">Completed</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteSession(session.id);
+                        addToast({ title: "Session Removed", message: `Removed "${session.title}" from history.`, type: "info" });
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition cursor-pointer"
+                      title="Remove from history"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

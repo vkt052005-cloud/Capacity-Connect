@@ -218,7 +218,11 @@ export const CourseCatalog: React.FC = () => {
                         <span className="badge-green text-[8px]">
                           {c.lessons?.length || (c.id === 'c-dsa' ? 315 : (c.id === 'c6' ? 139 : 10))} Lessons
                         </span>
-                        <span className="text-amber-400 font-mono">⭐ {c.rating || 4.9}</span>
+                        {c.rating && c.totalRatings && c.totalRatings > 0 ? (
+                          <span className="text-amber-400 font-mono">⭐ {c.rating.toFixed(1)} ({c.totalRatings})</span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px] font-medium">No ratings yet</span>
+                        )}
                         <span className="text-slate-500 font-mono">• {formatCourseDuration(c)}</span>
                       </div>
 

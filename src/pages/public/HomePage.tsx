@@ -302,7 +302,11 @@ export const HomePage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="badge-blue text-[9px]">{c.category}</span>
                         <span className="badge-green text-[9px]">{c.lessons?.length || (c.id === 'c-dsa' ? 315 : 139)} Lessons</span>
-                        <span className="badge-blue text-[9px] font-mono">⭐ {c.rating || 4.98}</span>
+                        {c.rating && c.totalRatings && c.totalRatings > 0 ? (
+                          <span className="badge-blue text-[9px] font-mono">⭐ {c.rating.toFixed(1)}</span>
+                        ) : (
+                          <span className="badge-gray text-[9px]">Unrated</span>
+                        )}
                       </div>
                       <h3
                         onClick={() => handleWatchCourse(c.id)}

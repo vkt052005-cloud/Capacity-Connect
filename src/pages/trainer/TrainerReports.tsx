@@ -47,7 +47,7 @@ export const TrainerReports: React.FC = () => {
   const avgStudentRating =
     relevantFeedbacks.length > 0
       ? (relevantFeedbacks.reduce((acc, f) => acc + f.rating, 0) / relevantFeedbacks.length).toFixed(1)
-      : "5.0";
+      : null;
 
   return (
     <DashboardLayout
@@ -77,7 +77,13 @@ export const TrainerReports: React.FC = () => {
               <span>Student Quality Rating</span>
             </span>
             <p className="text-2xl font-bold text-amber-300">
-              {avgStudentRating} <span className="text-xs text-slate-400 font-normal">/ 5.0 ({relevantFeedbacks.length} reviews)</span>
+              {avgStudentRating ? (
+                <>
+                  {avgStudentRating} <span className="text-xs text-slate-400 font-normal">/ 5.0 ({relevantFeedbacks.length} reviews)</span>
+                </>
+              ) : (
+                <span className="text-sm text-slate-400 font-normal">No ratings yet</span>
+              )}
             </p>
           </div>
         </div>
@@ -95,7 +101,7 @@ export const TrainerReports: React.FC = () => {
               </p>
             </div>
             <span className="text-xs text-emerald-400 font-semibold">
-              Instructor Overall: {avgStudentRating} / 5.0
+              {avgStudentRating ? `Instructor Overall: ${avgStudentRating} / 5.0` : "No ratings yet"}
             </span>
           </div>
 

@@ -65,6 +65,8 @@ interface LiveSessionsState {
   activeSession: LiveSession | null;
   isClassroomOpen: boolean;
   load: () => void;
+  deleteSession: (id: string) => void;
+  clearCompletedSessions: () => void;
   scheduleSession: (data: Omit<LiveSession, "id" | "attendeeCount" | "attendees">) => LiveSession;
   startInstantMeet: (data: {
     courseId: string;
@@ -95,6 +97,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
   load: () => {
     let saved = getFromStorage<LiveSession>(STORAGE_KEYS.LIVE_SESSIONS);
     // Purge any legacy mock / fake sessions ("Dr. Marcus Vance", "live-01", "xxx-yyyy-zzz", etc.)
+    // and purge repetitive mock completed sessions from past runs
     if (saved && saved.length > 0) {
       saved = saved.filter(
         (s) =>
@@ -104,7 +107,8 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
           s.trainerName !== "Dr. Marcus Vance" &&
           s.zoomMeetingId !== "982-4512-8874" &&
           !s.meetingCode?.includes("xxx-yyyy-zzz") &&
-          s.meetingCode !== "meet.google.com/new"
+          s.meetingCode !== "meet.google.com/new" &&
+          !(s.status === "completed" && s.title?.includes("Data Structures & Algorithms (DSA) Problem Solving"))
       );
       saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
     } else {
@@ -112,6 +116,39 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
     }
     set({ sessions: saved });
+  },
+
+  deleteSession: (id: string) => {
+    const updated = get().sessions.filter((s) => s.id !== id);
+    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    set({
+      sessions: updated,
+      activeSession: get().activeSession?.id === id ? null : get().activeSession
+    });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
+      try {
+        const bc = new BroadcastChannel("capacity_live_channel");
+        bc.postMessage({ type: "LIVE_UPDATE" });
+        bc.close();
+      } catch {}
+    }
+  },
+
+  clearCompletedSessions: () => {
+    const updated = get().sessions.filter((s) => s.status !== "completed");
+    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    set({ sessions: updated });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
+      try {
+        const bc = new BroadcastChannel("capacity_live_channel");
+        bc.postMessage({ type: "LIVE_UPDATE" });
+        bc.close();
+      } catch {}
+    }
   },
 
   scheduleSession: (data) => {

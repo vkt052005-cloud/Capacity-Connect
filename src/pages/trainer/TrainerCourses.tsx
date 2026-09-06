@@ -448,10 +448,13 @@ export const TrainerCourses: React.FC = () => {
                     {/* Student Quality Rating & Reviews trigger */}
                     {(() => {
                       const courseFbs = feedbacks.filter((f) => f.courseId === c.id);
+                      const hasRatings = courseFbs.length > 0 || (c.totalRatings && c.totalRatings > 0);
                       const avgRating =
                         courseFbs.length > 0
                           ? (courseFbs.reduce((acc, f) => acc + f.rating, 0) / courseFbs.length).toFixed(1)
-                          : c.rating?.toFixed(1) || "5.0";
+                          : (c.totalRatings && c.totalRatings > 0 && c.rating)
+                          ? c.rating.toFixed(1)
+                          : null;
                       return (
                         <div className="pt-2 border-t border-white/5 flex items-center justify-between">
                           <button
@@ -461,8 +464,14 @@ export const TrainerCourses: React.FC = () => {
                             title="Click to view student reviews"
                           >
                             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            <span className="font-bold">{avgRating}</span>
-                            <span className="text-[11px] text-slate-400">({courseFbs.length} student reviews)</span>
+                            {hasRatings ? (
+                              <>
+                                <span className="font-bold">{avgRating}</span>
+                                <span className="text-[11px] text-slate-400">({courseFbs.length} student reviews)</span>
+                              </>
+                            ) : (
+                              <span className="text-[11px] text-slate-400">No ratings yet (0 reviews)</span>
+                            )}
                           </button>
                           <button
                             type="button"
@@ -1014,10 +1023,13 @@ export const TrainerCourses: React.FC = () => {
       {reviewsModalCourseId && (() => {
         const modalCourse = courses.find((c) => c.id === reviewsModalCourseId);
         const modalFeedbacks = feedbacks.filter((f) => f.courseId === reviewsModalCourseId);
+        const hasRatings = modalFeedbacks.length > 0 || (modalCourse?.totalRatings && modalCourse.totalRatings > 0);
         const modalAvg =
           modalFeedbacks.length > 0
             ? (modalFeedbacks.reduce((acc, f) => acc + f.rating, 0) / modalFeedbacks.length).toFixed(1)
-            : modalCourse?.rating?.toFixed(1) || "5.0";
+            : (modalCourse?.totalRatings && modalCourse.totalRatings > 0 && modalCourse.rating)
+            ? modalCourse.rating.toFixed(1)
+            : null;
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-2xl animate-fadeIn overflow-y-auto">
@@ -1029,7 +1041,11 @@ export const TrainerCourses: React.FC = () => {
                     <span>Student Reviews: {modalCourse?.title}</span>
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Direct feedback from students enrolled in your course • Average: <strong className="text-amber-300">{modalAvg} / 5.0</strong> ({modalFeedbacks.length} ratings)
+                    Direct feedback from students enrolled in your course • {hasRatings ? (
+                      <>Average: <strong className="text-amber-300">{modalAvg} / 5.0</strong> ({modalFeedbacks.length} ratings)</>
+                    ) : (
+                      <span>No student ratings yet</span>
+                    )}
                   </p>
                 </div>
                 <button

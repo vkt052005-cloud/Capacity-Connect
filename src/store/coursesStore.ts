@@ -32,22 +32,39 @@ interface CoursesState {
   getTrainerCourses: (trainerId: string) => Course[];
 }
 
-const sanitizeCourses = (courses: Course[]): Course[] => {
-  return (courses || []).filter((c) => {
-    if (!c) return false;
-    if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
-    const trainer = (c.trainerName || "").toLowerCase();
-    if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
-    const title = (c.title || "").toLowerCase();
-    if (
-      title.includes("advanced cloud infrastructure") ||
-      title.includes("generative ai & llm systems") ||
-      title.includes("strategic leadership") ||
-      title.includes("cybersecurity governance") ||
-      title.includes("executive communication")
-    ) return false;
-    return true;
-  });
+const sanitizeCourses = (courses: Course[], feedbacks: Feedback[] = []): Course[] => {
+  return (courses || [])
+    .filter((c) => {
+      if (!c) return false;
+      if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
+      const trainer = (c.trainerName || "").toLowerCase();
+      if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
+      const title = (c.title || "").toLowerCase();
+      if (
+        title.includes("advanced cloud infrastructure") ||
+        title.includes("generative ai & llm systems") ||
+        title.includes("strategic leadership") ||
+        title.includes("cybersecurity governance") ||
+        title.includes("executive communication")
+      ) return false;
+      return true;
+    })
+    .map((c) => {
+      const courseFbs = feedbacks.filter((f) => f && f.courseId === c.id);
+      if (courseFbs.length > 0) {
+        const sum = courseFbs.reduce((acc, f) => acc + (f.rating || 0), 0);
+        return {
+          ...c,
+          rating: Number((sum / courseFbs.length).toFixed(1)),
+          totalRatings: courseFbs.length
+        };
+      }
+      return {
+        ...c,
+        rating: 0,
+        totalRatings: 0
+      };
+    });
 };
 
 const sanitizeEnrollments = (enrollments: Enrollment[]): Enrollment[] => {
@@ -75,18 +92,23 @@ const sanitizeFeedbacks = (feedbacks: Feedback[]): Feedback[] => {
   });
 };
 
+const initialFeedbacks = sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
+const initialCoursesList = sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES), initialFeedbacks);
+
 export const useCoursesStore = create<CoursesState>((set, get) => ({
-  courses: sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES)),
+  courses: initialCoursesList,
   enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
   certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
-  feedbacks: sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS)),
+  feedbacks: initialFeedbacks,
 
   load: () => {
+    const freshFeedbacks = sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
+    const freshCourses = sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES), freshFeedbacks);
     set({
-      courses: sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES)),
+      courses: freshCourses,
       enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
       certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
-      feedbacks: sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS))
+      feedbacks: freshFeedbacks
     });
   },
 

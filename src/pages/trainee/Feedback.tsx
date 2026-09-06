@@ -140,7 +140,7 @@ export const FeedbackPage: React.FC = () => {
                 </select>
                 {selectedCourse && (
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Faculty: <strong className="text-slate-200">{selectedCourse.trainerName}</strong> • Current Student Rating: <strong className="text-amber-400">⭐ {selectedCourse.rating || 5.0}</strong>
+                    Faculty: <strong className="text-slate-200">{selectedCourse.trainerName}</strong> • Current Student Rating: <strong className="text-amber-400">{selectedCourse.totalRatings && selectedCourse.totalRatings > 0 ? `⭐ ${selectedCourse.rating?.toFixed(1)} (${selectedCourse.totalRatings} ratings)` : "Not rated yet"}</strong>
                   </p>
                 )}
               </div>

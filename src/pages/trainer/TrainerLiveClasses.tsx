@@ -22,7 +22,9 @@ export const TrainerLiveClasses: React.FC = () => {
     endSession,
     cancelSession,
     openClassroom,
-    updateSessionMeetUrl
+    updateSessionMeetUrl,
+    deleteSession,
+    clearCompletedSessions
   } = useLiveSessionsStore();
   const { courses } = useCoursesStore();
   const { currentUser } = useAuthStore();
@@ -421,7 +423,19 @@ export const TrainerLiveClasses: React.FC = () => {
         {/* ─── Completed Classes Archive ─── */}
         {pastSessions.length > 0 && (
           <div className="space-y-3 pt-4">
-            <h3 className="text-sm font-bold text-white tracking-tight">Completed Classes Archive</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white tracking-tight">Completed Classes Archive</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  clearCompletedSessions();
+                  addToast({ title: "Archive Cleared", message: "Completed classes archive has been cleared.", type: "info" });
+                }}
+                className="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 rounded border border-rose-500/20 hover:bg-rose-500/10 transition cursor-pointer"
+              >
+                Clear Archive
+              </button>
+            </div>
             <div className="glass-card divide-y divide-white/10 border border-white/10">
               {pastSessions.map((session) => (
                 <div key={session.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -431,7 +445,20 @@ export const TrainerLiveClasses: React.FC = () => {
                       {session.courseTitle} • {session.durationMinutes} min • {session.attendeeCount} Verified Attendees
                     </p>
                   </div>
-                  <span className="badge-green text-[10px] self-start sm:self-auto">Completed & Logged</span>
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <span className="badge-green text-[10px]">Completed & Logged</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteSession(session.id);
+                        addToast({ title: "Session Removed", message: `Removed "${session.title}" from archive.`, type: "info" });
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition cursor-pointer"
+                      title="Delete from archive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

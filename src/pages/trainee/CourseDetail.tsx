@@ -331,7 +331,9 @@ export const CourseDetail: React.FC = () => {
   const avgCourseRating =
     courseFeedbacks.length > 0
       ? (courseFeedbacks.reduce((acc, f) => acc + f.rating, 0) / courseFeedbacks.length).toFixed(1)
-      : course.rating?.toFixed(1) || "5.0";
+      : (course.rating && course.totalRatings && course.totalRatings > 0)
+      ? course.rating.toFixed(1)
+      : null;
 
   return (
     <DashboardLayout
@@ -810,24 +812,35 @@ export const CourseDetail: React.FC = () => {
                   <span>Student Quality Rating Summary</span>
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl font-extrabold text-amber-300 font-mono">{avgCourseRating}</span>
-                  <div>
-                    <div className="flex text-amber-400">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 ${
-                            star <= Math.round(Number(avgCourseRating))
-                              ? "text-amber-400 fill-amber-400"
-                              : "text-slate-600"
-                          }`}
-                        />
-                      ))}
+                  {avgCourseRating ? (
+                    <>
+                      <span className="text-3xl font-extrabold text-amber-300 font-mono">{avgCourseRating}</span>
+                      <div>
+                        <div className="flex text-amber-400">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-4 h-4 ${
+                                star <= Math.round(Number(avgCourseRating))
+                                  ? "text-amber-400 fill-amber-400"
+                                  : "text-slate-600"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Based on {courseFeedbacks.length} student reviews
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold text-slate-300">No ratings yet</p>
+                      <p className="text-[11px] text-slate-400">
+                        Be the first student to review and rate this course!
+                      </p>
                     </div>
-                    <p className="text-[11px] text-slate-400">
-                      Based on {courseFeedbacks.length} student reviews
-                    </p>
-                  </div>
+                  )}
                 </div>
               </div>
 

@@ -59,10 +59,13 @@ export const CourseManagement: React.FC = () => {
           <div className="divide-y divide-white/5">
             {courses.map((c) => {
               const courseFbs = feedbacks.filter((f) => f.courseId === c.id);
+              const hasRatings = courseFbs.length > 0 || (c.totalRatings && c.totalRatings > 0);
               const courseAvg =
                 courseFbs.length > 0
                   ? (courseFbs.reduce((acc, f) => acc + f.rating, 0) / courseFbs.length).toFixed(1)
-                  : c.rating?.toFixed(1) || "5.0";
+                  : (c.totalRatings && c.totalRatings > 0 && c.rating)
+                  ? c.rating.toFixed(1)
+                  : null;
 
               return (
                 <div key={c.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -70,11 +73,18 @@ export const CourseManagement: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="text-sm font-bold text-white">{c.title}</h4>
                       <span className="badge-blue text-[9px]">{c.category}</span>
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-bold">
-                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                        <span>{courseAvg}</span>
-                        <span className="text-[10px] text-slate-400 font-normal">({courseFbs.length} reviews)</span>
-                      </div>
+                      {hasRatings ? (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-bold">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <span>{courseAvg}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">({courseFbs.length} reviews)</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-400 text-[10px]">
+                          <Star className="w-3 h-3 text-slate-500" />
+                          <span>No ratings yet</span>
+                        </div>
+                      )}
                     </div>
                     <p className="text-xs text-slate-400">Faculty: {c.trainerName} • Level: {c.level} • Duration: {formatCourseDuration(c)}</p>
                   </div>
