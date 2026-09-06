@@ -65,7 +65,28 @@
         "experience": "10+ Years Technical Education",
         "rating": 4.99,
         "totalStudentsTaught": 60000,
-        "verifiedCredentials": ["Senior Educator", "Verified LMS Faculty"]
+        "verifiedCredentials": ["Senior Technical Faculty", "Verified LMS Instructor"]
+      }
+    },
+    {
+      "id": "u-trainer-codewithharry",
+      "name": "CodeWithHarry (Haris Khan)",
+      "email": "codewithharry@gmail.com",
+      "password": "SRNNv@2005",
+      "role": "trainer",
+      "status": "active",
+      "createdAt": "2026-08-01T09:00:00Z",
+      "trainerProfile": {
+        "bio": "Master Software Educator, Creator of Sigma Web Development & Python 100 Days. Over 6M+ students trained globally.",
+        "expertise": ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"],
+        "competencies": ["Hands-on Coding", "Curriculum Design", "Real-world Projects"],
+        "phone": "+91 98765 44444",
+        "department": "Computer Science & Engineering",
+        "designation": "Principal Technical Educator & Founder, CodeWithHarry",
+        "experience": "10+ Years Technical Education",
+        "rating": 4.99,
+        "totalStudentsTaught": 6000000,
+        "verifiedCredentials": ["CodeWithHarry Founder", "Top Developer Educator"]
       }
     },
     {

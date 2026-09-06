@@ -52,15 +52,38 @@ export const initialUsers: User[] = [
     createdAt: "2026-08-01T09:00:00Z",
     trainerProfile: {
       bio: "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.",
-      expertise: ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"],
-      competencies: ["Hands-on Coding", "Curriculum Design", "Real-world Projects"],
+      expertise: ["Full-Stack Architecture", "Data Structures", "System Design", "Cloud Systems"],
+      competencies: ["Hands-on Coding", "Curriculum Design", "Real-world Projects", "Systems Architecture"],
       phone: "+91 98765 11111",
       department: "Computer Science & Engineering",
       designation: "Senior Technical Educator & Mentor",
       experience: "10+ Years Technical Education",
       rating: 4.99,
       totalStudentsTaught: 60000,
-      verifiedCredentials: ["Senior Educator", "Verified LMS Faculty"],
+      verifiedCredentials: ["Senior Technical Faculty", "Verified LMS Instructor"],
+      isVerifiedByAdmin: true
+    }
+  },
+  {
+    id: "u-trainer-codewithharry",
+    name: "CodeWithHarry (Haris Khan)",
+    email: "codewithharry@gmail.com",
+    password: "SRNNv@2005",
+    role: "trainer",
+    status: "active",
+    isVerifiedByAdmin: true,
+    createdAt: "2026-08-01T09:00:00Z",
+    trainerProfile: {
+      bio: "Master Software Educator, Creator of Sigma Web Development & Python 100 Days. Over 6M+ students trained globally.",
+      expertise: ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"],
+      competencies: ["Hands-on Coding", "Curriculum Design", "Real-world Projects"],
+      phone: "+91 98765 44444",
+      department: "Computer Science & Engineering",
+      designation: "Principal Technical Educator & Founder, CodeWithHarry",
+      experience: "10+ Years Technical Education",
+      rating: 4.99,
+      totalStudentsTaught: 6000000,
+      verifiedCredentials: ["CodeWithHarry Founder", "Top Developer Educator"],
       isVerifiedByAdmin: true
     }
   },
@@ -256,8 +279,8 @@ export const initialCourses: Course[] = [
     id: "c6",
     title: "Web Development Course",
     description: "The complete hands-on roadmap to becoming a full stack web developer: learn semantic HTML5, modern CSS3 & Flexbox, vanilla JavaScript ES6+, DOM manipulation, Node.js runtime, Express backend, MongoDB database, and React & Next.js.",
-    trainerId: "u-trainer-official",
-    trainerName: "Raj Tiwari",
+    trainerId: "u-trainer-codewithharry",
+    trainerName: "CodeWithHarry (Haris Khan)",
     category: "Technical",
     thumbnail: "/thumbnails/webdev-course.jpg",
     duration: "85+ Hours • 139 Lessons",
@@ -289,7 +312,7 @@ export const initialCourses: Course[] = [
         url: "#slides",
         size: "18.5 MB",
         uploadedAt: "2026-02-15T10:00:00Z",
-        uploadedBy: "Raj Tiwari",
+        uploadedBy: "CodeWithHarry (Haris Khan)",
         version: "v3.0",
         summary: "Comprehensive developer handbook covering HTML tags, CSS Flexbox cheatsheet, JavaScript DOM manipulation, Express routes, and React component lifecycles.",
         keyTakeaways: [
@@ -533,9 +556,9 @@ export const initialCourses: Course[] = [
   {
     id: "c-c-prog",
     title: "C Programming Complete Course",
-    description: "Master C Language programming from scratch with Raj Tiwari. Covers variables, data types, control flow, functions, recursion, pointers, dynamic memory allocation (malloc, calloc, realloc, free), structs, file I/O, and real-world projects like Snake Water Gun game.",
-    trainerId: "u-trainer-official",
-    trainerName: "Raj Tiwari",
+    description: "Master C Language programming from scratch with CodeWithHarry. Covers variables, data types, control flow, functions, recursion, pointers, dynamic memory allocation (malloc, calloc, realloc, free), structs, file I/O, and real-world projects like Snake Water Gun game.",
+    trainerId: "u-trainer-codewithharry",
+    trainerName: "CodeWithHarry (Haris Khan)",
     category: "Technical",
     thumbnail: "/thumbnails/c-prog-course.jpg",
     duration: "10+ Hours • 14 Chapters & Projects",
@@ -568,9 +591,9 @@ export const initialCourses: Course[] = [
   {
     id: "c-python",
     title: "Python for Beginners (100 Days of Code)",
-    description: "The complete 100 Days of Code Python Bootcamp by Raj Tiwari. Learn Python programming from beginner syntax to advanced object-oriented programming, data structures, decorators, generators, file handling, multi-threading, GUI development, and production project creation.",
-    trainerId: "u-trainer-official",
-    trainerName: "Raj Tiwari",
+    description: "The complete 100 Days of Code Python Bootcamp by CodeWithHarry. Learn Python programming from beginner syntax to advanced object-oriented programming, data structures, decorators, generators, file handling, multi-threading, GUI development, and production project creation.",
+    trainerId: "u-trainer-codewithharry",
+    trainerName: "CodeWithHarry (Haris Khan)",
     category: "Technical",
     thumbnail: "/thumbnails/python-course.jpg",
     duration: "35+ Hours • 100 Lessons",
@@ -756,7 +779,7 @@ export const initialAssessments: Assessment[] = [
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 20,
     passingScore: 70,
-    createdBy: "Raj Tiwari",
+    createdBy: "CodeWithHarry (Haris Khan)",
     createdAt: "2026-02-15T12:00:00Z",
     questions: [
       {
@@ -1023,7 +1046,7 @@ export const initialAssessments: Assessment[] = [
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 20,
     passingScore: 70,
-    createdBy: "Raj Tiwari",
+    createdBy: "CodeWithHarry (Haris Khan)",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [
       {
@@ -1112,7 +1135,7 @@ export const initialAssessments: Assessment[] = [
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 20,
     passingScore: 70,
-    createdBy: "Raj Tiwari",
+    createdBy: "CodeWithHarry (Haris Khan)",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [
       {
@@ -1694,7 +1717,8 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     gapScore: 3,
     priority: "High",
     suitableTrainers: [
-      { id: "u-trainer-official", name: "Raj Tiwari", rating: 4.98, matchPercentage: 100, experienceYears: 12, competencies: ["Full-Stack", "JavaScript", "React", "Next.js", "Express", "Node.js", "Tailwind"] }
+      { id: "u-trainer-codewithharry", name: "CodeWithHarry (Haris Khan)", rating: 4.98, matchPercentage: 100, experienceYears: 12, competencies: ["Full-Stack", "JavaScript", "React", "Next.js", "Express", "Node.js", "Tailwind"] },
+      { id: "u-trainer-official", name: "Raj Tiwari", rating: 4.98, matchPercentage: 96, experienceYears: 10, competencies: ["Full-Stack", "JavaScript", "React", "Node.js", "Cloud Systems"] }
     ]
   },
   {
@@ -1727,7 +1751,7 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     gapScore: 4,
     priority: "High",
     suitableTrainers: [
-      { id: "u-trainer-official", name: "Raj Tiwari", rating: 4.98, matchPercentage: 100, experienceYears: 10, competencies: ["C Programming", "Pointers", "Memory Management", "Data Structures"] }
+      { id: "u-trainer-codewithharry", name: "CodeWithHarry (Haris Khan)", rating: 4.98, matchPercentage: 100, experienceYears: 10, competencies: ["C Programming", "Pointers", "Memory Management", "Data Structures"] }
     ]
   },
   {
@@ -1738,7 +1762,7 @@ export const initialCompetencyMatrix: SubjectCompetency[] = [
     gapScore: 4,
     priority: "Critical",
     suitableTrainers: [
-      { id: "u-trainer-official", name: "Raj Tiwari", rating: 4.99, matchPercentage: 100, experienceYears: 10, competencies: ["Python", "Automation", "OOP", "Data Structures", "APIs"] }
+      { id: "u-trainer-codewithharry", name: "CodeWithHarry (Haris Khan)", rating: 4.99, matchPercentage: 100, experienceYears: 10, competencies: ["Python", "Automation", "OOP", "Data Structures", "APIs"] }
     ]
   },
   {
@@ -1814,8 +1838,8 @@ export const initialDiscussions: DiscussionThread[] = [
     replies: [
       {
         id: "rep-01",
-        authorId: "u-trainer-official",
-        authorName: "Raj Tiwari",
+        authorId: "u-trainer-codewithharry",
+        authorName: "CodeWithHarry (Haris Khan)",
         authorRole: "trainer",
         authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
         content: "Great question! Either use primitive values (like user.id) directly in the dependency array instead of the entire object, or wrap the fetch function in useCallback. As covered in Tutorial #108 and #118!",
@@ -1827,7 +1851,7 @@ export const initialDiscussions: DiscussionThread[] = [
         authorId: "u-trainee-official",
         authorName: "Madhav Kumar",
         authorRole: "trainee",
-        content: "Passing just user.id solved the infinite loop right away, thank you sir!",
+        content: "Passing just user.id solved the infinite loop right away, thank you Harry sir!",
         createdAt: "2026-02-18T15:10:00Z"
       }
     ]
@@ -1846,8 +1870,8 @@ export const initialDiscussions: DiscussionThread[] = [
     replies: [
       {
         id: "rep-03",
-        authorId: "u-trainer-official",
-        authorName: "Raj Tiwari",
+        authorId: "u-trainer-codewithharry",
+        authorName: "CodeWithHarry (Haris Khan)",
         authorRole: "trainer",
         content: "CSS Grid is 2D and excels when you want uniform column alignments across rows. Flexbox is 1D and best for header bars or uneven tag strips. In Tutorial #44 we cover exactly this comparison!",
         createdAt: "2026-02-22T10:30:00Z",
@@ -1970,25 +1994,45 @@ export function initializeStorage() {
           u.email !== "trainee@capacityconnect.org"
         )
         .map((u: any) => {
-          if (
-            u.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-            u.id === "u-trainer-official" ||
-            (u.name && (u.name.toLowerCase().includes("harry") || u.name.toLowerCase().includes("khan")))
-          ) {
+          if (u.email?.toLowerCase() === "tiwariraj052005@gmail.com") {
             return {
               ...u,
+              id: "u-trainer-official",
               name: "Raj Tiwari",
               trainerProfile: {
                 ...(u.trainerProfile || {}),
                 bio: "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.",
                 designation: "Senior Technical Educator & Mentor",
                 department: u.trainerProfile?.department || "Computer Science & Engineering",
-                verifiedCredentials: ["Senior Educator", "Verified LMS Faculty"]
+                verifiedCredentials: ["Senior Technical Faculty", "Verified LMS Instructor"]
+              }
+            };
+          }
+          if (u.email?.toLowerCase() === "codewithharry@gmail.com") {
+            return {
+              ...u,
+              id: "u-trainer-codewithharry",
+              name: "CodeWithHarry (Haris Khan)",
+              trainerProfile: {
+                ...(u.trainerProfile || {}),
+                bio: "Master Software Educator, Creator of Sigma Web Development & Python 100 Days. Over 6M+ students trained globally.",
+                designation: "Principal Technical Educator & Founder, CodeWithHarry",
+                department: "Computer Science & Engineering",
+                verifiedCredentials: ["CodeWithHarry Founder", "Top Developer Educator"]
               }
             };
           }
           return u;
         });
+
+      if (!filteredUsers.some((u: any) => u.email?.toLowerCase() === "codewithharry@gmail.com")) {
+        const harryUser = initialUsers.find((u) => u.email.toLowerCase() === "codewithharry@gmail.com");
+        if (harryUser) filteredUsers.push(harryUser);
+      }
+      if (!filteredUsers.some((u: any) => u.email?.toLowerCase() === "tiwariraj052005@gmail.com")) {
+        const rajUser = initialUsers.find((u) => u.email.toLowerCase() === "tiwariraj052005@gmail.com");
+        if (rajUser) filteredUsers.push(rajUser);
+      }
       localStorage.setItem("cc_users", JSON.stringify(filteredUsers));
     }
 
@@ -2002,11 +2046,13 @@ export function initializeStorage() {
       ) {
         localStorage.removeItem("cc_auth");
       } else if (parsedAuth?.user) {
-        if (
-          parsedAuth.user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-          (parsedAuth.user.name && (parsedAuth.user.name.toLowerCase().includes("harry") || parsedAuth.user.name.toLowerCase().includes("khan")))
-        ) {
+        if (parsedAuth.user.email?.toLowerCase() === "tiwariraj052005@gmail.com") {
           parsedAuth.user.name = "Raj Tiwari";
+          parsedAuth.user.id = "u-trainer-official";
+          localStorage.setItem("cc_auth", JSON.stringify(parsedAuth));
+        } else if (parsedAuth.user.email?.toLowerCase() === "codewithharry@gmail.com") {
+          parsedAuth.user.name = "CodeWithHarry (Haris Khan)";
+          parsedAuth.user.id = "u-trainer-codewithharry";
           localStorage.setItem("cc_auth", JSON.stringify(parsedAuth));
         }
       }
@@ -2016,8 +2062,12 @@ export function initializeStorage() {
     if (rawCourses) {
       const parsedCourses = JSON.parse(rawCourses);
       const cleanedCourses = parsedCourses.map((c: any) => {
-        if (c.trainerName && (c.trainerName.toLowerCase().includes("harry") || c.trainerName.toLowerCase().includes("khan"))) {
-          return { ...c, trainerName: "Raj Tiwari" };
+        if (c.id === "c6" || c.id === "c-c-prog" || c.id === "c-python") {
+          return {
+            ...c,
+            trainerId: "u-trainer-codewithharry",
+            trainerName: "CodeWithHarry (Haris Khan)"
+          };
         }
         return c;
       });
@@ -2088,13 +2138,24 @@ export function getFromStorage<T>(key: string): T[] {
             } else {
               const match = parsed.find((u: any) => u.email?.toLowerCase() === initUser.email.toLowerCase());
               if (match) {
-                if (match.name !== initUser.name && (match.id === initUser.id || match.email?.toLowerCase() === "tiwariraj052005@gmail.com" || match.name?.includes("Haris Khan"))) {
-                  match.name = initUser.name;
-                  if (match.trainerProfile && initUser.trainerProfile) {
-                    match.trainerProfile.bio = initUser.trainerProfile.bio;
-                    match.trainerProfile.designation = initUser.trainerProfile.designation;
+                if (initUser.email.toLowerCase() === "tiwariraj052005@gmail.com") {
+                  if (match.name !== "Raj Tiwari" || match.id !== "u-trainer-official") {
+                    match.name = "Raj Tiwari";
+                    match.id = "u-trainer-official";
+                    if (initUser.trainerProfile) {
+                      match.trainerProfile = { ...initUser.trainerProfile };
+                    }
+                    modified = true;
                   }
-                  modified = true;
+                } else if (initUser.email.toLowerCase() === "codewithharry@gmail.com") {
+                  if (match.name !== "CodeWithHarry (Haris Khan)" || match.id !== "u-trainer-codewithharry") {
+                    match.name = "CodeWithHarry (Haris Khan)";
+                    match.id = "u-trainer-codewithharry";
+                    if (initUser.trainerProfile) {
+                      match.trainerProfile = { ...initUser.trainerProfile };
+                    }
+                    modified = true;
+                  }
                 }
                 if (initUser.role === "trainer" && initUser.isVerifiedByAdmin && (match.isVerifiedByAdmin === undefined || !match.isVerifiedByAdmin)) {
                   match.isVerifiedByAdmin = true;

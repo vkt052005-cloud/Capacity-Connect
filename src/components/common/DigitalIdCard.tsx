@@ -22,9 +22,8 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({ user }) => {
 
   const displayName =
     (user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-     user.id === "u-trainer-official" ||
-     user.name?.toLowerCase().includes("harry") ||
-     user.name?.toLowerCase().includes("khan"))
+     (user.id === "u-trainer-official" && !user.email?.toLowerCase().includes("harry")) ||
+     user.id === "trainer-mto8vdlt-rpmv8")
       ? "Raj Tiwari"
       : user.name;
 

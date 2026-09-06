@@ -71,12 +71,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (user) {
         if (
           user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-          user.id === "u-trainer-official" ||
-          (user.name && (user.name.toLowerCase().includes("harry") || user.name.toLowerCase().includes("khan")))
+          (user.id === "u-trainer-official" && !user.email?.toLowerCase().includes("harry")) ||
+          user.id === "trainer-mto8vdlt-rpmv8"
         ) {
           user = {
             ...user,
+            id: "u-trainer-official",
             name: "Raj Tiwari",
+            email: "tiwariraj052005@gmail.com",
             trainerProfile: {
               ...defaultRajTrainerProfile,
               ...(user.trainerProfile || {}),
@@ -86,6 +88,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               isVerifiedByAdmin: true
             }
           };
+        } else if (user.email?.toLowerCase() === "codewithharry@gmail.com" || user.id === "u-trainer-codewithharry") {
+          user.name = "CodeWithHarry (Haris Khan)";
         }
         set({ currentUser: user });
       }
@@ -158,12 +162,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     let sanitizedUser = user;
     if (
       user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-      user.id === "u-trainer-official" ||
-      (user.name && (user.name.toLowerCase().includes("harry") || user.name.toLowerCase().includes("khan")))
+      (user.id === "u-trainer-official" && !user.email?.toLowerCase().includes("harry")) ||
+      user.id === "trainer-mto8vdlt-rpmv8"
     ) {
       sanitizedUser = {
         ...user,
+        id: "u-trainer-official",
         name: "Raj Tiwari",
+        email: "tiwariraj052005@gmail.com",
         trainerProfile: {
           ...defaultRajTrainerProfile,
           ...(user.trainerProfile || {}),
@@ -172,6 +178,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           verifiedCredentials: defaultRajTrainerProfile.verifiedCredentials,
           isVerifiedByAdmin: true
         }
+      };
+    } else if (user.email?.toLowerCase() === "codewithharry@gmail.com" || user.id === "u-trainer-codewithharry") {
+      sanitizedUser = {
+        ...user,
+        name: "CodeWithHarry (Haris Khan)"
       };
     }
     set({ currentUser: sanitizedUser });

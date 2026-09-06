@@ -212,10 +212,8 @@ export const Header: React.FC = () => {
           {currentUser ? (() => {
             const isRajTiwari =
               currentUser.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-              currentUser.id === "u-trainer-official" ||
-              currentUser.id === "trainer-mto8vdlt-rpmv8" ||
-              Boolean(currentUser.name?.toLowerCase().includes("harry")) ||
-              Boolean(currentUser.name?.toLowerCase().includes("khan"));
+              (currentUser.id === "u-trainer-official" && !currentUser.email?.toLowerCase().includes("harry")) ||
+              currentUser.id === "trainer-mto8vdlt-rpmv8";
             const userDisplayName = isRajTiwari ? "Raj Tiwari" : currentUser.name;
 
             return (

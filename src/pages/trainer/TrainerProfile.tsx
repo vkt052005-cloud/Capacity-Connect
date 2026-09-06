@@ -10,18 +10,27 @@ export const TrainerProfile: React.FC = () => {
 
   const isRajTiwari =
     currentUser?.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-    currentUser?.id === "u-trainer-official" ||
-    currentUser?.id === "trainer-mto8vdlt-rpmv8" ||
-    Boolean(currentUser?.name?.toLowerCase().includes("harry")) ||
-    Boolean(currentUser?.name?.toLowerCase().includes("khan"));
+    (currentUser?.id === "u-trainer-official" && !currentUser?.email?.toLowerCase().includes("harry")) ||
+    currentUser?.id === "trainer-mto8vdlt-rpmv8";
 
-  const displayName = isRajTiwari ? "Raj Tiwari" : (currentUser?.name || "Faculty Trainer");
+  const isCodeWithHarry =
+    currentUser?.email?.toLowerCase() === "codewithharry@gmail.com" ||
+    currentUser?.id === "u-trainer-codewithharry";
+
+  const displayName = isRajTiwari
+    ? "Raj Tiwari"
+    : isCodeWithHarry
+    ? "CodeWithHarry (Haris Khan)"
+    : (currentUser?.name || "Faculty Trainer");
+
   const displayDesignation = isRajTiwari
     ? (profile?.designation || "Senior Technical Educator & Mentor")
-    : (profile?.designation || "Trainer");
+    : (profile?.designation || "Faculty Trainer");
+
   const displayDepartment = isRajTiwari
     ? (profile?.department || "Computer Science & Engineering")
     : (profile?.department || "Academic Faculty");
+
   const displayBio = isRajTiwari
     ? (profile?.bio && !profile.bio.toLowerCase().includes("harry") && !profile.bio.toLowerCase().includes("khan")
         ? profile.bio
@@ -41,10 +50,11 @@ export const TrainerProfile: React.FC = () => {
     : (isRajTiwari ? ["Full-Stack Architecture", "Python", "JavaScript", "C Programming"] : []);
 
   const rawCreds = profile?.verifiedCredentials?.filter(Boolean) || [];
-  const sanitizedCreds = rawCreds.filter(c => !c.toLowerCase().includes("harry") && !c.toLowerCase().includes("khan"));
-  const credentials = sanitizedCreds.length > 0
-    ? sanitizedCreds
-    : (isRajTiwari ? ["Senior Educator", "Verified LMS Faculty"] : []);
+  const credentials = isRajTiwari
+    ? (rawCreds.filter(c => !c.toLowerCase().includes("harry") && !c.toLowerCase().includes("khan")).length
+        ? rawCreds.filter(c => !c.toLowerCase().includes("harry") && !c.toLowerCase().includes("khan"))
+        : ["Senior Technical Faculty", "Verified LMS Instructor"])
+    : (rawCreds.length ? rawCreds : ["CodeWithHarry Founder", "Top Developer Educator"]);
 
   return (
     <DashboardLayout
