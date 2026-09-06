@@ -5,7 +5,7 @@ import { useCoursesStore } from "../../store/coursesStore";
 import { formatCourseDuration } from "../../utils/courseDuration";
 
 export const CourseManagement: React.FC = () => {
-  const { courses, deleteCourse, feedbacks } = useCoursesStore();
+  const { courses, deleteCourse, feedbacks, deleteFeedback } = useCoursesStore();
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("all");
 
   const filteredFeedbacks =
@@ -136,12 +136,13 @@ export const CourseManagement: React.FC = () => {
                   <th className="py-2.5 px-3">Rating</th>
                   <th className="py-2.5 px-3">Student Feedback & Suggestions</th>
                   <th className="py-2.5 px-3">Date</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredFeedbacks.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-xs text-slate-400 italic">
+                    <td colSpan={7} className="py-8 text-center text-xs text-slate-400 italic">
                       No student ratings found matching this filter.
                     </td>
                   </tr>
@@ -178,6 +179,15 @@ export const CourseManagement: React.FC = () => {
                       </td>
                       <td className="py-3 px-3 text-slate-400 whitespace-nowrap">
                         {new Date(fb.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          onClick={() => deleteFeedback(fb.id)}
+                          className="p-1 text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                          title="Delete / Moderate Review"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </td>
                     </tr>
                   ))

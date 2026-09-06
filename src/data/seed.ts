@@ -1932,56 +1932,7 @@ export const initialDiscussions: DiscussionThread[] = [
   }
 ];
 
-export const initialFeedbacks: Feedback[] = [
-  {
-    id: "fb-1",
-    traineeId: "u-trainee-1",
-    traineeName: "Madhav Kumar",
-    courseId: "c6",
-    courseTitle: "Web Development Course",
-    trainerId: "u-trainer-codewithharry",
-    trainerName: "CodeWithHarry (Haris Khan)",
-    rating: 5,
-    comment: "The explanation of JavaScript DOM and async/await is world-class. Very thorough lectures and hands-on exercises!",
-    createdAt: "2026-09-06T14:30:00Z"
-  },
-  {
-    id: "fb-2",
-    traineeId: "u-trainee-2",
-    traineeName: "Aarav Sharma",
-    courseId: "c-dsa",
-    courseTitle: "DATA STRUCTURE AND ALGORITHM",
-    trainerId: "u-trainer-striver",
-    trainerName: "take U forward (Striver / Raj Vikramaditya)",
-    rating: 5,
-    comment: "Outstanding roadmap for Binary Trees and Dynamic Programming. Clear step-by-step intuition before coding.",
-    createdAt: "2026-09-06T11:15:00Z"
-  },
-  {
-    id: "fb-3",
-    traineeId: "u-trainee-3",
-    traineeName: "Priya Patel",
-    courseId: "c-sql",
-    courseTitle: "Databases With SQL",
-    trainerId: "u-trainer-cs50",
-    trainerName: "Harvard CS50 / Carter Zenke",
-    rating: 5,
-    comment: "Concise yet powerful lectures on normalization, JOINs, and indexing. The slide decks are exceptionally clear.",
-    createdAt: "2026-09-06T16:45:00Z"
-  },
-  {
-    id: "fb-4",
-    traineeId: "u-trainee-1",
-    traineeName: "Madhav Kumar",
-    courseId: "c-c-prog",
-    courseTitle: "C Programming Complete Course",
-    trainerId: "u-trainer-codewithharry",
-    trainerName: "CodeWithHarry (Haris Khan)",
-    rating: 5,
-    comment: "Pointers and memory management concepts were explained with incredible visual clarity. Highly recommended.",
-    createdAt: "2026-09-06T09:20:00Z"
-  }
-];
+export const initialFeedbacks: Feedback[] = [];
 
 export const initialNotifications: Notification[] = [
   {
@@ -2338,6 +2289,26 @@ export function getFromStorage<T>(key: string): T[] {
         if (key === STORAGE_KEYS.COMPETENCIES) {
           localStorage.setItem(key, JSON.stringify(initialCompetencyMatrix));
           return initialCompetencyMatrix as any;
+        }
+        if (key === STORAGE_KEYS.FEEDBACKS) {
+          // Remove seed/fake reviews that were not given by real students
+          const realStudentFeedbacks = (parsed || []).filter((f: any) => {
+            if (!f || !f.id) return false;
+            // Filter out seed IDs or pre-filled reviews
+            if (["fb-1", "fb-2", "fb-3", "fb-4"].includes(f.id)) return false;
+            const comment = (f.comment || "").toLowerCase();
+            if (
+              comment.includes("world-class") ||
+              comment.includes("pointers and memory management concepts were explained") ||
+              comment.includes("concise yet powerful lectures on normalization") ||
+              comment.includes("outstanding roadmap for binary trees")
+            ) {
+              return false;
+            }
+            return true;
+          });
+          localStorage.setItem(key, JSON.stringify(realStudentFeedbacks));
+          return realStudentFeedbacks as any;
         }
         return parsed;
       }

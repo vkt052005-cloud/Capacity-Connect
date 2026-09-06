@@ -23,6 +23,7 @@ interface CoursesState {
   updateCourse: (courseId: string, updates: Partial<Course>) => void;
   deleteCourse: (courseId: string) => void;
   addFeedback: (fb: Feedback) => void;
+  deleteFeedback: (feedbackId: string) => void;
   getCourseFeedbacks: (courseId: string) => Feedback[];
   getTrainerFeedbacks: (trainerId: string) => Feedback[];
   isEnrolled: (traineeId: string, courseId: string) => boolean;
@@ -57,18 +58,35 @@ const sanitizeEnrollments = (enrollments: Enrollment[]): Enrollment[] => {
   });
 };
 
+const sanitizeFeedbacks = (feedbacks: Feedback[]): Feedback[] => {
+  return (feedbacks || []).filter((f) => {
+    if (!f || !f.id) return false;
+    if (["fb-1", "fb-2", "fb-3", "fb-4"].includes(f.id)) return false;
+    const comment = (f.comment || "").toLowerCase();
+    if (
+      comment.includes("world-class") ||
+      comment.includes("pointers and memory management concepts were explained") ||
+      comment.includes("concise yet powerful lectures on normalization") ||
+      comment.includes("outstanding roadmap for binary trees")
+    ) {
+      return false;
+    }
+    return true;
+  });
+};
+
 export const useCoursesStore = create<CoursesState>((set, get) => ({
   courses: sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES)),
   enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
   certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
-  feedbacks: getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS),
+  feedbacks: sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS)),
 
   load: () => {
     set({
       courses: sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES)),
       enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
       certificates: getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES),
-      feedbacks: getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS)
+      feedbacks: sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS))
     });
   },
 
@@ -198,6 +216,36 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
     saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
     set({ feedbacks: updatedFeedbacks, courses: updatedCourses });
+  },
+
+  deleteFeedback: (feedbackId) => {
+    const { feedbacks, courses } = get();
+    const targetFeedback = feedbacks.find((f) => f.id === feedbackId);
+    const updatedFeedbacks = feedbacks.filter((f) => f.id !== feedbackId);
+    saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
+
+    if (targetFeedback) {
+      const remainingCourseFeedbacks = updatedFeedbacks.filter((f) => f.courseId === targetFeedback.courseId);
+      const avgRating =
+        remainingCourseFeedbacks.length > 0
+          ? Number((remainingCourseFeedbacks.reduce((acc, f) => acc + f.rating, 0) / remainingCourseFeedbacks.length).toFixed(1))
+          : 0;
+
+      const updatedCourses = courses.map((c) => {
+        if (c.id === targetFeedback.courseId) {
+          return {
+            ...c,
+            rating: avgRating,
+            totalRatings: remainingCourseFeedbacks.length
+          };
+        }
+        return c;
+      });
+      saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
+      set({ feedbacks: updatedFeedbacks, courses: updatedCourses });
+    } else {
+      set({ feedbacks: updatedFeedbacks });
+    }
   },
 
   getCourseFeedbacks: (courseId) => {

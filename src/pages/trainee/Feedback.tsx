@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Star, Send, MessageSquare, CheckCircle2, Award, BookOpen, Clock, ShieldCheck } from "lucide-react";
+import { Star, Send, MessageSquare, CheckCircle2, Award, BookOpen, Clock, ShieldCheck, Trash2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useCoursesStore } from "../../store/coursesStore";
@@ -7,7 +7,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 
 export const FeedbackPage: React.FC = () => {
-  const { courses, enrollments, addFeedback, feedbacks } = useCoursesStore();
+  const { courses, enrollments, addFeedback, deleteFeedback, feedbacks } = useCoursesStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
   const [searchParams] = useSearchParams();
@@ -226,6 +226,20 @@ export const FeedbackPage: React.FC = () => {
                       <span className="text-[10px] text-slate-500 font-mono">
                         {new Date(fb.createdAt).toLocaleDateString()}
                       </span>
+                      <button
+                        onClick={() => {
+                          deleteFeedback(fb.id);
+                          addToast({
+                            title: "Review Removed",
+                            message: "Your review has been deleted.",
+                            type: "info"
+                          });
+                        }}
+                        className="p-1 text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                        title="Delete Review"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed italic">
