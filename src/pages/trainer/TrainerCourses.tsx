@@ -247,10 +247,13 @@ export const TrainerCourses: React.FC = () => {
     }
   };
 
-    // Create Course Handler
-    const handleCreateCourse = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!title.trim()) return;
+  const [isSubmittingCourse, setIsSubmittingCourse] = useState(false);
+
+  // Create Course Handler
+  const handleCreateCourse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || isSubmittingCourse) return;
+    setIsSubmittingCourse(true);
 
       const modNum = typeof modulesCount === "number" && modulesCount > 0 ? modulesCount : undefined;
       const baseDuration = duration.trim() || "0 Mins";
@@ -350,6 +353,7 @@ export const TrainerCourses: React.FC = () => {
       setInitialResourceTitle("");
       setInitialResourceUrl("");
       setThumbnailUrl(THUMBNAIL_PRESETS[0].url);
+      setIsSubmittingCourse(false);
       addToast({
         title: "Course Created Successfully",
         message: "New curriculum published to catalog and trainees notified.",
@@ -1457,8 +1461,12 @@ export const TrainerCourses: React.FC = () => {
               </div>
 
               <div className="flex gap-2 pt-2 border-t border-white/10">
-                <button type="submit" className="apple-btn-primary flex-1 text-xs py-2 font-bold cursor-pointer">
-                  Publish Curriculum
+                <button
+                  type="submit"
+                  disabled={isSubmittingCourse}
+                  className="apple-btn-primary flex-1 text-xs py-2 font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingCourse ? "Publishing Curriculum..." : "Publish Curriculum"}
                 </button>
                 <button
                   type="button"

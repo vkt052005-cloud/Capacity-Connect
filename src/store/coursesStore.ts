@@ -50,10 +50,20 @@ interface CoursesState {
 
 const sanitizeCourses = (courses: Course[], feedbacks: Feedback[] = []): Course[] => {
   const deletedIds = getDeletedCourseIds();
+  const seenIds = new Set<string>();
+  const seenTitleTrainer = new Set<string>();
+
   return (courses || [])
     .filter((c) => {
       if (!c || !c.id) return false;
       if (deletedIds.has(c.id)) return false;
+      if (seenIds.has(c.id)) return false;
+      seenIds.add(c.id);
+
+      const titleKey = `${c.trainerId || c.trainerName || ""}_${(c.title || "").trim().toLowerCase()}`;
+      if (c.title && c.title.trim() && seenTitleTrainer.has(titleKey)) return false;
+      if (c.title && c.title.trim()) seenTitleTrainer.add(titleKey);
+
       if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
       const trainer = (c.trainerName || "").toLowerCase();
       if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
@@ -327,6 +337,12 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
   addCourse: (course) => {
     const { courses } = get();
+    // Prevent duplicate entries of the same course
+    const exists = courses.some((c) => c.id === course.id || (c.title.trim().toLowerCase() === course.title.trim().toLowerCase() && c.trainerId === course.trainerId));
+    if (exists) {
+      console.warn("Course with identical ID or title/trainer already exists, skipping duplicate addition:", course.title);
+      return;
+    }
     const updated = [...courses, course];
     saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });

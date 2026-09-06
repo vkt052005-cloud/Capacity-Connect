@@ -42,11 +42,14 @@ export const CourseManagement: React.FC = () => {
   // Permanent course deletion state
   const [courseToDelete, setCourseToDelete] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSubmittingCourse, setIsSubmittingCourse] = useState(false);
 
   const handleAdminCreateCourse = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingCourse) return;
     if (!title.trim()) return;
 
+    setIsSubmittingCourse(true);
     const courseId = "c-" + Date.now();
     const courseTitle = title.trim();
     const modNum = typeof modulesCount === "number" && modulesCount > 0 ? modulesCount : undefined;
@@ -125,6 +128,7 @@ export const CourseManagement: React.FC = () => {
     setInitialVideoUrl("");
     setInitialVideoTitle("");
     setThumbnailUrl(ADMIN_THUMBNAIL_PRESETS[0].url);
+    setIsSubmittingCourse(false);
 
     addToast({
       title: "Course Curriculum Published",
@@ -615,8 +619,12 @@ export const CourseManagement: React.FC = () => {
               </div>
 
               <div className="flex gap-2 pt-2 border-t border-white/10">
-                <button type="submit" className="apple-btn-primary flex-1 text-xs py-2 font-bold cursor-pointer">
-                  Publish Curriculum
+                <button
+                  type="submit"
+                  disabled={isSubmittingCourse}
+                  className="apple-btn-primary flex-1 text-xs py-2 font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingCourse ? "Publishing Curriculum..." : "Publish Curriculum"}
                 </button>
                 <button
                   type="button"

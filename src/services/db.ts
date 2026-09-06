@@ -140,10 +140,26 @@ class DatabaseService {
   public async create<T = any>(collection: string, record: T): Promise<T> {
     const storageKey = this.getStorageKey(collection);
 
-    // 1. Optimistically save to local storage
+    // 1. Optimistically save to local storage (with deduplication by id and course title/trainer)
     if (storageKey) {
       const local = getFromStorage<any>(storageKey);
-      saveToStorage(storageKey, [record, ...local]);
+      const recordId = (record as any)?.id;
+      const alreadyInStorage = recordId
+        ? local.some((item: any) => {
+            if (item?.id === recordId) return true;
+            if (collection === 'courses' && item?.title && (record as any)?.title) {
+              const itemTitle = String(item.title).trim().toLowerCase();
+              const recordTitle = String((record as any).title).trim().toLowerCase();
+              const itemTrainer = item.trainerId || item.trainerName || '';
+              const recordTrainer = (record as any).trainerId || (record as any).trainerName || '';
+              return itemTitle === recordTitle && itemTrainer === recordTrainer;
+            }
+            return false;
+          })
+        : false;
+      if (!alreadyInStorage) {
+        saveToStorage(storageKey, [record, ...local]);
+      }
     }
 
     // 2. Try Cloud Supabase if configured
