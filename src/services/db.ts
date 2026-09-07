@@ -101,160 +101,151 @@ class DatabaseService {
     };
   }
 
-  // GET ALL Records
-  public async getAll<T = any>(collection: string): Promise<T[]> {
-    const storageKey = this.getStorageKey(collection);
+  private notifySubscribers(collection: string, payload: any) {
+    if (this.listeners.has(collection)) {
+      this.listeners.get(collection)?.forEach((cb) => {
+        try {
+          cb(payload);
+        } catch (e) {}
+      });
+    }
+  }
 
-    // 1. Try Cloud Supabase if configured
+  // GET ALL Records directly from Cloud
+  public async getAll<T = any>(collection: string): Promise<T[]> {
+    // 1. Primary: Authoritative Cloud Supabase
     if (isSupabaseConfigured) {
       try {
         const cloudData = await supabase.select<T>(collection);
-        if (cloudData && cloudData.length > 0) {
-          if (storageKey) {
-            saveToStorage(storageKey, cloudData);
-          }
+        if (cloudData !== null && Array.isArray(cloudData)) {
           return cloudData;
         }
       } catch (err) {
-        console.warn('Supabase fetch failed, falling back to local central DB:', err);
+        console.warn('Supabase fetch error on ' + collection + ':', err);
       }
     }
 
-    // 2. Try Central Server Database
+    // 2. Fallback: Central Server Database
     try {
       const res = await fetch(`${this.getBaseUrl()}/api/db/${collection}`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          if (storageKey) {
-            saveToStorage(storageKey, data);
-          }
+        if (Array.isArray(data)) {
           return data as T[];
         }
       }
-    } catch (e) {
-      // Offline fallback
-    }
+    } catch (e) {}
 
-    // 3. LocalStorage fallback
-    if (storageKey) {
-      return getFromStorage<T>(storageKey);
-    }
     return [];
   }
 
-  // CREATE Record
+  // CREATE Record directly in Cloud
   public async create<T = any>(collection: string, record: T): Promise<T> {
-    const storageKey = this.getStorageKey(collection);
+    let cloudRecord: any = record;
 
-    // 1. Optimistically save to local storage (with deduplication by id and course title/trainer)
-    if (storageKey) {
-      const local = getFromStorage<any>(storageKey);
-      const recordId = (record as any)?.id;
-      const alreadyInStorage = recordId
-        ? local.some((item: any) => {
-            if (item?.id === recordId) return true;
-            if (collection === 'courses' && item?.title && (record as any)?.title) {
-              const itemTitle = String(item.title).trim().toLowerCase();
-              const recordTitle = String((record as any).title).trim().toLowerCase();
-              const itemTrainer = item.trainerId || item.trainerName || '';
-              const recordTrainer = (record as any).trainerId || (record as any).trainerName || '';
-              return itemTitle === recordTitle && itemTrainer === recordTrainer;
-            }
-            return false;
-          })
-        : false;
-      if (!alreadyInStorage) {
-        saveToStorage(storageKey, [record, ...local]);
-      }
+    if (collection === 'audit_logs') {
+      cloudRecord = {
+        ...record,
+        user_id: (record as any).actor || (record as any).user_id || 'System',
+        action: (record as any).action || 'ACTION',
+        details: (record as any).details || `${(record as any).actor || 'User'} (${(record as any).role || 'user'}): ${(record as any).action} on ${(record as any).target || 'system'} [${(record as any).status || 'SUCCESS'}]`,
+        severity: (record as any).severity || ((record as any).status === 'FAILED' ? 'critical' : (record as any).status === 'WARNING' ? 'warning' : 'info'),
+        ip_address: (record as any).ipAddress || (record as any).ip_address || '127.0.0.1'
+      };
+    } else if (collection === 'certificates') {
+      cloudRecord = {
+        ...record,
+        certificate_number: (record as any).certificateHash || (record as any).certificate_number || (record as any).id,
+        user_name: (record as any).traineeName || (record as any).user_name || 'Student',
+        course_title: (record as any).courseTitle || (record as any).course_title || 'Course',
+        grade: (record as any).grade || 'Passed',
+        verification_hash: (record as any).certificateHash || (record as any).verification_hash || (record as any).id,
+        verification_url: (record as any).verificationUrl || (record as any).verification_url || 'https://capacityconnect.org/verify',
+        user_id: (record as any).traineeId || (record as any).user_id,
+        course_id: (record as any).courseId || (record as any).course_id,
+        issue_date: (record as any).issuedAt || (record as any).issue_date || new Date().toISOString()
+      };
+    } else if (collection === 'live_sessions') {
+      cloudRecord = {
+        ...record,
+        trainer_name: (record as any).trainerName || (record as any).trainer_name || 'Trainer',
+        course_title: (record as any).courseTitle || (record as any).course_title || 'Live Interactive Class'
+      };
+    } else if (collection === 'feedbacks') {
+      cloudRecord = {
+        ...record,
+        trainee_name: (record as any).traineeName || (record as any).trainee_name || 'Student',
+        course_title: (record as any).courseTitle || (record as any).course_title || 'Course',
+        comment: (record as any).comment || 'Feedback submitted'
+      };
     }
 
-    // 2. Try Cloud Supabase if configured
     if (isSupabaseConfigured) {
       try {
-        await supabase.insert(collection, record);
+        const res = await supabase.insert(collection, cloudRecord);
+        this.notifySubscribers(collection, { action: 'create', data: res || cloudRecord });
+        return (res as T) || record;
       } catch (err) {
-        console.warn('Supabase insert skipped or failed:', err);
+        console.warn('Supabase insert failed on ' + collection + ':', err);
       }
     }
 
-    // 3. Post to central server database
+    // Try central server DB
     try {
       const res = await fetch(`${this.getBaseUrl()}/api/db/${collection}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(record)
+        body: JSON.stringify(cloudRecord)
       });
       if (res.ok) {
-        return await res.json();
+        const data = await res.json();
+        this.notifySubscribers(collection, { action: 'create', data });
+        return data;
       }
-    } catch (e) {
-      console.warn('Saved locally and queued for server sync.');
-    }
+    } catch (e) {}
 
+    this.notifySubscribers(collection, { action: 'create', data: cloudRecord });
     return record;
   }
 
-  // UPDATE Record
+  // UPDATE Record directly in Cloud
   public async update<T = any>(collection: string, id: string, updates: Partial<T>): Promise<void> {
-    const storageKey = this.getStorageKey(collection);
-
-    // 1. Update in local storage
-    if (storageKey) {
-      const local = getFromStorage<any>(storageKey);
-      const updated = local.map((i: any) => (i.id === id ? { ...i, ...updates } : i));
-      saveToStorage(storageKey, updated);
-    }
-
-    // 2. Try Cloud Supabase
     if (isSupabaseConfigured) {
       try {
         await supabase.update(collection, 'id', id, updates);
+        this.notifySubscribers(collection, { action: 'update', data: { id, ...updates } });
       } catch (err) {
-        console.warn('Supabase update failed:', err);
+        console.warn('Supabase update failed on ' + collection + ':', err);
       }
     }
 
-    // 3. Put to central server database
     try {
       await fetch(`${this.getBaseUrl()}/api/db/${collection}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-    } catch (e) {
-      console.warn('Could not sync update to central server DB.');
-    }
+      this.notifySubscribers(collection, { action: 'update', data: { id, ...updates } });
+    } catch (e) {}
   }
 
-  // DELETE Record
+  // DELETE Record directly from Cloud
   public async remove(collection: string, id: string): Promise<void> {
-    const storageKey = this.getStorageKey(collection);
-
-    // 1. Delete from local storage
-    if (storageKey) {
-      const local = getFromStorage<any>(storageKey);
-      const filtered = local.filter((i: any) => i.id !== id);
-      saveToStorage(storageKey, filtered);
-    }
-
-    // 2. Try Cloud Supabase
     if (isSupabaseConfigured) {
       try {
         await supabase.delete(collection, 'id', id);
+        this.notifySubscribers(collection, { action: 'delete', data: { id } });
       } catch (err) {
-        console.warn('Supabase delete failed:', err);
+        console.warn('Supabase delete failed on ' + collection + ':', err);
       }
     }
 
-    // 3. Delete from central server database
     try {
       await fetch(`${this.getBaseUrl()}/api/db/${collection}/${id}`, {
         method: 'DELETE'
       });
-    } catch (e) {
-      console.warn('Could not sync delete to central server DB.');
-    }
+      this.notifySubscribers(collection, { action: 'delete', data: { id } });
+    } catch (e) {}
   }
 }
 

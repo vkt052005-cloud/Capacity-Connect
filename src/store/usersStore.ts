@@ -27,7 +27,7 @@ interface UsersState {
 }
 
 export const useUsersStore = create<UsersState>((set, get) => ({
-  users: getFromStorage<User>(STORAGE_KEYS.USERS),
+  users: [],
   isSubscribed: false,
 
   initSubscription: () => {
@@ -35,11 +35,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     set({ isSubscribed: true });
 
     // Listen to real-time server events across all devices on the network
-    dbService.subscribe('users', async (event) => {
+    dbService.subscribe('users', async () => {
       try {
         const fresh = await dbService.getAll<User>('users');
-        if (fresh && fresh.length > 0) {
-          saveToStorage(STORAGE_KEYS.USERS, fresh);
+        if (fresh) {
           set({ users: fresh });
         }
       } catch (e) {}
@@ -47,24 +46,15 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   load: async () => {
-    // 1. Instant local read
-    const local = getFromStorage<User>(STORAGE_KEYS.USERS);
-    if (local && local.length > 0) {
-      set({ users: local });
-    }
-
-    // 2. Ensure real-time listener is running
     get().initSubscription();
 
-    // 3. Fresh pull from central server database
     try {
       const serverUsers = await dbService.getAll<User>('users');
-      if (serverUsers && serverUsers.length > 0) {
-        saveToStorage(STORAGE_KEYS.USERS, serverUsers);
+      if (serverUsers) {
         set({ users: serverUsers });
       }
     } catch (e) {
-      // Offline fallback
+      console.warn('Could not load users from cloud:', e);
     }
   },
 

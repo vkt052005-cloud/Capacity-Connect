@@ -123,7 +123,6 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
         const cloudSessions = await dbService.getAll<LiveSession>("live_sessions");
         if (cloudSessions) {
           const cleaned = sanitizeLiveSessions(cloudSessions);
-          saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, cleaned);
           set({ sessions: cleaned });
         }
       } catch (e) {}
@@ -131,17 +130,11 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
   },
 
   load: () => {
-    let saved = getFromStorage<LiveSession>(STORAGE_KEYS.LIVE_SESSIONS) || [];
-    saved = sanitizeLiveSessions(saved);
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, saved);
-    set({ sessions: saved });
-
     get().initSubscription();
 
     dbService.getAll<LiveSession>("live_sessions").then((cloud) => {
-      if (cloud && cloud.length > 0) {
+      if (cloud) {
         const cleaned = sanitizeLiveSessions(cloud);
-        saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, cleaned);
         set({ sessions: cleaned });
       }
     }).catch(() => {});

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { initializeStorage } from "./data/seed";
+import { purgeLocalDeviceData } from "./utils/purgeLocalStorage";
 import { useAuthStore } from "./store/authStore";
 import { useNotificationsStore } from "./store/notificationsStore";
 import { useCoursesStore } from "./store/coursesStore";
@@ -8,6 +8,7 @@ import { useAssessmentsStore } from "./store/assessmentsStore";
 import { useUsersStore } from "./store/usersStore";
 import { useLiveSessionsStore } from "./store/liveSessionsStore";
 import { useAttendanceStore } from "./store/attendanceStore";
+import { useAuditStore } from "./store/auditStore";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 
 // Public Pages
@@ -54,9 +55,12 @@ function App() {
   const { load: loadUsers } = useUsersStore();
   const { load: loadLiveSessions } = useLiveSessionsStore();
   const { load: loadAttendance } = useAttendanceStore();
+  const { load: loadAuditLogs } = useAuditStore();
 
   useEffect(() => {
-    initializeStorage();
+    // Purge local mock and device storage cache so platform is 100% cloud-driven
+    purgeLocalDeviceData();
+
     loadFromStorage();
     loadNotifications();
     loadCourses();
@@ -64,6 +68,7 @@ function App() {
     loadUsers();
     loadLiveSessions();
     loadAttendance();
+    loadAuditLogs();
   }, []);
 
   return (

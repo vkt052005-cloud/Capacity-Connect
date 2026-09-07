@@ -31,26 +31,32 @@ interface AttendanceState {
 }
 
 export const useAttendanceStore = create<AttendanceState>((set, get) => ({
-  sessionAttendance: getFromStorage<SessionAttendance>(STORAGE_KEYS.SESSION_ATTENDANCE),
-  lessonAttendance: getFromStorage<LessonAttendance>(STORAGE_KEYS.LESSON_ATTENDANCE),
+  sessionAttendance: [],
+  lessonAttendance: [],
 
   load: () => {
+    try {
+      dbService.subscribe("session_attendance", () => {
+        dbService.getAll<SessionAttendance>("session_attendance").then((sessions) => {
+          if (sessions) set({ sessionAttendance: sessions });
+        }).catch(() => {});
+      });
+      dbService.subscribe("lesson_attendance", () => {
+        dbService.getAll<LessonAttendance>("lesson_attendance").then((lessons) => {
+          if (lessons) set({ lessonAttendance: lessons });
+        }).catch(() => {});
+      });
+    } catch (e) {}
+
     Promise.all([
       dbService.getAll<SessionAttendance>("session_attendance"),
       dbService.getAll<LessonAttendance>("lesson_attendance"),
     ])
       .then(([remoteSessions, remoteLessons]) => {
-        const sessions =
-          remoteSessions && remoteSessions.length > 0
-            ? remoteSessions
-            : getFromStorage<SessionAttendance>(STORAGE_KEYS.SESSION_ATTENDANCE);
-        const lessons =
-          remoteLessons && remoteLessons.length > 0
-            ? remoteLessons
-            : getFromStorage<LessonAttendance>(STORAGE_KEYS.LESSON_ATTENDANCE);
-        saveToStorage(STORAGE_KEYS.SESSION_ATTENDANCE, sessions);
-        saveToStorage(STORAGE_KEYS.LESSON_ATTENDANCE, lessons);
-        set({ sessionAttendance: sessions, lessonAttendance: lessons });
+        set({
+          sessionAttendance: remoteSessions || [],
+          lessonAttendance: remoteLessons || []
+        });
       })
       .catch(() => {});
   },

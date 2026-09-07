@@ -133,15 +133,11 @@ const sanitizeCertificates = (certificates: Certificate[]): Certificate[] => {
   });
 };
 
-const initialFeedbacks = sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
-const initialCoursesList = sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES), initialFeedbacks);
-const initialCertificatesList = sanitizeCertificates(getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES));
-
 export const useCoursesStore = create<CoursesState>((set, get) => ({
-  courses: initialCoursesList,
-  enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
-  certificates: initialCertificatesList,
-  feedbacks: initialFeedbacks,
+  courses: [],
+  enrollments: [],
+  certificates: [],
+  feedbacks: [],
   isSubscribed: false,
 
   initSubscription: () => {
@@ -158,15 +154,10 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
           dbService.getAll<Certificate>("certificates"),
         ]);
 
-        const validFeedbacks = sanitizeFeedbacks(cloudFeedbacks && cloudFeedbacks.length > 0 ? cloudFeedbacks : getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
-        const validCourses = sanitizeCourses(cloudCourses && cloudCourses.length > 0 ? cloudCourses : getFromStorage<Course>(STORAGE_KEYS.COURSES), validFeedbacks);
-        const validEnrollments = sanitizeEnrollments(cloudEnrollments && cloudEnrollments.length > 0 ? cloudEnrollments : getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS));
-        const validCertificates = sanitizeCertificates(cloudCertificates && cloudCertificates.length > 0 ? cloudCertificates : getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES));
-
-        saveToStorage(STORAGE_KEYS.COURSES, validCourses);
-        saveToStorage(STORAGE_KEYS.ENROLLMENTS, validEnrollments);
-        saveToStorage(STORAGE_KEYS.FEEDBACKS, validFeedbacks);
-        saveToStorage(STORAGE_KEYS.CERTIFICATES, validCertificates);
+        const validFeedbacks = sanitizeFeedbacks(cloudFeedbacks || []);
+        const validCourses = sanitizeCourses(cloudCourses || [], validFeedbacks);
+        const validEnrollments = sanitizeEnrollments(cloudEnrollments || []);
+        const validCertificates = sanitizeCertificates(cloudCertificates || []);
 
         set({
           courses: validCourses,
@@ -175,7 +166,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
           certificates: validCertificates,
         });
       } catch (err) {
-        // Fallback to local
+        console.warn("Could not sync courses from cloud:", err);
       }
     };
 
@@ -186,34 +177,18 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   },
 
   load: () => {
-    const freshFeedbacks = sanitizeFeedbacks(getFromStorage<Feedback>(STORAGE_KEYS.FEEDBACKS));
-    const freshCourses = sanitizeCourses(getFromStorage<Course>(STORAGE_KEYS.COURSES), freshFeedbacks);
-    set({
-      courses: freshCourses,
-      enrollments: sanitizeEnrollments(getFromStorage<Enrollment>(STORAGE_KEYS.ENROLLMENTS)),
-      certificates: sanitizeCertificates(getFromStorage<Certificate>(STORAGE_KEYS.CERTIFICATES)),
-      feedbacks: freshFeedbacks
-    });
-
-    // Ensure real-time multi-device subscription is active
     get().initSubscription();
 
-    // Asynchronously fetch latest records from central server DB and cloud
     Promise.all([
       dbService.getAll<Course>("courses"),
       dbService.getAll<Enrollment>("enrollments"),
       dbService.getAll<Feedback>("feedbacks"),
       dbService.getAll<Certificate>("certificates")
     ]).then(([srvCourses, srvEnrollments, srvFeedbacks, srvCertificates]) => {
-      const activeFeedbacks = srvFeedbacks && srvFeedbacks.length > 0 ? sanitizeFeedbacks(srvFeedbacks) : freshFeedbacks;
-      const activeCourses = srvCourses && srvCourses.length > 0 ? sanitizeCourses(srvCourses, activeFeedbacks) : freshCourses;
-      const activeEnrollments = srvEnrollments && srvEnrollments.length > 0 ? sanitizeEnrollments(srvEnrollments) : get().enrollments;
-      const activeCertificates = srvCertificates && srvCertificates.length > 0 ? sanitizeCertificates(srvCertificates) : get().certificates;
-
-      saveToStorage(STORAGE_KEYS.COURSES, activeCourses);
-      saveToStorage(STORAGE_KEYS.ENROLLMENTS, activeEnrollments);
-      saveToStorage(STORAGE_KEYS.FEEDBACKS, activeFeedbacks);
-      saveToStorage(STORAGE_KEYS.CERTIFICATES, activeCertificates);
+      const activeFeedbacks = sanitizeFeedbacks(srvFeedbacks || []);
+      const activeCourses = sanitizeCourses(srvCourses || [], activeFeedbacks);
+      const activeEnrollments = sanitizeEnrollments(srvEnrollments || []);
+      const activeCertificates = sanitizeCertificates(srvCertificates || []);
 
       set({
         courses: activeCourses,

@@ -24,14 +24,10 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
         dbService.getAll<Assessment>('assessments'),
         dbService.getAll<Attempt>('assessment_attempts')
       ]);
-      if (serverAssessments && serverAssessments.length > 0) {
-        saveToStorage(STORAGE_KEYS.ASSESSMENTS, serverAssessments);
-        set({ assessments: serverAssessments });
-      }
-      if (serverAttempts && serverAttempts.length > 0) {
-        saveToStorage(STORAGE_KEYS.ATTEMPTS, serverAttempts);
-        set({ attempts: serverAttempts });
-      }
+      set({
+        assessments: serverAssessments || [],
+        attempts: serverAttempts || []
+      });
     } catch (e) {
       console.warn('Could not sync assessments from central db:', e);
     }
@@ -52,14 +48,10 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
   }
 
   return {
-    assessments: getFromStorage<Assessment>(STORAGE_KEYS.ASSESSMENTS),
-    attempts: getFromStorage<Attempt>(STORAGE_KEYS.ATTEMPTS),
+    assessments: [],
+    attempts: [],
 
     load: () => {
-      set({
-        assessments: getFromStorage<Assessment>(STORAGE_KEYS.ASSESSMENTS),
-        attempts: getFromStorage<Attempt>(STORAGE_KEYS.ATTEMPTS),
-      });
       refreshAssessments();
     },
 

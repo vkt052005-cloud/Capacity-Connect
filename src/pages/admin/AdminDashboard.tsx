@@ -2,7 +2,8 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Users, BookOpen, Award, Shield, Bell, BarChart3,
-  TrendingUp, CheckCircle2, AlertTriangle, ArrowRight, Brain, Clock
+  TrendingUp, CheckCircle2, AlertTriangle, ArrowRight, Brain, Clock,
+  RotateCw, Download
 } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useUsersStore } from "../../store/usersStore";
@@ -163,10 +164,39 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Tamper-Evident Security Audit Logs */}
         <div className="card p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
             <div>
               <h3 className="text-sm font-bold text-white tracking-tight">Tamper-Evident Security & Authentication Logs</h3>
               <p className="text-xs text-slate-400">Continuous cryptographic trail of JWT sessions, QR logins, and proctored exam submissions</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => loadAuditLogs()}
+                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 transition flex items-center gap-1.5 cursor-pointer border border-white/10"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+                <span>Refresh Cloud</span>
+              </button>
+              {auditLogs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const headers = "Timestamp,Actor,Role,Action,Target,Status,IP Address\n";
+                    const rows = auditLogs.map(l => `"${l.timestamp}","${l.actor}","${l.role}","${l.action}","${l.target}","${l.status}","${l.ipAddress || ''}"`).join("\n");
+                    const blob = new Blob([headers + rows], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `capacity-connect-audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
+                    a.click();
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#0071e3] hover:bg-[#0077ed] text-xs font-semibold text-white transition flex items-center gap-1.5 cursor-pointer shadow"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export CSV</span>
+                </button>
+              )}
             </div>
           </div>
 
