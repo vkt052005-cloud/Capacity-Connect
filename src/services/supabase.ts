@@ -5,32 +5,65 @@ const SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 's
 
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
+function toSnakeCaseKey(key: string): string {
+  return key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+function toCamelCaseKey(key: string): string {
+  return key.replace(/_([a-z0-9])/g, (_, letter) => letter.toUpperCase());
+}
+
+export function rowToSnakeCase(row: any): any {
+  if (Array.isArray(row)) return row.map(rowToSnakeCase);
+  if (row !== null && typeof row === "object" && !(row instanceof Date)) {
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(row)) {
+      result[toSnakeCaseKey(key)] = value;
+    }
+    return result;
+  }
+  return row;
+}
+
+export function rowToCamelCase(row: any): any {
+  if (Array.isArray(row)) return row.map(rowToCamelCase);
+  if (row !== null && typeof row === "object" && !(row instanceof Date)) {
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(row)) {
+      result[toCamelCaseKey(key)] = value;
+    }
+    return result;
+  }
+  return row;
+}
+
 export class SupabaseClient {
   private url: string;
   private key: string;
 
   constructor(url: string, key: string) {
-    this.url = url.replace(/\/$/, '');
+    this.url = url.replace(/\/$/, "");
     this.key = key;
   }
 
   private headers() {
     return {
-      'apikey': this.key,
-      'Authorization': `Bearer ${this.key}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
+      apikey: this.key,
+      Authorization: `Bearer ${this.key}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
     };
   }
 
-  async select<T = any>(table: string, query: string = ''): Promise<T[]> {
+  async select<T = any>(table: string, query: string = ""): Promise<T[]> {
     if (!isSupabaseConfigured) return [];
     try {
-      const res = await fetch(`${this.url}/rest/v1/${table}${query ? `?${query}` : ''}`, {
-        headers: this.headers()
+      const res = await fetch(`${this.url}/rest/v1/${table}${query ? `?${query}` : ""}`, {
+        headers: this.headers(),
       });
       if (res.ok) {
-        return await res.json();
+        const data = await res.json();
+        return Array.isArray(data) ? data.map(rowToCamelCase) : [rowToCamelCase(data)];
       }
     } catch (e) {
       console.error(`Supabase select error on ${table}:`, e);
@@ -38,17 +71,27 @@ export class SupabaseClient {
     return [];
   }
 
-  async insert<T = any>(table: string, row: T): Promise<T | null> {
+  async insert<T = any>(table: string, row: T | T[]): Promise<T | null> {
     if (!isSupabaseConfigured) return null;
     try {
+      const payload = rowToSnakeCase(row);
       const res = await fetch(`${this.url}/rest/v1/${table}`, {
-        method: 'POST',
-        headers: this.headers(),
-        body: JSON.stringify(row)
+        method: "POST",
+        headers: {
+          ...this.headers(),
+          Prefer: "resolution=merge-duplicates,return=representation",
+        },
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         const data = await res.json();
-        return Array.isArray(data) ? data[0] : data;
+        if (Array.isArray(data)) {
+          return data.length > 0 ? rowToCamelCase(data[0]) : null;
+        }
+        return rowToCamelCase(data);
+      } else {
+        const errText = await res.text();
+        console.warn(`Supabase insert on ${table}:`, errText);
       }
     } catch (e) {
       console.error(`Supabase insert error on ${table}:`, e);
@@ -59,10 +102,12 @@ export class SupabaseClient {
   async update<T = any>(table: string, matchKey: string, matchVal: string, updates: Partial<T>): Promise<boolean> {
     if (!isSupabaseConfigured) return false;
     try {
-      const res = await fetch(`${this.url}/rest/v1/${table}?${matchKey}=eq.${matchVal}`, {
-        method: 'PATCH',
+      const payload = rowToSnakeCase(updates);
+      const snakeMatchKey = toSnakeCaseKey(matchKey);
+      const res = await fetch(`${this.url}/rest/v1/${table}?${snakeMatchKey}=eq.${encodeURIComponent(matchVal)}`, {
+        method: "PATCH",
         headers: this.headers(),
-        body: JSON.stringify(updates)
+        body: JSON.stringify(payload),
       });
       return res.ok;
     } catch (e) {
@@ -74,9 +119,10 @@ export class SupabaseClient {
   async delete(table: string, matchKey: string, matchVal: string): Promise<boolean> {
     if (!isSupabaseConfigured) return false;
     try {
-      const res = await fetch(`${this.url}/rest/v1/${table}?${matchKey}=eq.${matchVal}`, {
-        method: 'DELETE',
-        headers: this.headers()
+      const snakeMatchKey = toSnakeCaseKey(matchKey);
+      const res = await fetch(`${this.url}/rest/v1/${table}?${snakeMatchKey}=eq.${encodeURIComponent(matchVal)}`, {
+        method: "DELETE",
+        headers: this.headers(),
       });
       return res.ok;
     } catch (e) {
