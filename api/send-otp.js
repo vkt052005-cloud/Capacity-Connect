@@ -83,15 +83,13 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `Verification code generated for ${normEmail}`,
-      otp: finalOtp
+      message: `Verification code generated for ${normEmail}`
     });
   } catch (err) {
     console.error('Vercel API send-otp error:', err);
     return res.status(200).json({
       success: true,
-      message: `Verification code registered for ${normEmail}`,
-      otp: finalOtp
+      message: `Verification code registered for ${normEmail}`
     });
   }
 }

@@ -819,33 +819,17 @@ export const RegisterPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Delivery notice & 1-click fallback */}
-              <div className="p-3.5 rounded-xl bg-[#0071e3]/10 border border-[#2997ff]/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+              {/* Delivery notice */}
+              <div className="p-3.5 rounded-xl bg-[#0071e3]/10 border border-[#2997ff]/25 flex items-center gap-2.5 text-xs">
+                <ShieldCheck className="w-5 h-5 text-[#2997ff] shrink-0" />
                 <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 font-semibold text-[#2997ff]">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Verification Code Dispatched</span>
+                  <div className="font-semibold text-[#2997ff]">
+                    Verification Code Dispatched
                   </div>
                   <p className="text-[11px] text-slate-300">
-                    Check your inbox &amp; Spam folder. If email delivery is delayed on your network:
+                    A 6-digit code has been sent to your email. Please check your inbox and Spam folder.
                   </p>
                 </div>
-                {generatedOtp && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOtpDigits(generatedOtp.split(""));
-                      addToast({
-                        title: "Code Auto-Filled",
-                        message: "Verification code entered successfully.",
-                        type: "info"
-                      });
-                    }}
-                    className="w-full sm:w-auto px-3 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-lg font-medium text-xs transition shadow-md cursor-pointer whitespace-nowrap"
-                  >
-                    Auto-Fill Code
-                  </button>
-                )}
               </div>
 
               {error && (

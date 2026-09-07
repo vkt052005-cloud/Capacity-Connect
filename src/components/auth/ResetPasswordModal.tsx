@@ -384,21 +384,6 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                   <p className="text-[11px] text-slate-400">
                     Check your inbox and enter the 6-digit security code below.
                   </p>
-                  {generatedOtp && (
-                    <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
-                      <span className="text-slate-400">Security Token (Offline / Demo):</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const digits = generatedOtp.split("");
-                          setOtpDigits(digits);
-                        }}
-                        className="font-mono font-bold text-[#2997ff] bg-black/40 px-2 py-0.5 rounded border border-[#2997ff]/40 hover:bg-[#2997ff]/20 cursor-pointer"
-                      >
-                        ⚡ Autofill Code: {generatedOtp}
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* 6-Digit OTP */}
