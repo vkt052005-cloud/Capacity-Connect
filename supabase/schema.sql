@@ -223,3 +223,19 @@ create policy "allow_all_notifications" on notifications for all to anon, authen
 create policy "allow_all_audit_logs" on audit_logs for all to anon, authenticated using (true) with check (true);
 create policy "allow_all_session_attendance" on session_attendance for all to anon, authenticated using (true) with check (true);
 create policy "allow_all_lesson_attendance" on lesson_attendance for all to anon, authenticated using (true) with check (true);
+
+-- ─── 12. SUPABASE STORAGE: VIDEOS BUCKET & POLICIES ──────────
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('videos', 'videos', true, 524288000)
+on conflict (id) do update set public = true;
+
+drop policy if exists "public_select_videos" on storage.objects;
+drop policy if exists "public_insert_videos" on storage.objects;
+drop policy if exists "public_update_videos" on storage.objects;
+drop policy if exists "public_delete_videos" on storage.objects;
+
+create policy "public_select_videos" on storage.objects for select to anon, authenticated using (bucket_id = 'videos');
+create policy "public_insert_videos" on storage.objects for insert to anon, authenticated using (bucket_id = 'videos') with check (bucket_id = 'videos');
+create policy "public_update_videos" on storage.objects for update to anon, authenticated using (bucket_id = 'videos') with check (bucket_id = 'videos');
+create policy "public_delete_videos" on storage.objects for delete to anon, authenticated using (bucket_id = 'videos');
+

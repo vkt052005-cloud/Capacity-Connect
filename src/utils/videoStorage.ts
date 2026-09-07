@@ -1,3 +1,22 @@
+import { supabase, isSupabaseConfigured } from "../services/supabase";
+
+/**
+ * Uploads a video file or blob directly to Supabase Storage (bucket: 'videos').
+ * Returns the public CDN URL for playback, or null on failure.
+ */
+export async function uploadVideoToSupabase(key: string, file: Blob | File): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const ext = file.type ? file.type.split("/")[1] || "mp4" : "mp4";
+    const path = `${key}.${ext}`;
+    const publicUrl = await supabase.uploadFile("videos", path, file);
+    return publicUrl;
+  } catch (err) {
+    console.warn("Failed to upload video to Supabase Storage", err);
+    return null;
+  }
+}
+
 /**
  * IndexedDB helper to persistently store and retrieve mentor uploaded video files
  * across browser sessions, tabs, and student logins.

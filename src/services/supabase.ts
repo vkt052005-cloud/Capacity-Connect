@@ -130,6 +130,51 @@ export class SupabaseClient {
       return false;
     }
   }
+
+  async uploadFile(bucket: string, path: string, file: Blob | File): Promise<string | null> {
+    if (!isSupabaseConfigured) return null;
+    try {
+      const cleanPath = path.replace(/^\/+/, "");
+      const res = await fetch(`${this.url}/storage/v1/object/${bucket}/${cleanPath}`, {
+        method: "POST",
+        headers: {
+          apikey: this.key,
+          Authorization: `Bearer ${this.key}`,
+          "Content-Type": file.type || "video/mp4",
+          "x-upsert": "true",
+        },
+        body: file,
+      });
+      if (res.ok) {
+        return `${this.url}/storage/v1/object/public/${bucket}/${cleanPath}`;
+      } else {
+        const err = await res.text();
+        console.warn(`Supabase Storage upload error on ${bucket}/${cleanPath}:`, err);
+      }
+    } catch (e) {
+      console.error("Supabase Storage upload error:", e);
+    }
+    return null;
+  }
+
+  async deleteFile(bucket: string, paths: string[]): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+    try {
+      const res = await fetch(`${this.url}/storage/v1/object/${bucket}`, {
+        method: "DELETE",
+        headers: {
+          apikey: this.key,
+          Authorization: `Bearer ${this.key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prefixes: paths }),
+      });
+      return res.ok;
+    } catch (e) {
+      console.error("Supabase Storage delete error:", e);
+      return false;
+    }
+  }
 }
 
 export const supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);

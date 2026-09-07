@@ -13,7 +13,7 @@ import { useAppStore } from "../../store/appStore";
 import { useNotificationsStore } from "../../store/notificationsStore";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
 import { formatCourseDuration, extractMediaDuration } from "../../utils/courseDuration";
-import { storeVideoBlob } from "../../utils/videoStorage";
+import { storeVideoBlob, uploadVideoToSupabase } from "../../utils/videoStorage";
 import type { CourseCategory, CourseLesson, Resource } from "../../types";
 
 export const THUMBNAIL_PRESETS = [
@@ -108,6 +108,7 @@ export const TrainerCourses: React.FC = () => {
   const [videoUrlInput, setVideoUrlInput] = useState("");
   const [videoDescription, setVideoDescription] = useState("");
   const [localVideoFileName, setLocalVideoFileName] = useState("");
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Video Lesson Manager State (Expanded course drawer & preview)
@@ -443,14 +444,22 @@ export const TrainerCourses: React.FC = () => {
 
     let persistentUrl = videoUrlInput.trim();
 
-    // If local file was uploaded, store it persistently in IndexedDB
+    // If local file was uploaded, store it in Supabase Storage with IndexedDB fallback
     if (videoSourceType === "file" && selectedFileBlob) {
+      setIsUploadingVideo(true);
       try {
         const storageKey = `vid-${course.id}-${lessonId}`;
-        await storeVideoBlob(storageKey, selectedFileBlob);
-        persistentUrl = `indexeddb://${storageKey}`;
+        const cloudUrl = await uploadVideoToSupabase(storageKey, selectedFileBlob);
+        if (cloudUrl) {
+          persistentUrl = cloudUrl;
+        } else {
+          await storeVideoBlob(storageKey, selectedFileBlob);
+          persistentUrl = `indexeddb://${storageKey}`;
+        }
       } catch (err) {
-        console.warn("Failed to write to IndexedDB, fallback to direct input", err);
+        console.warn("Failed to upload video to Supabase Storage, fallback to IndexedDB", err);
+      } finally {
+        setIsUploadingVideo(false);
       }
     }
 
@@ -1157,10 +1166,19 @@ export const TrainerCourses: React.FC = () => {
               <div className="flex gap-2.5 pt-2 border-t border-white/10">
                 <button
                   type="submit"
-                  disabled={!videoUrlInput.trim()}
+                  disabled={!videoUrlInput.trim() || isUploadingVideo}
                   className="apple-btn-primary flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  <Video className="w-3.5 h-3.5" /> Publish Video Lesson
+                  {isUploadingVideo ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Uploading to Cloud Storage...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Video className="w-3.5 h-3.5" /> Publish Video Lesson
+                    </>
+                  )}
                 </button>
                 <button
                   type="button"
