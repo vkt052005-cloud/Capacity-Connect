@@ -3,7 +3,6 @@
 -- Run this in Supabase Dashboard → SQL Editor → Run
 -- ============================================================
 
--- Enable UUID extension
 create extension if not exists "uuid-ossp";
 
 -- ─── Core Tables ─────────────────────────────────────────────
@@ -143,7 +142,7 @@ create table if not exists audit_logs (
   ip_address text
 );
 
--- ─── Attendance Tables (NEW) ──────────────────────────────────
+-- ─── Attendance Tables ────────────────────────────────────────
 
 create table if not exists session_attendance (
   id text primary key,
@@ -177,7 +176,7 @@ create table if not exists lesson_attendance (
   status text default 'partial'
 );
 
--- ─── Row Level Security (open policy for anon key) ───────────
+-- ─── Row Level Security ───────────────────────────────────────
 
 alter table users enable row level security;
 alter table courses enable row level security;
@@ -191,16 +190,28 @@ alter table audit_logs enable row level security;
 alter table session_attendance enable row level security;
 alter table lesson_attendance enable row level security;
 
--- Allow all operations for anon and authenticated roles
-do $$
-declare
-  t text;
-begin
-  foreach t in array array[
-    'users','courses','enrollments','feedbacks','certificates',
-    'live_sessions','assessments','notifications','audit_logs',
-    'session_attendance','lesson_attendance'
-  ] loop
-    execute format('create policy if not exists "allow_all_%s" on %s for all to anon, authenticated using (true) with check (true)', t, t);
-  end loop;
-end $$;
+-- Drop existing policies first (safe to re-run)
+drop policy if exists "allow_all_users" on users;
+drop policy if exists "allow_all_courses" on courses;
+drop policy if exists "allow_all_enrollments" on enrollments;
+drop policy if exists "allow_all_feedbacks" on feedbacks;
+drop policy if exists "allow_all_certificates" on certificates;
+drop policy if exists "allow_all_live_sessions" on live_sessions;
+drop policy if exists "allow_all_assessments" on assessments;
+drop policy if exists "allow_all_notifications" on notifications;
+drop policy if exists "allow_all_audit_logs" on audit_logs;
+drop policy if exists "allow_all_session_attendance" on session_attendance;
+drop policy if exists "allow_all_lesson_attendance" on lesson_attendance;
+
+-- Create open policies
+create policy "allow_all_users" on users for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_courses" on courses for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_enrollments" on enrollments for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_feedbacks" on feedbacks for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_certificates" on certificates for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_live_sessions" on live_sessions for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_assessments" on assessments for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_notifications" on notifications for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_audit_logs" on audit_logs for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_session_attendance" on session_attendance for all to anon, authenticated using (true) with check (true);
+create policy "allow_all_lesson_attendance" on lesson_attendance for all to anon, authenticated using (true) with check (true);
