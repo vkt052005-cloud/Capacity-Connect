@@ -33,7 +33,10 @@ export default async function handler(req, res) {
         auth: {
           user: smtpEmail,
           pass: smtpPass
-        }
+        },
+        connectionTimeout: 6000,
+        greetingTimeout: 6000,
+        socketTimeout: 6000
       });
 
       const isLogin = flowType === 'login';
@@ -87,7 +90,8 @@ export default async function handler(req, res) {
     console.error('Vercel API send-otp error:', err);
     return res.status(200).json({
       success: true,
-      message: `Verification code registered`
+      message: `Verification code registered for ${normEmail}`,
+      otp: finalOtp
     });
   }
 }

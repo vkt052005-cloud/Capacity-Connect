@@ -16,6 +16,11 @@ const COLLECTION_STORAGE_MAP: Record<string, string> = {
   notifications: STORAGE_KEYS.NOTIFICATIONS,
   session_attendance: STORAGE_KEYS.SESSION_ATTENDANCE,
   lesson_attendance: STORAGE_KEYS.LESSON_ATTENDANCE,
+  assessment_attempts: STORAGE_KEYS.ATTEMPTS,
+  subject_competencies: STORAGE_KEYS.COMPETENCIES,
+  discussion_threads: STORAGE_KEYS.DISCUSSIONS,
+  leaderboard: STORAGE_KEYS.LEADERBOARD,
+  badges: STORAGE_KEYS.BADGES,
 };
 
 class DatabaseService {

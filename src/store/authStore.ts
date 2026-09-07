@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { User, TrainerProfile } from "../types";
 import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId, initialUsers } from "../data/seed";
 import { dbService } from "../services/db";
+import { supabase, isSupabaseConfigured } from "../services/supabase";
 import { recordAuditEvent } from "./auditStore";
 
 const defaultRajTrainerProfile: TrainerProfile = {
@@ -100,6 +101,7 @@ interface AuthState {
   isInitialized: boolean;
   login: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User; isRemoved?: boolean };
   validateCredentials: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User; isRemoved?: boolean };
+  validateCredentialsAsync: (email: string, password: string, requiredRole?: User["role"]) => Promise<{ success: boolean; message: string; user?: User; isRemoved?: boolean }>;
   completeLogin: (user: User) => { success: boolean; message: string; user: User };
   logout: () => void;
   register: (data: Omit<User, "id" | "createdAt" | "status">) => { success: boolean; message: string };
@@ -150,6 +152,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isInitialized: true });
       }
     }
+  },
+
+  validateCredentialsAsync: async (email, password, requiredRole) => {
+    const cleanEmail = email.trim().toLowerCase();
+    let users = getFromStorage<User>(STORAGE_KEYS.USERS);
+    let user = users.find(
+      (u) => u.email.toLowerCase() === cleanEmail && u.password === password
+    );
+
+    // If user not in local storage, check directly in Cloud Supabase!
+    if (!user && isSupabaseConfigured) {
+      try {
+        const cloudUsers = await supabase.select<User>('users', `email=eq.${encodeURIComponent(cleanEmail)}`);
+        if (cloudUsers && cloudUsers.length > 0) {
+          const fetchedUser = cloudUsers[0];
+          if (fetchedUser && fetchedUser.password === password) {
+            user = fetchedUser;
+            const merged = [...users.filter((u) => u.id !== user!.id), user];
+            saveToStorage(STORAGE_KEYS.USERS, merged);
+          }
+        }
+      } catch (e) {
+        console.warn("Could not query Supabase for cross-device auth:", e);
+      }
+    }
+
+    return get().validateCredentials(email, password, requiredRole);
   },
 
   validateCredentials: (email, password, requiredRole) => {

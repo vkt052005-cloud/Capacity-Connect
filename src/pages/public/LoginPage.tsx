@@ -35,7 +35,7 @@ export const LoginPage: React.FC = () => {
   const [canResend, setCanResend] = useState(false);
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-  const { currentUser, validateCredentials, completeLogin } = useAuthStore();
+  const { currentUser, validateCredentials, validateCredentialsAsync, completeLogin } = useAuthStore();
   const { requestReinstatement } = useUsersStore();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
@@ -110,7 +110,7 @@ export const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const res = validateCredentials(email, password, role);
+      const res = await validateCredentialsAsync(email, password, role);
       if (!res.success || !res.user) {
         if (res.isRemoved) {
           setIsRemovedBlocked(true);

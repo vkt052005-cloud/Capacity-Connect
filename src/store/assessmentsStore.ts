@@ -20,10 +20,17 @@ interface AssessmentsState {
 export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
   const refreshAssessments = async () => {
     try {
-      const serverAssessments = await dbService.getAll<Assessment>('assessments');
+      const [serverAssessments, serverAttempts] = await Promise.all([
+        dbService.getAll<Assessment>('assessments'),
+        dbService.getAll<Attempt>('assessment_attempts')
+      ]);
       if (serverAssessments && serverAssessments.length > 0) {
         saveToStorage(STORAGE_KEYS.ASSESSMENTS, serverAssessments);
         set({ assessments: serverAssessments });
+      }
+      if (serverAttempts && serverAttempts.length > 0) {
+        saveToStorage(STORAGE_KEYS.ATTEMPTS, serverAttempts);
+        set({ attempts: serverAttempts });
       }
     } catch (e) {
       console.warn('Could not sync assessments from central db:', e);
@@ -33,6 +40,9 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
   // Subscribe to real-time changes across devices
   try {
     dbService.subscribe('assessments', () => {
+      refreshAssessments();
+    });
+    dbService.subscribe('assessment_attempts', () => {
       refreshAssessments();
     });
     // Initial fetch on module load
@@ -84,6 +94,7 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
       const updated = [...attempts, newAttempt];
       saveToStorage(STORAGE_KEYS.ATTEMPTS, updated);
       set({ attempts: updated });
+      dbService.create('assessment_attempts', newAttempt).catch(() => {});
     },
 
     getAttemptsByTrainee: (traineeId) => get().attempts.filter(a => a.traineeId === traineeId),
