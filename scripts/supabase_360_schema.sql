@@ -343,3 +343,73 @@ create policy "public_select_videos" on storage.objects for select to anon, auth
 create policy "public_insert_videos" on storage.objects for insert to anon, authenticated using (bucket_id = 'videos') with check (bucket_id = 'videos');
 create policy "public_update_videos" on storage.objects for update to anon, authenticated using (bucket_id = 'videos') with check (bucket_id = 'videos');
 create policy "public_delete_videos" on storage.objects for delete to anon, authenticated using (bucket_id = 'videos');
+
+-- ─── 19. OTP VERIFICATIONS TABLE (Server-side secure OTP storage) ─
+create table if not exists otp_verifications (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  otp_hash text not null,
+  expires_at timestamptz not null,
+  used boolean default false,
+  created_at timestamptz default now()
+);
+
+-- Index for fast email lookups
+create index if not exists idx_otp_verifications_email on otp_verifications(email);
+
+-- Row-level security: Only server (service-role key) can access this table — anon cannot read OTPs
+alter table otp_verifications enable row level security;
+drop policy if exists "otp_deny_anon" on otp_verifications;
+create policy "otp_deny_anon" on otp_verifications for all to anon using (false);
+create policy "otp_allow_service" on otp_verifications for all to service_role using (true) with check (true);
+
+-- Auto-cleanup: Delete expired OTPs older than 1 hour
+create or replace function cleanup_expired_otps() returns void language plpgsql as $$
+begin
+  delete from otp_verifications where expires_at < now() - interval '1 hour';
+end;
+$$;
+
+-- ─── 20. FOREIGN KEY CONSTRAINTS (Data Integrity) ────────────────
+-- Enrollments: both trainee_id and course_id must exist
+alter table enrollments
+  drop constraint if exists fk_enrollments_trainee,
+  drop constraint if exists fk_enrollments_course;
+alter table enrollments
+  add constraint fk_enrollments_trainee foreign key (trainee_id) references users(id) on delete cascade,
+  add constraint fk_enrollments_course foreign key (course_id) references courses(id) on delete cascade;
+
+-- Assessments: course must exist
+alter table assessments
+  drop constraint if exists fk_assessments_course;
+alter table assessments
+  add constraint fk_assessments_course foreign key (course_id) references courses(id) on delete cascade;
+
+-- Assessment attempts: trainee must exist
+alter table assessment_attempts
+  drop constraint if exists fk_attempts_trainee;
+alter table assessment_attempts
+  add constraint fk_attempts_trainee foreign key (trainee_id) references users(id) on delete cascade;
+
+-- Certificates: both trainee and course must exist
+alter table certificates
+  drop constraint if exists fk_certificates_trainee,
+  drop constraint if exists fk_certificates_course;
+alter table certificates
+  add constraint fk_certificates_trainee foreign key (trainee_id) references users(id) on delete cascade,
+  add constraint fk_certificates_course foreign key (course_id) references courses(id) on delete cascade;
+
+-- Feedbacks: trainee and course must exist
+alter table feedbacks
+  drop constraint if exists fk_feedbacks_trainee,
+  drop constraint if exists fk_feedbacks_course;
+alter table feedbacks
+  add constraint fk_feedbacks_trainee foreign key (trainee_id) references users(id) on delete cascade,
+  add constraint fk_feedbacks_course foreign key (course_id) references courses(id) on delete cascade;
+
+-- ─── 21. TIGHTEN STORAGE VIDEO DELETION POLICY ───────────────────
+-- Remove anonymous video deletion — only authenticated users may delete
+drop policy if exists "public_delete_videos" on storage.objects;
+create policy "auth_delete_videos" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'videos');

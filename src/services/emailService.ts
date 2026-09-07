@@ -61,21 +61,16 @@ export async function sendOtpEmail({ email, name, otp, purpose = 'register' }: S
 }
 
 /**
- * Validates the entered 6-digit OTP code against server OTP store or local state.
+ * Validates the entered 6-digit OTP code against the server-side OTP store.
+ * OTP codes are stored (hashed) in Supabase otp_verifications by the send-otp API.
  */
 export async function verifyOtpCode(
   email: string,
-  enteredToken: string,
-  localBackupOtp?: string
+  enteredToken: string
 ): Promise<{ valid: boolean; error?: string }> {
   const token = enteredToken.trim();
 
-  // 1. Direct match with locally dispatched code
-  if (localBackupOtp && token === localBackupOtp.trim()) {
-    return { valid: true };
-  }
-
-  // 2. Check authoritative server OTP store (which was emailed from capacityconnect.org@gmail.com)
+  // Verify against authoritative server OTP store (which was emailed from capacityconnect.org@gmail.com)
   try {
     const res = await fetch('/api/verify-otp', {
       method: 'POST',

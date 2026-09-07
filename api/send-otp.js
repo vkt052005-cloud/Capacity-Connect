@@ -1,4 +1,40 @@
 import nodemailer from 'nodemailer';
+import bcrypt from 'bcryptjs';
+
+const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || 'https://osahxrfvcuxymkktrbwl.supabase.co').replace(/\/$/, '');
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+
+async function storeOtp(email, otp) {
+  if (!SUPABASE_SERVICE_KEY) return;
+  try {
+    const hash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+    // Delete old OTPs for this email first
+    await fetch(`${SUPABASE_URL}/rest/v1/otp_verifications?email=eq.${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+      headers: {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Insert new OTP
+    await fetch(`${SUPABASE_URL}/rest/v1/otp_verifications`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ email, otp_hash: hash, expires_at: expiresAt, used: false }),
+    });
+  } catch (err) {
+    console.error('OTP store error:', err);
+  }
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -23,6 +59,9 @@ export default async function handler(req, res) {
     const normEmail = (email || '').trim().toLowerCase();
     const finalOtp = otp || Math.floor(100000 + Math.random() * 900000).toString();
     const flowType = purpose === 'login' ? 'login' : 'register';
+
+    // Store OTP hash server-side in Supabase (for real verification)
+    await storeOtp(normEmail, finalOtp);
 
     const smtpEmail = process.env.SMTP_EMAIL || process.env.SMTP_USER || 'capacityconnect.org@gmail.com';
     const smtpPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || 'lhvnhismvukivzna';
@@ -56,7 +95,7 @@ export default async function handler(req, res) {
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #0b0f19; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 32px; color: #ffffff;">
             <div style="text-align: center; margin-bottom: 24px;">
               <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: 1px;">CAPACITY CONNECT</h2>
-              <p style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;">Official Learning & Accreditation Management Portal</p>
+              <p style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;">Official Learning &amp; Accreditation Management Portal</p>
             </div>
             <div style="background: rgba(0, 113, 227, 0.1); border: 1px solid rgba(41, 151, 255, 0.35); border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 24px;">
               <p style="margin: 0 0 8px 0; font-size: 13px; color: #cbd5e1;">${headingText}</p>

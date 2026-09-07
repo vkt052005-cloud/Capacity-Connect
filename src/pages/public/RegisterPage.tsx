@@ -332,7 +332,7 @@ export const RegisterPage: React.FC = () => {
     setError("");
     setLoading(true);
 
-    const verificationResult = await verifyOtpCode(email, enteredOtp, generatedOtp);
+    const verificationResult = await verifyOtpCode(email, enteredOtp);
     if (!verificationResult.valid) {
       setLoading(false);
       setError(verificationResult.error || "Incorrect verification code. Please check your email and try again.");

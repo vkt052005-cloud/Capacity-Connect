@@ -148,7 +148,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const refreshAll = async () => {
       try {
         const [cloudCourses, cloudEnrollments, cloudFeedbacks, cloudCertificates] = await Promise.all([
-          dbService.getAll<Course>("courses"),
+          dbService.getAll<Course>("courses", 200),
           dbService.getAll<Enrollment>("enrollments"),
           dbService.getAll<Feedback>("feedbacks"),
           dbService.getAll<Certificate>("certificates"),
@@ -180,7 +180,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     get().initSubscription();
 
     Promise.all([
-      dbService.getAll<Course>("courses"),
+      dbService.getAll<Course>("courses", 200),
       dbService.getAll<Enrollment>("enrollments"),
       dbService.getAll<Feedback>("feedbacks"),
       dbService.getAll<Certificate>("certificates")

@@ -55,10 +55,17 @@ export class SupabaseClient {
     };
   }
 
-  async select<T = any>(table: string, query: string = ""): Promise<T[]> {
+  async select<T = any>(table: string, query: string = "", limit?: number, offset?: number): Promise<T[]> {
     if (!isSupabaseConfigured) return [];
     try {
-      const res = await fetch(`${this.url}/rest/v1/${table}${query ? `?${query}` : ""}`, {
+      let q = query;
+      if (limit !== undefined) {
+        q = q ? `${q}&limit=${limit}` : `limit=${limit}`;
+      }
+      if (offset !== undefined) {
+        q = q ? `${q}&offset=${offset}` : `offset=${offset}`;
+      }
+      const res = await fetch(`${this.url}/rest/v1/${table}${q ? `?${q}` : ""}`, {
         headers: this.headers(),
       });
       if (res.ok) {

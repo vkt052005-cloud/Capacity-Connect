@@ -236,7 +236,7 @@ export const LoginPage: React.FC = () => {
     setError("");
     setLoading(true);
 
-    const verificationResult = await verifyOtpCode(pendingUser.email, enteredOtp, generatedOtp);
+    const verificationResult = await verifyOtpCode(pendingUser.email, enteredOtp);
     if (!verificationResult.valid) {
       setLoading(false);
       setError(verificationResult.error || "Incorrect verification code. Please check your email and try again.");

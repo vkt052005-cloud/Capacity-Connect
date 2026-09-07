@@ -111,12 +111,13 @@ class DatabaseService {
     }
   }
 
-  // GET ALL Records directly from Cloud
-  public async getAll<T = any>(collection: string): Promise<T[]> {
+  // GET ALL Records directly from Cloud (with optional limit for pagination)
+  public async getAll<T = any>(collection: string, limit?: number): Promise<T[]> {
     // 1. Primary: Authoritative Cloud Supabase
     if (isSupabaseConfigured) {
       try {
-        const cloudData = await supabase.select<T>(collection);
+        const orderQuery = 'order=created_at.desc';
+        const cloudData = await supabase.select<T>(collection, orderQuery, limit);
         if (cloudData !== null && Array.isArray(cloudData)) {
           return cloudData;
         }
@@ -127,7 +128,10 @@ class DatabaseService {
 
     // 2. Fallback: Central Server Database
     try {
-      const res = await fetch(`${this.getBaseUrl()}/api/db/${collection}`);
+      const url = limit
+        ? `${this.getBaseUrl()}/api/db/${collection}?limit=${limit}`
+        : `${this.getBaseUrl()}/api/db/${collection}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {

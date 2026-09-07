@@ -194,7 +194,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
       return;
     }
 
-    const verifyRes = await verifyOtpCode(resetEmail.trim(), enteredOtp, generatedOtp);
+    const verifyRes = await verifyOtpCode(resetEmail.trim(), enteredOtp);
     if (!verifyRes.valid) {
       setResetError(verifyRes.error || "Incorrect or expired verification code. Please check your email inbox.");
       return;
@@ -212,7 +212,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     }
 
     setIsResetting(true);
-    const updateRes = resetUserPassword(resetEmail.trim(), newPassword, resetRole);
+    const updateRes = await resetUserPassword(resetEmail.trim(), newPassword, resetRole);
     setIsResetting(false);
 
     if (!updateRes.success) {

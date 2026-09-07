@@ -50,11 +50,62 @@ function sanitizeUserForSession(user: User): User {
   return user;
 }
 
+// ── Session duration: 8 hours ─────────────────────────────────
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+
+/** Hash a password using the server-side bcrypt endpoint */
+async function hashPassword(password: string): Promise<string> {
+  try {
+    const res = await fetch('/api/hash-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.hash) return data.hash;
+    }
+  } catch (e) {
+    console.warn('hashPassword API unavailable, storing plaintext (dev mode)');
+  }
+  return password; // dev fallback only
+}
+
+/** Securely compare password vs stored hash using the server-side bcrypt endpoint */
+async function verifyPassword(password: string, hash: string): Promise<{ valid: boolean; isLegacy: boolean }> {
+  // Quick plaintext match check first (handles legacy & offline dev mode)
+  if (!hash.startsWith('$2') && password === hash) {
+    return { valid: true, isLegacy: true };
+  }
+  try {
+    const res = await fetch('/api/verify-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, hash }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { valid: data.valid === true, isLegacy: data.isLegacy === true };
+    }
+  } catch (e) {
+    console.warn('verifyPassword API unavailable, falling back to plaintext compare');
+    return { valid: password === hash, isLegacy: true };
+  }
+  return { valid: false, isLegacy: false };
+}
+
 function getInitialAuthUser(): User | null {
   try {
     const rawAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
     if (!rawAuth) return null;
     const parsed = JSON.parse(rawAuth);
+
+    // ── Session expiry check ──────────────────────────────────
+    if (parsed?.expiresAt && Date.now() > parsed.expiresAt) {
+      localStorage.removeItem(STORAGE_KEYS.AUTH);
+      return null;
+    }
+
     const targetId = parsed?.userId || parsed?.user?.id || parsed?.id;
     const targetEmail = (parsed?.user?.email || parsed?.email || "").toLowerCase();
 
@@ -96,6 +147,7 @@ function getInitialAuthUser(): User | null {
   return null;
 }
 
+
 interface AuthState {
   currentUser: User | null;
   isInitialized: boolean;
@@ -104,7 +156,7 @@ interface AuthState {
   validateCredentialsAsync: (email: string, password: string, requiredRole?: User["role"]) => Promise<{ success: boolean; message: string; user?: User; isRemoved?: boolean }>;
   completeLogin: (user: User) => { success: boolean; message: string; user: User };
   logout: () => void;
-  register: (data: Omit<User, "id" | "createdAt" | "status">) => { success: boolean; message: string };
+  register: (data: Omit<User, "id" | "createdAt" | "status">) => Promise<{ success: boolean; message: string }>;
   updateProfile: (updates: Partial<User>) => void;
   loadFromStorage: () => void;
   findUserForRecovery: (query: { name: string; department?: string; designation?: string; role?: User["role"] }) => {
@@ -121,10 +173,10 @@ interface AuthState {
       status: User["status"];
     }>;
   };
-  resetUserPassword: (email: string, newPassword: string, requiredRole?: User["role"]) => {
+  resetUserPassword: (email: string, newPassword: string, requiredRole?: User["role"]) => Promise<{
     success: boolean;
     message: string;
-  };
+  }>;
   submitRecoveryTicket: (ticket: {
     name: string;
     contactInfo: string;
@@ -157,29 +209,58 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   validateCredentialsAsync: async (email, password, requiredRole) => {
     const cleanEmail = email.trim().toLowerCase();
     let users = getFromStorage<User>(STORAGE_KEYS.USERS);
-    let user = users.find(
-      (u) => u.email.toLowerCase() === cleanEmail && u.password === password
-    );
+
+    // Find user by email first (without password comparison — we'll verify securely)
+    let user = users.find((u) => u.email.toLowerCase() === cleanEmail);
 
     // If user not in local storage, check directly in Cloud Supabase!
     if (!user && isSupabaseConfigured) {
       try {
-        const cloudUsers = await supabase.select<User>('users', `email=eq.${encodeURIComponent(cleanEmail)}`);
+        const cloudUsers = await supabase.select<User>('users', `email=eq.${encodeURIComponent(cleanEmail)}&limit=1`);
         if (cloudUsers && cloudUsers.length > 0) {
-          const fetchedUser = cloudUsers[0];
-          if (fetchedUser && fetchedUser.password === password) {
-            user = fetchedUser;
-            const merged = [...users.filter((u) => u.id !== user!.id), user];
-            saveToStorage(STORAGE_KEYS.USERS, merged);
-          }
+          user = cloudUsers[0];
+          // Sync to local cache
+          const merged = [...users.filter((u) => u.id !== user!.id), user!];
+          saveToStorage(STORAGE_KEYS.USERS, merged);
         }
       } catch (e) {
         console.warn("Could not query Supabase for cross-device auth:", e);
       }
     }
 
+    if (!user) {
+      return { success: false, message: "Invalid official email or password." };
+    }
+
+    // Secure password verification via server-side bcrypt
+    const { valid, isLegacy } = await verifyPassword(password, user.password || '');
+    if (!valid) {
+      recordAuditEvent({
+        actor: email,
+        role: requiredRole || "trainee",
+        action: "FAILED_LOGIN_ATTEMPT",
+        target: "Auth Service",
+        status: "FAILED"
+      });
+      return { success: false, message: "Invalid official email or password." };
+    }
+
+    // If legacy plaintext match succeeded, transparently re-hash password in background
+    if (isLegacy) {
+      hashPassword(password).then(async (newHash) => {
+        try {
+          const updatedUsers = users.map((u) => u.id === user!.id ? { ...u, password: newHash } : u);
+          saveToStorage(STORAGE_KEYS.USERS, updatedUsers);
+          await dbService.update('users', user!.id, { password: newHash });
+        } catch (e) {
+          console.warn('Password re-hash background update failed:', e);
+        }
+      });
+    }
+
     return get().validateCredentials(email, password, requiredRole);
   },
+
 
   validateCredentials: (email, password, requiredRole) => {
     const cleanEmail = email.trim().toLowerCase();
@@ -278,7 +359,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ currentUser: sanitizedUser, isInitialized: true });
     localStorage.setItem(
       STORAGE_KEYS.AUTH,
-      JSON.stringify({ userId: sanitizedUser.id, user: sanitizedUser })
+      JSON.stringify({
+        userId: sanitizedUser.id,
+        user: sanitizedUser,
+        expiresAt: Date.now() + SESSION_TTL_MS  // 8-hour session expiry
+      })
     );
     recordAuditEvent({
       actor: sanitizedUser.name,
@@ -313,7 +398,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.removeItem(STORAGE_KEYS.AUTH);
   },
 
-  register: (data) => {
+  register: async (data) => {
     const cleanEmail = data.email.trim().toLowerCase();
     const users = getFromStorage<User>(STORAGE_KEYS.USERS);
 
@@ -346,8 +431,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     if (existing) return { success: false, message: "An account with this email already exists." };
 
+    // Hash password before saving
+    const hashedPassword = await hashPassword(data.password || '');
+
     const newUser: User = {
       ...data,
+      password: hashedPassword,
       id: generateId(data.role),
       status: data.role === "trainee" ? "active" : "pending",
       createdAt: new Date().toISOString(),
@@ -480,7 +569,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     };
   },
 
-  resetUserPassword: (email, newPassword, requiredRole) => {
+  resetUserPassword: async (email, newPassword, requiredRole) => {
     const users = getFromStorage<User>(STORAGE_KEYS.USERS);
     const userIndex = users.findIndex((u) => u.email.toLowerCase() === email.trim().toLowerCase());
     if (userIndex === -1) {
@@ -506,10 +595,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { success: false, message: "This account is inactive or suspended. Please contact an administrator." };
     }
 
-    user.password = newPassword;
+    // Hash the new password before storing
+    const hashedPassword = await hashPassword(newPassword);
+
+    user.password = hashedPassword;
     users[userIndex] = user;
     saveToStorage(STORAGE_KEYS.USERS, users);
-    dbService.update('users', user.id, { password: newPassword });
+    dbService.update('users', user.id, { password: hashedPassword });
 
     recordAuditEvent({
       actor: user.name,
@@ -521,7 +613,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const current = get().currentUser;
     if (current && current.id === user.id) {
-      set({ currentUser: { ...user, password: newPassword } });
+      set({ currentUser: { ...user, password: hashedPassword } });
     }
 
     return {

@@ -67,7 +67,7 @@ export const useAuditStore = create<AuditState>((set, get) => {
 
       try {
         dbService.subscribe("audit_logs", async () => {
-          const fresh = await dbService.getAll<any>("audit_logs");
+          const fresh = await dbService.getAll<any>("audit_logs", 200);
           set({ logs: normalizeLogs(fresh) });
         });
       } catch (e) {}
@@ -76,7 +76,7 @@ export const useAuditStore = create<AuditState>((set, get) => {
     load: async () => {
       get().initSubscription();
       try {
-        const serverLogs = await dbService.getAll<any>("audit_logs");
+        const serverLogs = await dbService.getAll<any>("audit_logs", 200);
         set({ logs: normalizeLogs(serverLogs) });
       } catch (e) {
         console.warn("Could not load audit logs from cloud:", e);

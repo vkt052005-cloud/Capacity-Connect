@@ -37,7 +37,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     // Listen to real-time server events across all devices on the network
     dbService.subscribe('users', async () => {
       try {
-        const fresh = await dbService.getAll<User>('users');
+        const fresh = await dbService.getAll<User>('users', 500);
         if (fresh) {
           set({ users: fresh });
         }
@@ -49,7 +49,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     get().initSubscription();
 
     try {
-      const serverUsers = await dbService.getAll<User>('users');
+      const serverUsers = await dbService.getAll<User>('users', 500);
       if (serverUsers) {
         set({ users: serverUsers });
       }

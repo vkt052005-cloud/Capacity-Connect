@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { purgeLocalDeviceData } from "./utils/purgeLocalStorage";
 import { useAuthStore } from "./store/authStore";
@@ -11,41 +11,50 @@ import { useAttendanceStore } from "./store/attendanceStore";
 import { useAuditStore } from "./store/auditStore";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 
-// Public Pages
-import { HomePage } from "./pages/public/HomePage";
-import { LoginPage } from "./pages/public/LoginPage";
-import { RegisterPage } from "./pages/public/RegisterPage";
-import { VerifyIdentityPage } from "./pages/public/VerifyIdentityPage";
-import { NotFoundPage } from "./pages/public/NotFoundPage";
+// ── Lazy-loaded Public Pages ─────────────────────────────────────
+const HomePage = React.lazy(() => import("./pages/public/HomePage").then(m => ({ default: m.HomePage })));
+const LoginPage = React.lazy(() => import("./pages/public/LoginPage").then(m => ({ default: m.LoginPage })));
+const RegisterPage = React.lazy(() => import("./pages/public/RegisterPage").then(m => ({ default: m.RegisterPage })));
+const VerifyIdentityPage = React.lazy(() => import("./pages/public/VerifyIdentityPage").then(m => ({ default: m.VerifyIdentityPage })));
+const NotFoundPage = React.lazy(() => import("./pages/public/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
-// Trainee Pages
-import { TraineeDashboard } from "./pages/trainee/TraineeDashboard";
-import { TraineeProfile } from "./pages/trainee/TraineeProfile";
-import { CourseCatalog } from "./pages/trainee/CourseCatalog";
-import { CourseDetail } from "./pages/trainee/CourseDetail";
-import { Assessments } from "./pages/trainee/Assessments";
-import { TakeAssessment } from "./pages/trainee/TakeAssessment";
-import { Certificates } from "./pages/trainee/Certificates";
-import { FeedbackPage } from "./pages/trainee/Feedback";
-import { TraineeLiveClasses } from "./pages/trainee/TraineeLiveClasses";
+// ── Lazy-loaded Trainee Pages ─────────────────────────────────────
+const TraineeDashboard = React.lazy(() => import("./pages/trainee/TraineeDashboard").then(m => ({ default: m.TraineeDashboard })));
+const TraineeProfile = React.lazy(() => import("./pages/trainee/TraineeProfile").then(m => ({ default: m.TraineeProfile })));
+const CourseCatalog = React.lazy(() => import("./pages/trainee/CourseCatalog").then(m => ({ default: m.CourseCatalog })));
+const CourseDetail = React.lazy(() => import("./pages/trainee/CourseDetail").then(m => ({ default: m.CourseDetail })));
+const Assessments = React.lazy(() => import("./pages/trainee/Assessments").then(m => ({ default: m.Assessments })));
+const TakeAssessment = React.lazy(() => import("./pages/trainee/TakeAssessment").then(m => ({ default: m.TakeAssessment })));
+const Certificates = React.lazy(() => import("./pages/trainee/Certificates").then(m => ({ default: m.Certificates })));
+const FeedbackPage = React.lazy(() => import("./pages/trainee/Feedback").then(m => ({ default: m.FeedbackPage })));
+const TraineeLiveClasses = React.lazy(() => import("./pages/trainee/TraineeLiveClasses").then(m => ({ default: m.TraineeLiveClasses })));
 
-// Trainer Pages
-import TrainerDashboard from "./pages/trainer/TrainerDashboard";
-import TrainerProfile from "./pages/trainer/TrainerProfile";
-import TrainerLibrary from "./pages/trainer/TrainerLibrary";
-import Questionnaires from "./pages/trainer/Questionnaires";
-import TrainerReports from "./pages/trainer/TrainerReports";
-import TrainerCourses from "./pages/trainer/TrainerCourses";
-import { TrainerLiveClasses } from "./pages/trainer/TrainerLiveClasses";
+// ── Lazy-loaded Trainer Pages ─────────────────────────────────────
+const TrainerDashboard = React.lazy(() => import("./pages/trainer/TrainerDashboard"));
+const TrainerProfile = React.lazy(() => import("./pages/trainer/TrainerProfile"));
+const TrainerLibrary = React.lazy(() => import("./pages/trainer/TrainerLibrary"));
+const Questionnaires = React.lazy(() => import("./pages/trainer/Questionnaires"));
+const TrainerReports = React.lazy(() => import("./pages/trainer/TrainerReports"));
+const TrainerCourses = React.lazy(() => import("./pages/trainer/TrainerCourses"));
+const TrainerLiveClasses = React.lazy(() => import("./pages/trainer/TrainerLiveClasses").then(m => ({ default: m.TrainerLiveClasses })));
 
-// Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import UserManagement from "./pages/admin/UserManagement";
-import CourseManagement from "./pages/admin/CourseManagement";
-import CompetencyMapping from "./pages/admin/CompetencyMapping";
-import AdminNotifications from "./pages/admin/AdminNotifications";
-import AdminReports from "./pages/admin/AdminReports";
-import AdminProfile from "./pages/admin/AdminProfile";
+// ── Lazy-loaded Admin Pages ───────────────────────────────────────
+const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
+const UserManagement = React.lazy(() => import("./pages/admin/UserManagement"));
+const CourseManagement = React.lazy(() => import("./pages/admin/CourseManagement"));
+const CompetencyMapping = React.lazy(() => import("./pages/admin/CompetencyMapping"));
+const AdminNotifications = React.lazy(() => import("./pages/admin/AdminNotifications"));
+const AdminReports = React.lazy(() => import("./pages/admin/AdminReports"));
+const AdminProfile = React.lazy(() => import("./pages/admin/AdminProfile"));
+
+// ── Full-screen loading spinner shown while a lazy chunk is loading ──
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-[#000000] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function App() {
   const { loadFromStorage } = useAuthStore();
@@ -73,148 +82,150 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/verify/id" element={<VerifyIdentityPage />} />
-        <Route path="/auth/qr" element={<VerifyIdentityPage />} />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify/id" element={<VerifyIdentityPage />} />
+          <Route path="/auth/qr" element={<VerifyIdentityPage />} />
 
-        {/* Role Short Aliases */}
-        <Route path="/trainee" element={<Navigate to="/trainee/dashboard" replace />} />
-        <Route path="/trainer" element={<Navigate to="/trainer/dashboard" replace />} />
-        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          {/* Role Short Aliases */}
+          <Route path="/trainee" element={<Navigate to="/trainee/dashboard" replace />} />
+          <Route path="/trainer" element={<Navigate to="/trainer/dashboard" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
-        {/* Trainee Routes */}
-        <Route path="/trainee/dashboard" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <TraineeDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainee/live-classes" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <TraineeLiveClasses />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainee/profile" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <TraineeProfile />
-          </ProtectedRoute>
-        } />
-        {/* Course Catalog (Publicly browseable by all visitors; login required to watch/enroll) */}
-        <Route path="/courses" element={<CourseCatalog />} />
-        <Route path="/trainee/courses" element={<CourseCatalog />} />
+          {/* Trainee Routes */}
+          <Route path="/trainee/dashboard" element={
+            <ProtectedRoute allowedRoles={["trainee"]}>
+              <TraineeDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainee/live-classes" element={
+            <ProtectedRoute allowedRoles={["trainee"]}>
+              <TraineeLiveClasses />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainee/profile" element={
+            <ProtectedRoute allowedRoles={["trainee"]}>
+              <TraineeProfile />
+            </ProtectedRoute>
+          } />
+          {/* Course Catalog (Publicly browseable by all visitors; login required to watch/enroll) */}
+          <Route path="/courses" element={<CourseCatalog />} />
+          <Route path="/trainee/courses" element={<CourseCatalog />} />
 
-        {/* Watch Course / Lecture Studio (Protected — requires login) */}
-        <Route path="/trainee/course/:id" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <CourseDetail />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainee/library" element={
-          <ProtectedRoute allowedRoles={["trainee", "trainer", "admin"]}>
-            <TrainerLibrary />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainee/assessments" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <Assessments />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainee/assessment/:id" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <TakeAssessment />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainee/certificates" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <Certificates />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainee/feedback" element={
-          <ProtectedRoute allowedRoles={["trainee"]}>
-            <FeedbackPage />
-          </ProtectedRoute>
-        } />
+          {/* Watch Course / Lecture Studio (Protected — requires login) */}
+          <Route path="/trainee/course/:id" element={
+            <ProtectedRoute allowedRoles={["trainee"]}>
+              <CourseDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainee/library" element={
+            <ProtectedRoute allowedRoles={["trainee", "trainer", "admin"]}>
+              <TrainerLibrary />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainee/assessments" element={
+            <ProtectedRoute allowedRoles={["trainee"]}>
+              <Assessments />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainee/assessment/:id" element={
+            <ProtectedRoute allowedRoles={["trainee"]}>
+              <TakeAssessment />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainee/certificates" element={
+            <ProtectedRoute allowedRoles={["trainee"]}>
+              <Certificates />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainee/feedback" element={
+            <ProtectedRoute allowedRoles={["trainee"]}>
+              <FeedbackPage />
+            </ProtectedRoute>
+          } />
 
-        {/* Trainer Routes */}
-        <Route path="/trainer/dashboard" element={
-          <ProtectedRoute allowedRoles={["trainer"]}>
-            <TrainerDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainer/live-classes" element={
-          <ProtectedRoute allowedRoles={["trainer"]}>
-            <TrainerLiveClasses />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainer/profile" element={
-          <ProtectedRoute allowedRoles={["trainer"]}>
-            <TrainerProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainer/courses" element={
-          <ProtectedRoute allowedRoles={["trainer"]}>
-            <TrainerCourses />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainer/library" element={
-          <ProtectedRoute allowedRoles={["trainer"]}>
-            <TrainerLibrary />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainer/questionnaires" element={
-          <ProtectedRoute allowedRoles={["trainer"]}>
-            <Questionnaires />
-          </ProtectedRoute>
-        } />
-        <Route path="/trainer/reports" element={
-          <ProtectedRoute allowedRoles={["trainer"]}>
-            <TrainerReports />
-          </ProtectedRoute>
-        } />
+          {/* Trainer Routes */}
+          <Route path="/trainer/dashboard" element={
+            <ProtectedRoute allowedRoles={["trainer"]}>
+              <TrainerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainer/live-classes" element={
+            <ProtectedRoute allowedRoles={["trainer"]}>
+              <TrainerLiveClasses />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainer/profile" element={
+            <ProtectedRoute allowedRoles={["trainer"]}>
+              <TrainerProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainer/courses" element={
+            <ProtectedRoute allowedRoles={["trainer"]}>
+              <TrainerCourses />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainer/library" element={
+            <ProtectedRoute allowedRoles={["trainer"]}>
+              <TrainerLibrary />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainer/questionnaires" element={
+            <ProtectedRoute allowedRoles={["trainer"]}>
+              <Questionnaires />
+            </ProtectedRoute>
+          } />
+          <Route path="/trainer/reports" element={
+            <ProtectedRoute allowedRoles={["trainer"]}>
+              <TrainerReports />
+            </ProtectedRoute>
+          } />
 
-        {/* Admin Routes */}
-        <Route path="/admin/dashboard" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/users" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <UserManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/courses" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <CourseManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/competency" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <CompetencyMapping />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/notifications" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminNotifications />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/profile" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/reports" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminReports />
-          </ProtectedRoute>
-        } />
+          {/* Admin Routes */}
+          <Route path="/admin/dashboard" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <UserManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/courses" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <CourseManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/competency" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <CompetencyMapping />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/notifications" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminNotifications />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/profile" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/reports" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminReports />
+            </ProtectedRoute>
+          } />
 
-        {/* Zero-404 Fault-Tolerant Wildcard Fallback */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          {/* Zero-404 Fault-Tolerant Wildcard Fallback */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
