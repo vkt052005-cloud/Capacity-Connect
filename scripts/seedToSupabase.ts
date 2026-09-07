@@ -19,7 +19,8 @@ async function main() {
   // 2. Sync Courses
   console.log(`\n📦 Syncing ${initialCourses.length} Courses...`);
   for (const course of initialCourses) {
-    const res = await supabase.insert("courses", course);
+    const { videoUrl, ...courseData } = course as any;
+    const res = await supabase.insert("courses", courseData);
     console.log(`   Course [${course.title}] -> ${res ? "✅ OK" : "⚠️ Skipped/Failed"}`);
   }
 
