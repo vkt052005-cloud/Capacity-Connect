@@ -7,6 +7,7 @@ import { useCoursesStore } from "./store/coursesStore";
 import { useAssessmentsStore } from "./store/assessmentsStore";
 import { useUsersStore } from "./store/usersStore";
 import { useLiveSessionsStore } from "./store/liveSessionsStore";
+import { useAttendanceStore } from "./store/attendanceStore";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 
 // Public Pages
@@ -52,6 +53,7 @@ function App() {
   const { load: loadAssessments } = useAssessmentsStore();
   const { load: loadUsers } = useUsersStore();
   const { load: loadLiveSessions } = useLiveSessionsStore();
+  const { load: loadAttendance } = useAttendanceStore();
 
   useEffect(() => {
     initializeStorage();
@@ -61,6 +63,7 @@ function App() {
     loadAssessments();
     loadUsers();
     loadLiveSessions();
+    loadAttendance();
   }, []);
 
   return (

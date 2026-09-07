@@ -12,13 +12,17 @@ interface AdaptiveVideoPlayerProps {
   thumbnail?: string;
   transcripts?: TranscriptItem[];
   title: string;
+  onProgress?: (percent: number, currentTime: number) => void;
+  onEnded?: () => void;
 }
 
 export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
   videoUrl,
   thumbnail,
   transcripts = [],
-  title
+  title,
+  onProgress,
+  onEnded
 }) => {
   const { activeVideoQuality, setVideoQuality, dataSaverMode, addToast } = useAppStore();
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -148,10 +152,19 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
               src={resolvedStreamUrl}
               poster={thumbnail}
               className="w-full h-full object-cover"
-              controls={false}
-              onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+              onTimeUpdate={(e) => {
+                const cur = e.currentTarget.currentTime;
+                const dur = e.currentTarget.duration || duration || 1;
+                setCurrentTime(cur);
+                if (onProgress && dur > 0) {
+                  onProgress(Math.round((cur / dur) * 100), Math.round(cur));
+                }
+              }}
               onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 900)}
-              onEnded={() => setIsPlaying(false)}
+              onEnded={() => {
+                setIsPlaying(false);
+                if (onEnded) onEnded();
+              }}
               onError={() => setMediaError(true)}
             />
           ) : mediaError ? (

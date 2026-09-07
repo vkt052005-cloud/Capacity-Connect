@@ -15,6 +15,7 @@ import { useCoursesStore } from "../../store/coursesStore";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
+import { useAttendanceStore } from "../../store/attendanceStore";
 import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment";
 import { initialDiscussions, initialCourses } from "../../data/seed";
 import { sigmaWebDevLessons } from "../../data/sigmaWebDevPlaylist";
@@ -146,6 +147,7 @@ export const CourseDetail: React.FC = () => {
   const { sessions, launchGoogleMeet, openClassroom } = useLiveSessionsStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
+  const { markLessonWatched } = useAttendanceStore();
   const navigate = useNavigate();
   const playerRef = useRef<HTMLDivElement>(null);
 
@@ -661,6 +663,42 @@ export const CourseDetail: React.FC = () => {
                   thumbnail={getCourseThumbnail(course)}
                   transcripts={mainResource?.transcripts}
                   title={activeVideoTitle}
+                  onProgress={(percent, sec) => {
+                    if (currentUser && course && currentLesson && percent >= 80) {
+                      markLessonWatched(
+                        currentUser.id,
+                        currentUser.name,
+                        {
+                          id: currentLesson.id || `lesson-${currentLesson.lessonNumber}`,
+                          title: currentLesson.title,
+                          courseId: course.id,
+                          courseTitle: course.title,
+                          trainerId: course.trainerId || "",
+                          trainerName: course.trainerName || "",
+                        },
+                        percent,
+                        sec
+                      );
+                    }
+                  }}
+                  onEnded={() => {
+                    if (currentUser && course && currentLesson) {
+                      markLessonWatched(
+                        currentUser.id,
+                        currentUser.name,
+                        {
+                          id: currentLesson.id || `lesson-${currentLesson.lessonNumber}`,
+                          title: currentLesson.title,
+                          courseId: course.id,
+                          courseTitle: course.title,
+                          trainerId: course.trainerId || "",
+                          trainerName: course.trainerName || "",
+                        },
+                        100,
+                        900
+                      );
+                    }
+                  }}
                 />
 
                 <div className="card p-5 space-y-3">
