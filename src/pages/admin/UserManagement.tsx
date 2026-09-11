@@ -543,9 +543,9 @@ export const UserManagement: React.FC = () => {
         </div>
 
         {/* Users Table */}
-        <div className="card p-5 space-y-4">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+        <div className="card p-3 sm:p-5 space-y-4">
+          <div className="overflow-x-auto touch-scroll -mx-3 sm:mx-0 px-3 sm:px-0">
+            <table className="w-full min-w-[650px] text-left text-xs">
               <thead className="table-header border-b border-white/10 text-[10px] text-slate-400 uppercase tracking-wider">
                 <tr>
                   <th className="py-2.5 px-3">User & Profile</th>

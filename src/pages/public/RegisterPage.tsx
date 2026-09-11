@@ -406,25 +406,25 @@ export const RegisterPage: React.FC = () => {
 
       <Header />
 
-      <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-      <div className="max-w-lg w-full mx-auto space-y-6 relative z-10">
-        <div className="text-center space-y-2">
-          <Link to="/" className="inline-flex items-center gap-2 mb-2">
+      <main className="flex-1 flex items-center justify-center py-6 sm:py-12 px-3.5 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-lg w-full mx-auto space-y-4 sm:space-y-6 relative z-10">
+        <div className="text-center space-y-1.5 sm:space-y-2">
+          <Link to="/" className="inline-flex items-center gap-2 mb-1">
             <img
               src="/logo.png"
               alt="Capacity Connect"
-              className="w-28 h-28 sm:w-36 sm:h-36 object-contain drop-shadow-[0_0_35px_rgba(41,151,255,0.65)] mx-auto hover:scale-105 transition-transform duration-300"
+              className="w-20 h-20 sm:w-36 sm:h-36 object-contain drop-shadow-[0_0_35px_rgba(41,151,255,0.65)] mx-auto hover:scale-105 transition-transform duration-300"
             />
           </Link>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">
             {step === "form" ? "Create Professional Profile" : "Email OTP Verification"}
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-[11px] sm:text-xs text-slate-400">
             {step === "form" ? "Join Capacity Connect for certified capacity building" : ("We sent a 6-digit verification code to " + email)}
           </p>
         </div>
 
-        <div className="glass-panel p-6 sm:p-8 space-y-5 border border-white/15 shadow-2xl">
+        <div className="glass-panel p-4 sm:p-8 space-y-4 sm:space-y-5 border border-white/15 shadow-2xl">
           {step === "form" ? (
             <>
               {/* Role Selection Tabs */}
@@ -792,17 +792,18 @@ export const RegisterPage: React.FC = () => {
                 <label className="block text-center text-xs font-semibold text-slate-300 mb-3">
                   Verification Code (OTP)
                 </label>
-                <div className="flex items-center justify-center gap-2 sm:gap-3" onPaste={handleOtpPaste}>
+                <div className="flex items-center justify-center gap-1.5 sm:gap-3" onPaste={handleOtpPaste}>
                   {otpDigits.map((digit, idx) => (
                     <input
                       key={idx}
                       ref={(el) => (otpInputsRef.current[idx] = el)}
                       type="text"
+                      inputMode="numeric"
                       maxLength={1}
                       value={digit}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      className="w-11 h-12 sm:w-12 sm:h-14 text-center text-lg font-extrabold text-white bg-black/60 border border-white/20 rounded-xl focus:outline-none focus:border-[#2997ff] focus:ring-2 focus:ring-[#0071e3]/30 transition"
+                      className="w-9 h-11 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-extrabold text-white bg-black/60 border border-white/20 rounded-xl focus:outline-none focus:border-[#2997ff] focus:ring-2 focus:ring-[#0071e3]/30 transition"
                     />
                   ))}
                 </div>
@@ -831,7 +832,7 @@ export const RegisterPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="apple-btn-primary w-full py-3 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                className="apple-btn-primary w-full py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>{loading ? "Verifying & Creating Account..." : "Verify OTP & Complete Registration"}</span>

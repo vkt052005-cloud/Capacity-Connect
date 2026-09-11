@@ -98,65 +98,65 @@ export const HomePage: React.FC = () => {
 
       <main className="flex-1 space-y-10 pb-12 overflow-hidden">
         {/* Hero Section */}
-        <section className="relative pt-6 sm:pt-10 pb-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 z-10">
+        <section className="relative pt-4 sm:pt-10 pb-8 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 text-center space-y-5 sm:space-y-6 z-10">
           {/* Large Hero Brand Logo */}
           <div className="flex justify-center mb-1">
             <img
               src="/logo.png"
               alt="Capacity Connect Logo"
-              className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-[0_0_35px_rgba(41,151,255,0.7)] hover:scale-105 transition-transform duration-300"
+              className="w-20 h-20 sm:w-32 sm:h-32 object-contain drop-shadow-[0_0_35px_rgba(41,151,255,0.7)] hover:scale-105 transition-transform duration-300"
             />
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#2997ff]/40 bg-[#0071e3]/10 text-[#2997ff] text-xs sm:text-[12.5px] font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-[#2997ff]/40 bg-[#0071e3]/10 text-[#2997ff] text-[11px] sm:text-[12.5px] font-semibold">
             <span className="w-1.5 h-1.5 rounded-full bg-[#2997ff]" />
             <span>Competency Development Portal</span>
           </div>
 
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight sm:leading-snug">
+          <div className="space-y-3 sm:space-y-4 max-w-3xl mx-auto px-2">
+            <h1 className="text-2xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight sm:leading-snug">
               Digital Capacity Building &
-              <span className="block mt-1.5 sm:mt-2.5 pb-1 bg-gradient-to-r from-[#2997ff] via-[#64d2ff] to-[#a1e3ff] bg-clip-text text-transparent">
+              <span className="block mt-1 sm:mt-2.5 pb-1 bg-gradient-to-r from-[#2997ff] via-[#64d2ff] to-[#a1e3ff] bg-clip-text text-transparent">
                 Learning Management
               </span>
             </h1>
-            <p className="text-[13px] sm:text-[15px] text-slate-300 leading-relaxed font-normal max-w-2xl mx-auto">
+            <p className="text-xs sm:text-[15px] text-slate-300 leading-relaxed font-normal max-w-2xl mx-auto">
               A centralized web platform supporting organizational training, competency development, and knowledge sharing through structured courses, MCQ assessments, and verified certifications.
             </p>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 pt-2 w-full max-w-xs sm:max-w-none mx-auto">
             <Link
               to="/register"
-              className="apple-btn-primary px-6 py-2.5 text-xs sm:text-sm font-semibold shadow-lg shadow-blue-500/25 flex items-center gap-2"
+              className="apple-btn-primary w-full sm:w-auto px-6 py-3 sm:py-2.5 text-xs sm:text-sm font-semibold shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 min-h-[44px]"
             >
               <span>Get Started Free</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               to="/login"
-              className="apple-btn-secondary px-6 py-2.5 text-xs sm:text-sm font-medium"
+              className="apple-btn-secondary w-full sm:w-auto px-6 py-3 sm:py-2.5 text-xs sm:text-sm font-medium flex items-center justify-center min-h-[44px]"
             >
               Sign In to Portal
             </Link>
           </div>
 
           {/* Quick Role Entrance Cards */}
-          <div className="pt-8 max-w-5xl mx-auto">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-4">
+          <div className="pt-6 sm:pt-8 max-w-5xl mx-auto">
+            <p className="text-[11px] sm:text-xs text-slate-400 font-semibold uppercase tracking-wider mb-3 sm:mb-4">
               Select User Role to Access Workspace
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
               {/* Trainee */}
               <div
                 onClick={() => handleRoleQuickStart("trainee")}
-                className="glass-card p-5 text-left space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
+                className="glass-card p-4 sm:p-5 text-left space-y-1.5 sm:space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
               >
                 <div>
                   <h3 className="text-sm font-bold text-white group-hover:text-[#2997ff] transition flex items-center justify-between">
                     <span>Trainee</span>
-                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2997ff] transition" />
                   </h3>
                   <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
                     Professional profile, enrolled courses, MCQ tests & verified certificates.
@@ -167,12 +167,12 @@ export const HomePage: React.FC = () => {
               {/* Trainer */}
               <div
                 onClick={() => handleRoleQuickStart("trainer")}
-                className="glass-card p-5 text-left space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
+                className="glass-card p-4 sm:p-5 text-left space-y-1.5 sm:space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
               >
                 <div>
                   <h3 className="text-sm font-bold text-white group-hover:text-[#2997ff] transition flex items-center justify-between">
                     <span>Trainer</span>
-                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2997ff] transition" />
                   </h3>
                   <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
                     Schedule live lectures, author questionnaires, library & trainee gradebook.
@@ -183,12 +183,12 @@ export const HomePage: React.FC = () => {
               {/* Administrator */}
               <div
                 onClick={() => handleRoleQuickStart("admin")}
-                className="glass-card p-5 text-left space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
+                className="glass-card p-4 sm:p-5 text-left space-y-1.5 sm:space-y-2 cursor-pointer group hover:border-[#2997ff]/60 transition"
               >
                 <div>
                   <h3 className="text-sm font-bold text-white group-hover:text-[#2997ff] transition flex items-center justify-between">
                     <span>Administrator</span>
-                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2997ff] transition" />
                   </h3>
                   <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
                     User approval, competency mapping, announcements & executive reports.

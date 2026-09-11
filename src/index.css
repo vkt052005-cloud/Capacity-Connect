@@ -182,9 +182,16 @@
   color: #ffffff !important;
   border-radius: 10px !important;
   padding: 0.5rem 0.8rem;
-  font-size: 0.75rem;
+  font-size: 1rem;
   width: 100%;
   transition: border-color 0.15s ease;
+  touch-action: manipulation;
+}
+
+@media (min-width: 640px) {
+  .apple-input, .ai-input, .input {
+    font-size: 0.75rem;
+  }
 }
 
 .apple-input:focus, .ai-input:focus, .input:focus {
@@ -271,4 +278,25 @@
 }
 .rotate-y-180 {
   transform: rotateY(180deg);
+}
+
+/* Mobile Safe Areas and Touch Ergonomics */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.safe-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
 }

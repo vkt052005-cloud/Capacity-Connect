@@ -283,21 +283,21 @@ export const LoginPage: React.FC = () => {
 
       <Header />
 
-      <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-      <div className="max-w-md w-full space-y-6">
-        <div className="text-center space-y-2">
-          <Link to="/" className="inline-flex items-center gap-2 mb-2">
+      <main className="flex-1 flex items-center justify-center py-6 sm:py-12 px-3.5 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-md w-full space-y-4 sm:space-y-6">
+        <div className="text-center space-y-1.5 sm:space-y-2">
+          <Link to="/" className="inline-flex items-center gap-2 mb-1">
             <img
               src="/logo.png"
               alt="Capacity Connect"
-              className="w-28 h-28 sm:w-36 sm:h-36 object-contain drop-shadow-[0_0_35px_rgba(41,151,255,0.65)] mx-auto hover:scale-105 transition-transform duration-300"
+              className="w-20 h-20 sm:w-36 sm:h-36 object-contain drop-shadow-[0_0_35px_rgba(41,151,255,0.65)] mx-auto hover:scale-105 transition-transform duration-300"
             />
           </Link>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Sign In to Portal</h2>
-          <p className="text-xs text-slate-400">Secure role-based authentication</p>
+          <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">Sign In to Portal</h2>
+          <p className="text-[11px] sm:text-xs text-slate-400">Secure role-based authentication</p>
         </div>
 
-        <div className="glass-panel p-6 sm:p-8 space-y-5 border border-white/15 shadow-2xl">
+        <div className="glass-panel p-4 sm:p-8 space-y-4 sm:space-y-5 border border-white/15 shadow-2xl">
           {isPendingNotice && role === "trainer" && (
             <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/35 text-xs text-amber-200 space-y-1 animate-fadeIn">
               <div className="flex items-center gap-2 font-bold text-amber-300">
@@ -507,7 +507,7 @@ export const LoginPage: React.FC = () => {
                   <label className="block text-xs font-semibold text-slate-300 mb-2 text-center">
                     Enter 6-Digit Login Security Code
                   </label>
-                  <div className="flex items-center justify-center gap-2 sm:gap-3" onPaste={handleOtpPaste}>
+                  <div className="flex items-center justify-center gap-1.5 sm:gap-3" onPaste={handleOtpPaste}>
                     {otpDigits.map((digit, idx) => (
                       <input
                         key={idx}
@@ -518,7 +518,7 @@ export const LoginPage: React.FC = () => {
                         value={digit}
                         onChange={(e) => handleOtpChange(idx, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-mono font-extrabold bg-black/60 border border-white/20 rounded-xl focus:border-[#2997ff] focus:ring-2 focus:ring-[#2997ff]/40 text-white outline-none transition"
+                        className="w-9 h-11 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-mono font-extrabold bg-black/60 border border-white/20 rounded-xl focus:border-[#2997ff] focus:ring-2 focus:ring-[#2997ff]/40 text-white outline-none transition"
                       />
                     ))}
                   </div>
@@ -533,7 +533,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="apple-btn-primary w-full py-2.5 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                  className="apple-btn-primary w-full py-3 sm:py-2.5 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{loading ? "Verifying Code..." : "Verify OTP & Sign In"}</span>

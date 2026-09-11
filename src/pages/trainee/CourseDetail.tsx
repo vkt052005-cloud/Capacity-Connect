@@ -441,13 +441,13 @@ export const CourseDetail: React.FC = () => {
         )}
 
         {/* Navigation Tabs Pill (Apple Style) */}
-        <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-3">
-          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-black/50 border border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/10 pb-3 gap-3">
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-black/50 border border-white/10 overflow-x-auto no-scrollbar touch-scroll max-w-full">
             <button
               onClick={() => setActiveTab("video")}
               className={
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " +
-                (activeTab === "video" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")
+                "flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 " +
+                (activeTab === "video" ? "bg-[#0071e3] text-white shadow-md font-bold" : "text-slate-400 hover:text-white")
               }
             >
               <Video className="w-3.5 h-3.5" /> All {allLessons.length} Videos Playlist
@@ -455,8 +455,8 @@ export const CourseDetail: React.FC = () => {
             <button
               onClick={() => setActiveTab("slides")}
               className={
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " +
-                (activeTab === "slides" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")
+                "flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 " +
+                (activeTab === "slides" ? "bg-[#0071e3] text-white shadow-md font-bold" : "text-slate-400 hover:text-white")
               }
             >
               <Presentation className="w-3.5 h-3.5" /> Slide Deck
@@ -464,26 +464,26 @@ export const CourseDetail: React.FC = () => {
             <button
               onClick={() => setActiveTab("resources")}
               className={
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " +
-                (activeTab === "resources" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")
+                "flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 " +
+                (activeTab === "resources" ? "bg-[#0071e3] text-white shadow-md font-bold" : "text-slate-400 hover:text-white")
               }
             >
-              <FolderOpen className="w-3.5 h-3.5" /> Study Materials & Library ({course.resources?.length || 0})
+              <FolderOpen className="w-3.5 h-3.5" /> Study Materials ({course.resources?.length || 0})
             </button>
             <button
               onClick={() => setActiveTab("ai")}
               className={
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " +
-                (activeTab === "ai" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")
+                "flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 " +
+                (activeTab === "ai" ? "bg-[#0071e3] text-white shadow-md font-bold" : "text-slate-400 hover:text-white")
               }
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#2997ff]" /> AI Assistant & Cards
+              <Sparkles className="w-3.5 h-3.5 text-[#2997ff]" /> AI Assistant
             </button>
             <button
               onClick={() => setActiveTab("discussions")}
               className={
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " +
-                (activeTab === "discussions" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")
+                "flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 " +
+                (activeTab === "discussions" ? "bg-[#0071e3] text-white shadow-md font-bold" : "text-slate-400 hover:text-white")
               }
             >
               <MessageSquare className="w-3.5 h-3.5" /> Peer Q&A ({discussions.length})
@@ -491,18 +491,18 @@ export const CourseDetail: React.FC = () => {
             <button
               onClick={() => setActiveTab("reviews")}
               className={
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer " +
-                (activeTab === "reviews" ? "bg-[#0071e3] text-white shadow-md" : "text-slate-400 hover:text-white")
+                "flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 " +
+                (activeTab === "reviews" ? "bg-[#0071e3] text-white shadow-md font-bold" : "text-slate-400 hover:text-white")
               }
             >
-              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Student Reviews ({courseFeedbacks.length})
+              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Reviews ({courseFeedbacks.length})
             </button>
             <button
               onClick={() => setActiveTab("live")}
               className={
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer relative " +
+                "flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 relative " +
                 (activeTab === "live"
-                  ? "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30"
+                  ? "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30 font-bold"
                   : courseLiveSession
                   ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30"
                   : "text-slate-400 hover:text-white")
