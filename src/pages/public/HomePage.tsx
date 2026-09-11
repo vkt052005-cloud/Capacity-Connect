@@ -6,17 +6,16 @@ import {
   GraduationCap, BookOpen, Award, Users, ChevronRight, ChevronDown,
   TrendingUp, Shield, Zap, ArrowRight, CheckCircle2,
   Video, Brain, ShieldCheck, Flame, Star, QrCode, Search,
-  HelpCircle, Mail, Send, Sparkles, MapPin,
-  Bell, AlertTriangle, Trophy
+  HelpCircle, Mail, Send, MapPin,
+  Bell, AlertTriangle
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useCoursesStore } from "../../store/coursesStore";
-import { useNotificationsStore } from "../../store/notificationsStore";
 import { useAppStore } from "../../store/appStore";
 import { Header } from "../../components/layout/Header";
 import { Footer } from "../../components/layout/Footer";
 import { ToastContainer } from "../../components/common/ToastContainer";
-import { initialCourses, initialNotifications } from "../../data/seed";
+import { initialCourses } from "../../data/seed";
 
 export const HomePage: React.FC = () => {
   const { courses, load } = useCoursesStore();
@@ -26,19 +25,13 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     load();
   }, [load]);
-  const { notifications } = useNotificationsStore();
+
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [subscribeEmail, setSubscribeEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
-  const [bulletinFilter, setBulletinFilter] = useState<"all" | "announcement" | "achievement" | "new_content">("all");
 
   const featuredCourses = (courses && courses.length > 0 ? courses : initialCourses).slice(0, 4);
-  const displayNotifications = notifications && notifications.length > 0 ? notifications : initialNotifications;
-  const filteredNotifications = displayNotifications.filter((n) => {
-    if (bulletinFilter === "all") return true;
-    return n.type === bulletinFilter;
-  });
 
   const handleRoleQuickStart = (role: "trainee" | "trainer" | "admin") => {
     navigate(`/login?role=${role}`);
@@ -194,109 +187,6 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
         </section>
-
-        {/* Announcements, Achievements & Learning Spotlight Section */}
-        {filteredNotifications.length > 0 && (
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="card p-5 sm:p-6 border-[#2997ff]/30 bg-gradient-to-r from-blue-950/30 via-slate-900/40 to-purple-950/30 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="p-1.5 rounded-lg bg-blue-500/10 text-[#2997ff] border border-blue-500/20">
-                    <Bell className="w-4 h-4" />
-                  </span>
-                  <div>
-                    <h2 className="text-sm font-bold text-white tracking-wide">
-                      Bulletins, Achievements & Learning Updates
-                    </h2>
-                    <p className="text-[11px] text-slate-400">
-                      Official notifications, organizational milestones, and newly published learning content
-                    </p>
-                  </div>
-                </div>
-
-                {/* Filter Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                  {[
-                    { key: "all", label: "All Bulletins" },
-                    { key: "announcement", label: "Announcements" },
-                    { key: "achievement", label: "Achievements" },
-                    { key: "new_content", label: "New Content" },
-                  ].map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setBulletinFilter(tab.key as any)}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition whitespace-nowrap ${
-                        bulletinFilter === tab.key
-                          ? "bg-[#2997ff] text-white shadow-sm"
-                          : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {filteredNotifications.map((n) => {
-                  let badgeStyle = "bg-blue-500/10 text-[#2997ff] border-blue-500/30";
-                  let IconComponent = Bell;
-                  let typeLabel = "Notice";
-
-                  if (n.type === "achievement") {
-                    badgeStyle = "bg-amber-500/10 text-amber-300 border-amber-500/30";
-                    IconComponent = Trophy;
-                    typeLabel = "Achievement";
-                  } else if (n.type === "new_content") {
-                    badgeStyle = "bg-emerald-500/10 text-emerald-300 border-emerald-500/30";
-                    IconComponent = BookOpen;
-                    typeLabel = "New Course";
-                  } else if (n.type === "announcement") {
-                    badgeStyle = "bg-purple-500/10 text-purple-300 border-purple-500/30";
-                    IconComponent = Sparkles;
-                    typeLabel = "Announcement";
-                  }
-
-                  return (
-                    <div
-                      key={n.id}
-                      className="card p-4 space-y-2 border-white/10 hover:border-[#2997ff]/40 bg-slate-900/60 transition group"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`p-1 rounded border text-[10px] ${badgeStyle}`}>
-                            <IconComponent className="w-3.5 h-3.5" />
-                          </span>
-                          <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${badgeStyle}`}>
-                            {typeLabel}
-                          </span>
-                        </div>
-                        {n.pinned && (
-                          <span className="text-[9px] text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded font-medium">
-                            Pinned
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="text-xs font-bold text-white group-hover:text-[#2997ff] transition leading-snug">
-                        {n.title}
-                      </h3>
-
-                      <p className="text-[11px] text-slate-300 leading-relaxed line-clamp-3">
-                        {n.content}
-                      </p>
-
-                      <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[9px] text-slate-500 font-mono">
-                        <span>Published by {n.author}</span>
-                        <span>{new Date(n.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* Core Architectural Pillars */}
         <section className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-8">
