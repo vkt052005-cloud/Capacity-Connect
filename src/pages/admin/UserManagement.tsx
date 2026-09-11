@@ -371,10 +371,9 @@ export const UserManagement: React.FC = () => {
         : {})
     };
 
-    // 1. Save user to Zustand state & LocalStorage
+    // 1. Save user to Zustand state
     const { users: currentList } = useUsersStore.getState();
     const updated = [newUser, ...currentList];
-    localStorage.setItem("cc_users", JSON.stringify(updated));
     useUsersStore.setState({ users: updated });
 
     // 2. Persist to server backend database (db.json) & trigger live sync

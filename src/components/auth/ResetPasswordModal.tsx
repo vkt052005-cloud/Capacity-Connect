@@ -8,7 +8,7 @@ import { useAppStore } from "../../store/appStore";
 import { PasswordStrengthMeter, checkPasswordStrength } from "./PasswordStrengthMeter";
 import { sendOtpEmail, verifyOtpCode } from "../../services/emailService";
 import type { UserRole, User } from "../../types";
-import { STORAGE_KEYS, getFromStorage } from "../../data/seed";
+import { useUsersStore } from "../../store/usersStore";
 
 export interface ResetPasswordModalProps {
   isOpen: boolean;
@@ -91,8 +91,8 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     setIsResetting(true);
     try {
       // Security Pre-check: Ensure account is valid and reject admin self-reset
-      const users = getFromStorage<User>(STORAGE_KEYS.USERS);
-      const matchedUser = users.find((u: User) => u.email.toLowerCase() === emailToVerify);
+      const users = useUsersStore.getState().users;
+      const matchedUser = users.find((u: User) => u.email?.toLowerCase() === emailToVerify);
 
       if (matchedUser && matchedUser.role === "admin") {
         setIsResetting(false);

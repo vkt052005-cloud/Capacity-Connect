@@ -1,19 +1,9 @@
 import { create } from "zustand";
 import type { Course, Enrollment, Certificate, Resource, Feedback } from "../types";
-import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId } from "../data/seed";
+import { generateId } from "../data/seed";
 import { dbService } from "../services/db";
 import { deleteVideoBlob } from "../utils/videoStorage";
-
-const getDeletedCourseIds = (): Set<string> => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.DELETED_COURSES);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return new Set(parsed);
-    }
-  } catch (e) {}
-  return new Set();
-};
+import { useUsersStore } from "./usersStore";
 
 interface CoursesState {
   courses: Course[];
@@ -49,14 +39,12 @@ interface CoursesState {
 }
 
 const sanitizeCourses = (courses: Course[], feedbacks: Feedback[] = []): Course[] => {
-  const deletedIds = getDeletedCourseIds();
   const seenIds = new Set<string>();
   const seenTitleTrainer = new Set<string>();
 
   return (courses || [])
     .filter((c) => {
       if (!c || !c.id) return false;
-      if (deletedIds.has(c.id)) return false;
       if (seenIds.has(c.id)) return false;
       seenIds.add(c.id);
 
@@ -96,20 +84,16 @@ const sanitizeCourses = (courses: Course[], feedbacks: Feedback[] = []): Course[
 };
 
 const sanitizeEnrollments = (enrollments: Enrollment[]): Enrollment[] => {
-  const deletedIds = getDeletedCourseIds();
   return (enrollments || []).filter((e) => {
     if (!e || !e.courseId) return false;
-    if (deletedIds.has(e.courseId)) return false;
     if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
     return true;
   });
 };
 
 const sanitizeFeedbacks = (feedbacks: Feedback[]): Feedback[] => {
-  const deletedIds = getDeletedCourseIds();
   return (feedbacks || []).filter((f) => {
     if (!f || !f.id) return false;
-    if (f.courseId && deletedIds.has(f.courseId)) return false;
     if (["fb-1", "fb-2", "fb-3", "fb-4"].includes(f.id)) return false;
     const comment = (f.comment || "").toLowerCase();
     if (
@@ -125,10 +109,8 @@ const sanitizeFeedbacks = (feedbacks: Feedback[]): Feedback[] => {
 };
 
 const sanitizeCertificates = (certificates: Certificate[]): Certificate[] => {
-  const deletedIds = getDeletedCourseIds();
   return (certificates || []).filter((c) => {
     if (!c || !c.courseId) return false;
-    if (deletedIds.has(c.courseId)) return false;
     return true;
   });
 };
@@ -211,7 +193,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       progress: 0
     };
     const updated = [...enrollments, newEnrollment];
-    saveToStorage(STORAGE_KEYS.ENROLLMENTS, updated);
     set({ enrollments: updated });
     dbService.create("enrollments", newEnrollment).catch(() => {});
   },
@@ -220,7 +201,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const { enrollments } = get();
     const target = enrollments.find((e) => e.traineeId === traineeId && e.courseId === courseId);
     const updated = enrollments.filter((e) => !(e.traineeId === traineeId && e.courseId === courseId));
-    saveToStorage(STORAGE_KEYS.ENROLLMENTS, updated);
     set({ enrollments: updated });
     if (target?.id) {
       dbService.remove("enrollments", target.id).catch(() => {});
@@ -230,7 +210,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   updateProgress: (enrollmentId, progress) => {
     const { enrollments } = get();
     const updated = enrollments.map((e) => (e.id === enrollmentId ? { ...e, progress } : e));
-    saveToStorage(STORAGE_KEYS.ENROLLMENTS, updated);
     set({ enrollments: updated });
     dbService.update("enrollments", enrollmentId, { progress }).catch(() => {});
   },
@@ -242,7 +221,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
         ? { ...e, progress: 100, completedAt: new Date().toISOString() }
         : e
     );
-    saveToStorage(STORAGE_KEYS.ENROLLMENTS, updated);
     const targetEnrollment = updated.find((e) => e.traineeId === traineeId && e.courseId === courseId);
     if (targetEnrollment?.id) {
       dbService.update("enrollments", targetEnrollment.id, { progress: 100, completedAt: targetEnrollment.completedAt }).catch(() => {});
@@ -252,8 +230,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const certExists = certificates.find((c) => c.traineeId === traineeId && c.courseId === courseId);
 
     if (course && !certExists) {
-      const users = getFromStorage<{ id: string; name: string }>(STORAGE_KEYS.USERS);
-      const user = users.find((u) => u.id === traineeId);
+      const user = useUsersStore.getState().users.find((u) => u.id === traineeId);
       const randomSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
       const certHash = certData?.certificateHash || `CC-CERT-${randomSuffix}`;
       const defaultGrade = scorePercentage !== undefined
@@ -274,7 +251,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
         verificationUrl: certData?.verificationUrl || `${origin}/verify/id?cert=${encodeURIComponent(certHash)}&name=${encodeURIComponent(user?.name || "Student")}&course=${encodeURIComponent(course.title)}`
       };
       const updatedCerts = [...certificates, cert];
-      saveToStorage(STORAGE_KEYS.CERTIFICATES, updatedCerts);
       set({ enrollments: updated, certificates: updatedCerts });
       dbService.create("certificates", cert).catch(() => {});
       return cert;
@@ -289,7 +265,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const updated = courses.map((c) =>
       c.id === resource.courseId ? { ...c, resources: [...(c.resources || []), resource] } : c
     );
-    saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
     const targetCourse = updated.find((c) => c.id === resource.courseId);
     if (targetCourse) {
@@ -302,7 +277,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const updated = courses.map((c) =>
       c.id === courseId ? { ...c, resources: (c.resources || []).filter((r) => r.id !== resourceId) } : c
     );
-    saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
     const targetCourse = updated.find((c) => c.id === courseId);
     if (targetCourse) {
@@ -319,7 +293,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       return;
     }
     const updated = [...courses, course];
-    saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
     dbService.create("courses", course).catch(() => {});
   },
@@ -327,7 +300,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   updateCourse: (courseId, updates) => {
     const { courses } = get();
     const updated = courses.map((c) => (c.id === courseId ? { ...c, ...updates } : c));
-    saveToStorage(STORAGE_KEYS.COURSES, updated);
     set({ courses: updated });
     dbService.update("courses", courseId, updates).catch(() => {});
   },
@@ -336,31 +308,20 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const { courses, enrollments, feedbacks, certificates } = get();
     const courseToDelete = courses.find((c) => c.id === courseId);
 
-    // 1. Mark in permanent DELETED_COURSES tombstone so seed logic and remote sync will NEVER resurrect it
-    const deletedIds = getDeletedCourseIds();
-    deletedIds.add(courseId);
-    try {
-      localStorage.setItem(STORAGE_KEYS.DELETED_COURSES, JSON.stringify(Array.from(deletedIds)));
-    } catch (e) {}
-
-    // 2. Remove course from state and localStorage
+    // 1. Remove course from state
     const updatedCourses = courses.filter((c) => c.id !== courseId);
-    saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
 
     // 3. Cascade remove enrollments
     const enrollmentsToRemove = enrollments.filter((e) => e.courseId === courseId);
     const updatedEnrollments = enrollments.filter((e) => e.courseId !== courseId);
-    saveToStorage(STORAGE_KEYS.ENROLLMENTS, updatedEnrollments);
 
     // 4. Cascade remove feedbacks
     const feedbacksToRemove = feedbacks.filter((f) => f.courseId === courseId);
     const updatedFeedbacks = feedbacks.filter((f) => f.courseId !== courseId);
-    saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
 
     // 5. Cascade remove certificates
     const certsToRemove = certificates.filter((c) => c.courseId === courseId);
     const updatedCertificates = certificates.filter((c) => c.courseId !== courseId);
-    saveToStorage(STORAGE_KEYS.CERTIFICATES, updatedCertificates);
 
     set({
       courses: updatedCourses,
@@ -379,38 +340,12 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
     // 7. Cascade remove assessments and attempts for this course
     try {
-      const allAssessments = getFromStorage<any>(STORAGE_KEYS.ASSESSMENTS);
-      const assessmentsForCourse = allAssessments.filter((a: any) => a.courseId === courseId);
-      const assessIdsToRemove = new Set(assessmentsForCourse.map((a: any) => a.id));
-      const remainingAssessments = allAssessments.filter((a: any) => a.courseId !== courseId);
-      saveToStorage(STORAGE_KEYS.ASSESSMENTS, remainingAssessments);
-
-      const allAttempts = getFromStorage<any>(STORAGE_KEYS.ATTEMPTS);
-      const remainingAttempts = allAttempts.filter((att: any) => !assessIdsToRemove.has(att.assessmentId));
-      saveToStorage(STORAGE_KEYS.ATTEMPTS, remainingAttempts);
-
-      assessmentsForCourse.forEach((a: any) => {
-        dbService.remove("assessments", a.id).catch(() => {});
-      });
+      dbService.remove("assessments", `course_id=eq.${courseId}`).catch(() => {});
     } catch (e) {}
 
     // 8. Cascade remove live sessions
     try {
-      const allLiveSessions = getFromStorage<any>(STORAGE_KEYS.LIVE_SESSIONS);
-      const liveSessionsForCourse = allLiveSessions.filter((ls: any) => ls.courseId === courseId);
-      const remainingLiveSessions = allLiveSessions.filter((ls: any) => ls.courseId !== courseId);
-      saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, remainingLiveSessions);
-
-      liveSessionsForCourse.forEach((ls: any) => {
-        dbService.remove("live_sessions", ls.id).catch(() => {});
-      });
-    } catch (e) {}
-
-    // 9. Cascade remove discussions
-    try {
-      const allDiscussions = getFromStorage<any>(STORAGE_KEYS.DISCUSSIONS);
-      const remainingDiscussions = allDiscussions.filter((d: any) => d.courseId !== courseId);
-      saveToStorage(STORAGE_KEYS.DISCUSSIONS, remainingDiscussions);
+      dbService.remove("live_sessions", `course_id=eq.${courseId}`).catch(() => {});
     } catch (e) {}
 
     // 10. Permanently remove from central DB & cloud Supabase
@@ -448,7 +383,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       dbService.create("feedbacks", fb).catch(() => {});
     }
 
-    saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
 
     // Automatically recalculate the overall quality rating for this course directly from authentic student ratings
     const courseFeedbacks = updatedFeedbacks.filter((f) => f.courseId === fb.courseId);
@@ -466,7 +400,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       return c;
     });
 
-    saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
     set({ feedbacks: updatedFeedbacks, courses: updatedCourses });
     dbService.update("courses", fb.courseId, { rating: avgRating, totalRatings: courseFeedbacks.length }).catch(() => {});
   },
@@ -475,7 +408,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const { feedbacks, courses } = get();
     const targetFeedback = feedbacks.find((f) => f.id === feedbackId);
     const updatedFeedbacks = feedbacks.filter((f) => f.id !== feedbackId);
-    saveToStorage(STORAGE_KEYS.FEEDBACKS, updatedFeedbacks);
     dbService.remove("feedbacks", feedbackId).catch(() => {});
 
     if (targetFeedback) {
@@ -495,7 +427,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
         }
         return c;
       });
-      saveToStorage(STORAGE_KEYS.COURSES, updatedCourses);
       set({ feedbacks: updatedFeedbacks, courses: updatedCourses });
       dbService.update("courses", targetFeedback.courseId, { rating: avgRating, totalRatings: remainingCourseFeedbacks.length }).catch(() => {});
     } else {

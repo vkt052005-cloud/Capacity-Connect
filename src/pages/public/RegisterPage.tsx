@@ -11,7 +11,7 @@ import { sendOtpEmail, verifyOtpCode } from "../../services/emailService";
 import { CaptchaWidget } from "../../components/auth/CaptchaWidget";
 import { ToastContainer } from "../../components/common/ToastContainer";
 import { UserRole, User as UserType } from "../../types";
-import { STORAGE_KEYS, getFromStorage } from "../../data/seed";
+import { useUsersStore } from "../../store/usersStore";
 import { Header } from "../../components/layout/Header";
 import { Footer } from "../../components/layout/Footer";
 import { PasswordStrengthMeter, checkPasswordStrength } from "../../components/auth/PasswordStrengthMeter";
@@ -163,21 +163,10 @@ export const RegisterPage: React.FC = () => {
 
     // Pre-flight check: Ensure this official email is not already registered or removed by admin
     const cleanEmail = email.trim().toLowerCase();
-    const existingUsers = getFromStorage<UserType>(STORAGE_KEYS.USERS);
-    const existingUser = existingUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+    const existingUsers = useUsersStore.getState().users;
+    const existingUser = existingUsers.find((u) => u.email?.toLowerCase() === cleanEmail);
 
-    let isRemovedInRegistry = false;
-    try {
-      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
-      if (removedRaw) {
-        const parsed = JSON.parse(removedRaw);
-        if (Array.isArray(parsed)) {
-          isRemovedInRegistry = parsed.some((r: any) => (typeof r === 'string' ? r : r.email || '').toLowerCase() === cleanEmail);
-        }
-      }
-    } catch {}
-
-    if (existingUser?.status === "removed" || isRemovedInRegistry) {
+    if (existingUser?.status === "removed") {
       setError("This account was removed by an Administrator. In accordance with platform policy, you cannot register or access the website until an Administrator allows and reinstates your access.");
       setLoading(false);
       return;

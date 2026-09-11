@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { SessionAttendance, LessonAttendance } from "../types";
-import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId } from "../data/seed";
+import { generateId } from "../data/seed";
 import { dbService } from "../services/db";
 
 interface AttendanceState {
@@ -82,7 +82,6 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       status: "present",
     };
     const updated = [record, ...sessionAttendance];
-    saveToStorage(STORAGE_KEYS.SESSION_ATTENDANCE, updated);
     set({ sessionAttendance: updated });
     dbService.create("session_attendance", record).catch(() => {});
   },
@@ -100,7 +99,6 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       }
       return a;
     });
-    saveToStorage(STORAGE_KEYS.SESSION_ATTENDANCE, updated);
     set({ sessionAttendance: updated });
     const record = updated.find((a) => a.sessionId === sessionId && a.traineeId === traineeId);
     if (record?.id) {
@@ -130,7 +128,6 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
           ? { ...a, completionPercent, watchDurationSeconds, status, watchedAt: new Date().toISOString() }
           : a
       );
-      saveToStorage(STORAGE_KEYS.LESSON_ATTENDANCE, updated);
       set({ lessonAttendance: updated });
       dbService
         .update("lesson_attendance", existing.id, { completionPercent, watchDurationSeconds, status })
@@ -154,7 +151,6 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       status,
     };
     const updated = [record, ...lessonAttendance];
-    saveToStorage(STORAGE_KEYS.LESSON_ATTENDANCE, updated);
     set({ lessonAttendance: updated });
     dbService.create("lesson_attendance", record).catch(() => {});
   },

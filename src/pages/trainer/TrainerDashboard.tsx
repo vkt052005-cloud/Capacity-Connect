@@ -56,9 +56,7 @@ export const TrainerDashboard: React.FC = () => {
   const handleOpenInstantModal = () => {
     const sub = getSubjectById(selectedSubjectId) || STANDARD_SUBJECTS[0];
     setSelectedSubjectId(sub.id);
-    setInstantMeetTitle(sub.defaultTitle);
-    const saved = typeof window !== "undefined" ? localStorage.getItem("faculty_default_meet_" + trainerId) || "" : "";
-    setInstantMeetUrl(saved);
+    setInstantMeetUrl("");
     setShowInstantModal(true);
   };
 

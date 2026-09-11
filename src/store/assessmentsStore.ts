@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Assessment, Attempt } from '../types';
-import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId } from '../data/seed';
+import { generateId } from '../data/seed';
 import { dbService } from '../services/db';
 
 interface AssessmentsState {
@@ -59,7 +59,6 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
       const { assessments } = get();
       const newA: Assessment = { ...a, id: generateId('assess'), createdAt: new Date().toISOString() };
       const updated = [newA, ...assessments];
-      saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
       set({ assessments: updated });
       dbService.create('assessments', newA).catch(() => {});
     },
@@ -67,7 +66,6 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
     updateAssessment: (id, updates) => {
       const { assessments } = get();
       const updated = assessments.map(a => a.id === id ? { ...a, ...updates } : a);
-      saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
       set({ assessments: updated });
       dbService.update('assessments', id, updates).catch(() => {});
     },
@@ -75,7 +73,6 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
     deleteAssessment: (id) => {
       const { assessments } = get();
       const updated = assessments.filter(a => a.id !== id);
-      saveToStorage(STORAGE_KEYS.ASSESSMENTS, updated);
       set({ assessments: updated });
       dbService.remove('assessments', id).catch(() => {});
     },
@@ -84,7 +81,6 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
       const { attempts } = get();
       const newAttempt: Attempt = { ...attempt, id: generateId('att') };
       const updated = [...attempts, newAttempt];
-      saveToStorage(STORAGE_KEYS.ATTEMPTS, updated);
       set({ attempts: updated });
       dbService.create('assessment_attempts', newAttempt).catch(() => {});
     },
@@ -93,12 +89,8 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
     getAttemptsByAssessment: (assessmentId) => get().attempts.filter(a => a.assessmentId === assessmentId),
     hasAttempted: (assessmentId, traineeId) => get().attempts.some(a => a.assessmentId === assessmentId && a.traineeId === traineeId),
     getTrainerAssessments: (trainerId) => {
-      const users = getFromStorage<{ id: string; name: string }>(STORAGE_KEYS.USERS);
-      const trainer = users.find((u) => u.id === trainerId);
-      const trainerName = trainer?.name?.toLowerCase();
       return get().assessments.filter((a) =>
         a.createdBy === trainerId ||
-        (trainerName && a.createdBy.toLowerCase() === trainerName) ||
         a.createdBy === "Dr. Marcus Vance" ||
         a.createdBy === "Faculty Trainer"
       );

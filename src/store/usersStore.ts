@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { User } from '../types';
-import { STORAGE_KEYS, getFromStorage, saveToStorage } from '../data/seed';
+import { STORAGE_KEYS } from '../data/seed';
 import { dbService } from '../services/db';
 import { recordAuditEvent } from './auditStore';
 
@@ -62,7 +62,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, status: 'active' as const } : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
     await dbService.update('users', userId, { status: 'active' });
@@ -81,7 +80,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, status: "rejected" as const } : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
     await dbService.update('users', userId, { status: 'rejected' });
@@ -100,7 +98,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, status: 'inactive' as const } : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
     await dbService.update('users', userId, { status: 'inactive' });
@@ -119,7 +116,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, status: 'active' as const } : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
     await dbService.update('users', userId, { status: 'active' });
@@ -138,7 +134,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, role } : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
     await dbService.update('users', userId, { role });
@@ -168,7 +163,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       }
       return u;
     });
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
     await dbService.update('users', userId, {
@@ -193,7 +187,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.filter((u) => u.id !== userId);
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
     await dbService.remove('users', userId);
@@ -226,32 +219,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     };
 
     const updated = users.map((u) => (u.id === userId ? updatedUser : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
-
-    try {
-      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
-      let removedList: any[] = [];
-      if (removedRaw) {
-        try { removedList = JSON.parse(removedRaw) || []; } catch {}
-      }
-      const cleanEmail = targetUser.email.toLowerCase();
-      const existingIdx = removedList.findIndex((r: any) => (typeof r === 'string' ? r : r.email || '').toLowerCase() === cleanEmail);
-      const entry = {
-        id: targetUser.id,
-        email: cleanEmail,
-        name: targetUser.name,
-        role: targetUser.role,
-        removedAt: now,
-        reason: reason || "Revoked by Administrator"
-      };
-      if (existingIdx >= 0) {
-        removedList[existingIdx] = entry;
-      } else {
-        removedList.push(entry);
-      }
-      localStorage.setItem(STORAGE_KEYS.REMOVED_USERS, JSON.stringify(removedList));
-    } catch (e) {}
 
     await dbService.update('users', userId, {
       status: 'removed',
@@ -298,17 +266,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     };
 
     const updated = users.map((u) => (u.id === userId ? updatedUser : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
-
-    try {
-      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
-      if (removedRaw) {
-        let removedList = JSON.parse(removedRaw) || [];
-        removedList = removedList.filter((r: any) => (typeof r === 'string' ? r : r.email || '').toLowerCase() !== targetUser.email.toLowerCase());
-        localStorage.setItem(STORAGE_KEYS.REMOVED_USERS, JSON.stringify(removedList));
-      }
-    } catch (e) {}
 
     await dbService.update('users', userId, {
       status: 'active',
@@ -344,7 +302,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     };
 
     const updated = users.map((u) => (u.id === targetUser.id ? updatedUser : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     set({ users: updated });
 
     await dbService.update('users', targetUser.id, {
@@ -370,19 +327,8 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   isUserRemoved: (email) => {
     const clean = email.trim().toLowerCase();
     const { users } = get();
-    const match = users.find((u) => u.email.toLowerCase() === clean);
-    if (match && match.status === "removed") return true;
-
-    try {
-      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
-      if (removedRaw) {
-        const list = JSON.parse(removedRaw);
-        if (Array.isArray(list)) {
-          return list.some((r: any) => (typeof r === "string" ? r : r.email || "").toLowerCase() === clean);
-        }
-      }
-    } catch {}
-    return false;
+    const match = users.find((u) => u.email?.toLowerCase() === clean);
+    return match ? match.status === "removed" : false;
   },
 
   getTrainees: () => get().users.filter((u) => u.role === 'trainee'),

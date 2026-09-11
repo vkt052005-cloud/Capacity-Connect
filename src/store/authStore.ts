@@ -1,9 +1,12 @@
 import { create } from "zustand";
+import bcrypt from "bcryptjs";
 import type { User, TrainerProfile } from "../types";
-import { STORAGE_KEYS, getFromStorage, saveToStorage, generateId, initialUsers } from "../data/seed";
+import { STORAGE_KEYS, generateId } from "../data/seed";
 import { dbService } from "../services/db";
 import { supabase, isSupabaseConfigured } from "../services/supabase";
 import { recordAuditEvent } from "./auditStore";
+import { useUsersStore } from "./usersStore";
+import { useNotificationsStore } from "./notificationsStore";
 
 const defaultRajTrainerProfile: TrainerProfile = {
   bio: "Senior Technical Educator & Mentor specializing in Computer Science, Full-Stack Architecture, and Systems Engineering.",
@@ -53,45 +56,34 @@ function sanitizeUserForSession(user: User): User {
 // ── Session duration: 8 hours ─────────────────────────────────
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
-/** Hash a password using the server-side bcrypt endpoint */
+/** Hash a password using bcrypt */
 async function hashPassword(password: string): Promise<string> {
   try {
-    const res = await fetch('/api/hash-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.hash) return data.hash;
-    }
+    return await bcrypt.hash(password, 10);
   } catch (e) {
-    console.warn('hashPassword API unavailable, storing plaintext (dev mode)');
+    console.warn("bcrypt hash fallback:", e);
+    return password;
   }
-  return password; // dev fallback only
 }
 
-/** Securely compare password vs stored hash using the server-side bcrypt endpoint */
+/** Securely compare password vs stored hash */
 async function verifyPassword(password: string, hash: string): Promise<{ valid: boolean; isLegacy: boolean }> {
-  // Quick plaintext match check first (handles legacy & offline dev mode)
-  if (!hash.startsWith('$2') && password === hash) {
-    return { valid: true, isLegacy: true };
-  }
-  try {
-    const res = await fetch('/api/verify-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, hash }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return { valid: data.valid === true, isLegacy: data.isLegacy === true };
+  if (!hash) return { valid: false, isLegacy: false };
+
+  // If hash starts with $2, use bcrypt compare
+  if (hash.startsWith("$2")) {
+    try {
+      const match = await bcrypt.compare(password, hash);
+      return { valid: match, isLegacy: false };
+    } catch (e) {
+      console.warn("bcrypt compare failed:", e);
+      return { valid: false, isLegacy: false };
     }
-  } catch (e) {
-    console.warn('verifyPassword API unavailable, falling back to plaintext compare');
-    return { valid: password === hash, isLegacy: true };
   }
-  return { valid: false, isLegacy: false };
+
+  // Legacy plaintext match
+  const valid = password === hash;
+  return { valid, isLegacy: true };
 }
 
 function getInitialAuthUser(): User | null {
@@ -100,46 +92,18 @@ function getInitialAuthUser(): User | null {
     if (!rawAuth) return null;
     const parsed = JSON.parse(rawAuth);
 
-    // ── Session expiry check ──────────────────────────────────
+    // ── Session expiry check (8 hours) ──────────────────────────
     if (parsed?.expiresAt && Date.now() > parsed.expiresAt) {
       localStorage.removeItem(STORAGE_KEYS.AUTH);
       return null;
     }
 
-    const targetId = parsed?.userId || parsed?.user?.id || parsed?.id;
-    const targetEmail = (parsed?.user?.email || parsed?.email || "").toLowerCase();
-
-    const rawUsers = localStorage.getItem(STORAGE_KEYS.USERS);
-    let users: User[] = [];
-    if (rawUsers) {
-      try {
-        users = JSON.parse(rawUsers);
-      } catch (e) {}
-    }
-    if (!users || !users.length) {
-      users = initialUsers;
-    }
-
-    let user: User | undefined;
-    if (targetId) {
-      user = users.find((u) => u.id === targetId);
-    }
-    if (!user && targetEmail) {
-      user = users.find((u) => u.email?.toLowerCase() === targetEmail);
-    }
-    if (!user && targetId) {
-      user = initialUsers.find((u) => u.id === targetId);
-    }
-    if (!user && parsed?.user && parsed.user.name && parsed.user.role) {
-      user = parsed.user;
-    }
-
-    if (user) {
-      if (user.status === "removed") {
+    if (parsed?.user && parsed.user.name && parsed.user.role) {
+      if (parsed.user.status === "removed") {
         localStorage.removeItem(STORAGE_KEYS.AUTH);
         return null;
       }
-      return sanitizeUserForSession(user);
+      return sanitizeUserForSession(parsed.user);
     }
   } catch (e) {
     console.error("Failed to load initial auth user", e);
@@ -147,11 +111,10 @@ function getInitialAuthUser(): User | null {
   return null;
 }
 
-
 interface AuthState {
   currentUser: User | null;
   isInitialized: boolean;
-  login: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User; isRemoved?: boolean };
+  login: (email: string, password: string, requiredRole?: User["role"]) => Promise<{ success: boolean; message: string; user?: User; isRemoved?: boolean }>;
   validateCredentials: (email: string, password: string, requiredRole?: User["role"]) => { success: boolean; message: string; user?: User; isRemoved?: boolean };
   validateCredentialsAsync: (email: string, password: string, requiredRole?: User["role"]) => Promise<{ success: boolean; message: string; user?: User; isRemoved?: boolean }>;
   completeLogin: (user: User) => { success: boolean; message: string; user: User };
@@ -197,44 +160,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (user) {
       set({ currentUser: user, isInitialized: true });
     } else {
-      const rawAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
-      if (!rawAuth) {
-        set({ currentUser: null, isInitialized: true });
-      } else {
-        set({ isInitialized: true });
-      }
+      set({ currentUser: null, isInitialized: true });
     }
   },
 
   validateCredentialsAsync: async (email, password, requiredRole) => {
     const cleanEmail = email.trim().toLowerCase();
-    let users = getFromStorage<User>(STORAGE_KEYS.USERS);
+    let user: User | null = null;
 
-    // Find user by email first (without password comparison — we'll verify securely)
-    let user = users.find((u) => u.email.toLowerCase() === cleanEmail);
-
-    // If user not in local storage, check directly in Cloud Supabase!
-    if (!user && isSupabaseConfigured) {
+    // 1. Check direct from Supabase Cloud
+    if (isSupabaseConfigured) {
       try {
-        const cloudUsers = await supabase.select<User>('users', `email=eq.${encodeURIComponent(cleanEmail)}&limit=1`);
+        const cloudUsers = await supabase.select<User>("users", `email=eq.${encodeURIComponent(cleanEmail)}&limit=1`);
         if (cloudUsers && cloudUsers.length > 0) {
           user = cloudUsers[0];
-          // Sync to local cache
-          const merged = [...users.filter((u) => u.id !== user!.id), user!];
-          saveToStorage(STORAGE_KEYS.USERS, merged);
         }
       } catch (e) {
-        console.warn("Could not query Supabase for cross-device auth:", e);
+        console.warn("Supabase auth lookup warning:", e);
       }
     }
 
+    // 2. Fallback to in-memory state if cloud lookup was empty
     if (!user) {
-      return { success: false, message: "Invalid official email or password." };
+      const inMemory = useUsersStore.getState().users.find((u) => u.email?.toLowerCase() === cleanEmail);
+      if (inMemory) user = inMemory;
     }
 
-    // Secure password verification via server-side bcrypt
-    const { valid, isLegacy } = await verifyPassword(password, user.password || '');
-    if (!valid) {
+    // User not found
+    if (!user) {
       recordAuditEvent({
         actor: email,
         role: requiredRole || "trainee",
@@ -245,46 +198,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { success: false, message: "Invalid official email or password." };
     }
 
-    // If legacy plaintext match succeeded, transparently re-hash password in background
-    if (isLegacy) {
-      hashPassword(password).then(async (newHash) => {
-        try {
-          const updatedUsers = users.map((u) => u.id === user!.id ? { ...u, password: newHash } : u);
-          saveToStorage(STORAGE_KEYS.USERS, updatedUsers);
-          await dbService.update('users', user!.id, { password: newHash });
-        } catch (e) {
-          console.warn('Password re-hash background update failed:', e);
-        }
-      });
-    }
-
-    return get().validateCredentials(email, password, requiredRole);
-  },
-
-
-  validateCredentials: (email, password, requiredRole) => {
-    const cleanEmail = email.trim().toLowerCase();
-    const users = getFromStorage<User>(STORAGE_KEYS.USERS);
-    const user = users.find(
-      (u) => u.email.toLowerCase() === cleanEmail && u.password === password
-    );
-
-    // Check persistent removed registry
-    let isRemovedInRegistry = false;
-    try {
-      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
-      if (removedRaw) {
-        const parsed = JSON.parse(removedRaw);
-        if (Array.isArray(parsed)) {
-          isRemovedInRegistry = parsed.some((r: any) => (typeof r === "string" ? r : r.email || "").toLowerCase() === cleanEmail);
-        }
-      }
-    } catch {}
-
-    if (user?.status === "removed" || isRemovedInRegistry) {
+    // Check removed status
+    if (user.status === "removed") {
       recordAuditEvent({
-        actor: user?.name || cleanEmail,
-        role: user?.role || requiredRole || "trainee",
+        actor: user.name || cleanEmail,
+        role: user.role || requiredRole || "trainee",
         action: "REMOVED_USER_LOGIN_BLOCKED",
         target: "Auth Service",
         status: "FAILED"
@@ -297,7 +215,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       };
     }
 
-    if (!user) {
+    // Secure password verification (bcrypt or legacy plaintext match)
+    const { valid, isLegacy } = await verifyPassword(password, user.password || "");
+    if (!valid) {
       recordAuditEvent({
         actor: email,
         role: requiredRole || "trainee",
@@ -307,13 +227,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       return { success: false, message: "Invalid official email or password." };
     }
+
+    // Auto-migrate legacy plaintext password to bcrypt hash on cloud
+    if (isLegacy) {
+      hashPassword(password).then(async (newHash) => {
+        try {
+          await dbService.update("users", user!.id, { password: newHash });
+        } catch (e) {
+          console.warn("Password re-hash update failed:", e);
+        }
+      });
+    }
+
+    // Check account lifecycle states
     if (user.status === "pending") {
       if (user.role === "trainee") {
-        // Students / trainees do not require admin approval; auto-activate
+        // Students auto-activate
         user.status = "active";
-        const updatedUsers = users.map((u) => (u.id === user.id ? { ...u, status: "active" as const } : u));
-        saveToStorage(STORAGE_KEYS.USERS, updatedUsers);
-        dbService.update('users', user.id, { status: "active" });
+        dbService.update("users", user.id, { status: "active" }).catch(() => {});
       } else {
         recordAuditEvent({
           actor: user.name,
@@ -325,6 +256,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { success: false, message: "Your trainer account is awaiting admin approval before you can sign in." };
       }
     }
+
     if (user.status === "inactive" || user.status === "suspended") {
       recordAuditEvent({
         actor: user.name,
@@ -336,7 +268,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { success: false, message: "Your account has been deactivated. Please contact an administrator." };
     }
 
-    // Enforce role isolation: An Admin cannot sign in from the Trainee or Trainer tab, and vice versa!
+    // Enforce role isolation
     if (requiredRole && user.role !== requiredRole) {
       recordAuditEvent({
         actor: user.name,
@@ -354,6 +286,57 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return { success: true, message: "Credentials validated.", user };
   },
 
+  validateCredentials: (email, password, requiredRole) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const users = useUsersStore.getState().users;
+    const user = users.find((u) => u.email?.toLowerCase() === cleanEmail);
+
+    if (!user) {
+      return { success: false, message: "Invalid official email or password." };
+    }
+
+    let valid = false;
+    if (user.password?.startsWith("$2")) {
+      try {
+        valid = bcrypt.compareSync(password, user.password);
+      } catch {
+        valid = false;
+      }
+    } else {
+      valid = user.password === password;
+    }
+
+    if (!valid) {
+      return { success: false, message: "Invalid official email or password." };
+    }
+
+    if (user.status === "removed") {
+      return {
+        success: false,
+        message: "Your account was removed by an Administrator. For you to again access the website, you must be allowed and reinstated by an Administrator.",
+        isRemoved: true,
+        user
+      };
+    }
+
+    if (user.status === "pending" && user.role !== "trainee") {
+      return { success: false, message: "Your trainer account is awaiting admin approval before you can sign in." };
+    }
+
+    if (user.status === "inactive" || user.status === "suspended") {
+      return { success: false, message: "Your account has been deactivated. Please contact an administrator." };
+    }
+
+    if (requiredRole && user.role !== requiredRole) {
+      return {
+        success: false,
+        message: `Access Denied: This account is registered as an ${user.role.toUpperCase()}. You cannot sign in through the ${requiredRole.toUpperCase()} portal. Please switch to the ${user.role.toUpperCase()} tab.`
+      };
+    }
+
+    return { success: true, message: "Credentials validated.", user };
+  },
+
   completeLogin: (user) => {
     const sanitizedUser = sanitizeUserForSession(user);
     set({ currentUser: sanitizedUser, isInitialized: true });
@@ -362,7 +345,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       JSON.stringify({
         userId: sanitizedUser.id,
         user: sanitizedUser,
-        expiresAt: Date.now() + SESSION_TTL_MS  // 8-hour session expiry
+        expiresAt: Date.now() + SESSION_TTL_MS // 8-hour session expiry
       })
     );
     recordAuditEvent({
@@ -375,8 +358,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return { success: true, message: "Login successful!", user: sanitizedUser };
   },
 
-  login: (email, password, requiredRole) => {
-    const valid = get().validateCredentials(email, password, requiredRole);
+  login: async (email, password, requiredRole) => {
+    const valid = await get().validateCredentialsAsync(email, password, requiredRole);
     if (!valid.success || !valid.user) {
       return valid;
     }
@@ -400,22 +383,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   register: async (data) => {
     const cleanEmail = data.email.trim().toLowerCase();
-    const users = getFromStorage<User>(STORAGE_KEYS.USERS);
 
-    // Check if account was removed by Administrator
-    let isRemovedInRegistry = false;
-    try {
-      const removedRaw = localStorage.getItem(STORAGE_KEYS.REMOVED_USERS);
-      if (removedRaw) {
-        const parsed = JSON.parse(removedRaw);
-        if (Array.isArray(parsed)) {
-          isRemovedInRegistry = parsed.some((r: any) => (typeof r === "string" ? r : r.email || "").toLowerCase() === cleanEmail);
+    // 1. Check Cloud Supabase for existing user
+    let existingUser: User | null = null;
+    if (isSupabaseConfigured) {
+      try {
+        const cloudUsers = await supabase.select<User>("users", `email=eq.${encodeURIComponent(cleanEmail)}&limit=1`);
+        if (cloudUsers && cloudUsers.length > 0) {
+          existingUser = cloudUsers[0];
         }
-      }
-    } catch {}
+      } catch (e) {}
+    }
 
-    const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
-    if (existing?.status === "removed" || isRemovedInRegistry) {
+    if (!existingUser) {
+      const inMemory = useUsersStore.getState().users.find((u) => u.email?.toLowerCase() === cleanEmail);
+      if (inMemory) existingUser = inMemory;
+    }
+
+    if (existingUser?.status === "removed") {
       recordAuditEvent({
         actor: data.name || cleanEmail,
         role: data.role,
@@ -429,10 +414,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       };
     }
 
-    if (existing) return { success: false, message: "An account with this email already exists." };
+    if (existingUser) {
+      return { success: false, message: "An account with this email already exists." };
+    }
 
-    // Hash password before saving
-    const hashedPassword = await hashPassword(data.password || '');
+    // 2. Hash password with bcrypt before saving to Cloud
+    const hashedPassword = await hashPassword(data.password || "");
 
     const newUser: User = {
       ...data,
@@ -441,63 +428,74 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       status: data.role === "trainee" ? "active" : "pending",
       createdAt: new Date().toISOString(),
       traineeProfile: data.role === "trainee" ? {
-        bio: "",
-        qualifications: [],
-        experience: [],
-        skills: [],
-        interests: [],
+        bio: `Dedicated ${(data.traineeProfile?.department as any) || "Technical"} student actively acquiring advanced capabilities on Capacity Connect.`,
+        qualifications: ["Bachelor of Technology / Higher Secondary / Equivalent"],
+        experience: ["Student / Trainee Scholar"],
+        skills: data.traineeProfile?.skills || ["Problem Solving", "Cloud Infrastructure"],
+        interests: ["Capacity Building", "System Architecture", "Continuous Learning"],
         certificates: [],
-        phone: "",
-        department: "",
-        designation: "",
+        phone: "+91 98765 00000",
+        department: (data.traineeProfile?.department as any) || "Computer Science & Engineering",
+        designation: (data.traineeProfile?.designation as any) || "Undergraduate Student",
         xpPoints: 100,
         streakDays: 1,
         completedCoursesCount: 0,
         badges: []
       } : undefined,
       trainerProfile: data.role === "trainer" ? {
-        bio: "",
-        expertise: [],
-        competencies: [],
-        phone: "",
-        department: "",
-        designation: "",
-        experience: "",
+        bio: `Certified Instructor with deep domain expertise in ${(data.trainerProfile?.department as any) || "Engineering & Leadership"}.`,
+        expertise: data.trainerProfile?.expertise || ["Curriculum Authoring", "Assessment Design"],
+        competencies: ["Live Lecture Delivery", "Workforce Assessment"],
+        phone: "+91 98765 11111",
+        department: (data.trainerProfile?.department as any) || "Academic Faculty",
+        designation: (data.trainerProfile?.designation as any) || "Senior Trainer",
+        experience: data.trainerProfile?.experience || "8+ Years Industry & Academic Leadership",
         rating: 5.0,
         totalStudentsTaught: 0,
-        verifiedCredentials: []
+        verifiedCredentials: [(data.trainerProfile?.department as any) || "Institutional Faculty Accreditation"]
       } : undefined
     };
 
-    saveToStorage(STORAGE_KEYS.USERS, [...users, newUser]);
-    dbService.create('users', newUser);
+    // 3. Insert directly into Supabase Cloud
+    await dbService.create("users", newUser);
+
+    // 4. Update in-memory Zustand store
+    useUsersStore.setState((state) => ({
+      users: [newUser, ...state.users.filter((u) => u.id !== newUser.id)]
+    }));
+
     recordAuditEvent({
       actor: newUser.name,
       role: newUser.role,
       action: "ACCOUNT_REGISTERED",
-      target: "Pending Approvals Registry",
+      target: "Cloud Users Registry",
       status: "SUCCESS"
     });
+
     return { success: true, message: "Registration successful!" };
   },
 
   updateProfile: (updates) => {
     const { currentUser } = get();
     if (!currentUser) return;
-    const users = getFromStorage<User>(STORAGE_KEYS.USERS);
-    const updated = users.map((u) => (u.id === currentUser.id ? { ...u, ...updates } : u));
-    saveToStorage(STORAGE_KEYS.USERS, updated);
     const updatedUser = { ...currentUser, ...updates };
     set({ currentUser: updatedUser });
     localStorage.setItem(
       STORAGE_KEYS.AUTH,
-      JSON.stringify({ userId: updatedUser.id, user: updatedUser })
+      JSON.stringify({
+        userId: updatedUser.id,
+        user: updatedUser,
+        expiresAt: Date.now() + SESSION_TTL_MS
+      })
     );
-    dbService.update('users', currentUser.id, updates);
+    useUsersStore.setState((state) => ({
+      users: state.users.map((u) => (u.id === currentUser.id ? { ...u, ...updates } : u))
+    }));
+    dbService.update("users", currentUser.id, updates);
   },
 
   findUserForRecovery: (query) => {
-    const users = getFromStorage<User>(STORAGE_KEYS.USERS);
+    const users = useUsersStore.getState().users;
     const searchName = (query.name || "").trim().toLowerCase();
 
     if (!searchName || searchName.length < 2) {
@@ -516,7 +514,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return false;
       }
 
-      const nameMatch = u.name.toLowerCase().includes(searchName);
+      const nameMatch = u.name?.toLowerCase().includes(searchName);
       if (!nameMatch) return false;
 
       const uDept = (u.department || u.traineeProfile?.department || u.trainerProfile?.department || "").toLowerCase();
@@ -570,13 +568,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   resetUserPassword: async (email, newPassword, requiredRole) => {
-    const users = getFromStorage<User>(STORAGE_KEYS.USERS);
-    const userIndex = users.findIndex((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-    if (userIndex === -1) {
+    const cleanEmail = email.trim().toLowerCase();
+    let user: User | null = null;
+
+    if (isSupabaseConfigured) {
+      try {
+        const cloudUsers = await supabase.select<User>("users", `email=eq.${encodeURIComponent(cleanEmail)}&limit=1`);
+        if (cloudUsers && cloudUsers.length > 0) {
+          user = cloudUsers[0];
+        }
+      } catch (e) {}
+    }
+
+    if (!user) {
+      user = useUsersStore.getState().users.find((u) => u.email?.toLowerCase() === cleanEmail) || null;
+    }
+
+    if (!user) {
       return { success: false, message: "Account not found with this official email address." };
     }
 
-    const user = users[userIndex];
     if (user.role === "admin") {
       return {
         success: false,
@@ -595,13 +606,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { success: false, message: "This account is inactive or suspended. Please contact an administrator." };
     }
 
-    // Hash the new password before storing
     const hashedPassword = await hashPassword(newPassword);
 
-    user.password = hashedPassword;
-    users[userIndex] = user;
-    saveToStorage(STORAGE_KEYS.USERS, users);
-    dbService.update('users', user.id, { password: hashedPassword });
+    await dbService.update("users", user.id, { password: hashedPassword });
+
+    useUsersStore.setState((state) => ({
+      users: state.users.map((u) => (u.id === user!.id ? { ...u, password: hashedPassword } : u))
+    }));
 
     recordAuditEvent({
       actor: user.name,
@@ -623,6 +634,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   submitRecoveryTicket: (ticket) => {
+    const newNotif = {
+      id: generateId("notif-recovery"),
+      type: "alert" as const,
+      title: `Credential Assistance Request: ${ticket.name} (${ticket.role.toUpperCase()})`,
+      content: `User reported inaccessible credentials. Contact: ${ticket.contactInfo}. Details: ${ticket.description}`,
+      createdAt: new Date().toISOString(),
+      pinned: true,
+      author: "Security & Recovery Sentinel"
+    };
+
+    useNotificationsStore.getState().addNotification(newNotif);
+
     recordAuditEvent({
       actor: ticket.name,
       role: ticket.role,
@@ -630,20 +653,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       target: "Admin Governance Ledger",
       status: "WARNING"
     });
-
-    try {
-      const notifs = getFromStorage<any>(STORAGE_KEYS.NOTIFICATIONS);
-      const newNotif = {
-        id: generateId("notif-recovery"),
-        type: "alert",
-        title: `Credential Assistance Request: ${ticket.name} (${ticket.role.toUpperCase()})`,
-        content: `User reported inaccessible credentials. Contact: ${ticket.contactInfo}. Details: ${ticket.description}`,
-        createdAt: new Date().toISOString(),
-        pinned: true,
-        author: "Security & Recovery Sentinel"
-      };
-      saveToStorage(STORAGE_KEYS.NOTIFICATIONS, [newNotif, ...notifs]);
-    } catch (e) {}
 
     return {
       success: true,

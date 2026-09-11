@@ -1,27 +1,6 @@
-import type { User } from '../types';
-import { STORAGE_KEYS, getFromStorage, saveToStorage } from '../data/seed';
 import { supabase, isSupabaseConfigured } from './supabase';
 
 type ChangeCallback = (event: { action: 'create' | 'update' | 'delete' | 'sync'; data?: any }) => void;
-
-const COLLECTION_STORAGE_MAP: Record<string, string> = {
-  users: STORAGE_KEYS.USERS,
-  courses: STORAGE_KEYS.COURSES,
-  enrollments: STORAGE_KEYS.ENROLLMENTS,
-  feedbacks: STORAGE_KEYS.FEEDBACKS,
-  certificates: STORAGE_KEYS.CERTIFICATES,
-  live_sessions: STORAGE_KEYS.LIVE_SESSIONS,
-  audit_logs: STORAGE_KEYS.AUDIT_LOGS,
-  assessments: STORAGE_KEYS.ASSESSMENTS,
-  notifications: STORAGE_KEYS.NOTIFICATIONS,
-  session_attendance: STORAGE_KEYS.SESSION_ATTENDANCE,
-  lesson_attendance: STORAGE_KEYS.LESSON_ATTENDANCE,
-  assessment_attempts: STORAGE_KEYS.ATTEMPTS,
-  subject_competencies: STORAGE_KEYS.COMPETENCIES,
-  discussion_threads: STORAGE_KEYS.DISCUSSIONS,
-  leaderboard: STORAGE_KEYS.LEADERBOARD,
-  badges: STORAGE_KEYS.BADGES,
-};
 
 class DatabaseService {
   private eventSource: EventSource | null = null;
@@ -35,10 +14,6 @@ class DatabaseService {
   private getBaseUrl(): string {
     if (typeof window === 'undefined') return 'http://localhost:5173';
     return window.location.origin;
-  }
-
-  private getStorageKey(collection: string): string | undefined {
-    return COLLECTION_STORAGE_MAP[collection];
   }
 
   private initRealtimeStream() {

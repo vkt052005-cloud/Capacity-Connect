@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import type { LiveSession } from "../types";
-import { STORAGE_KEYS, getFromStorage, saveToStorage, initialLiveSessions } from "../data/seed";
+import { generateId } from "../data/seed";
 import { dbService } from "../services/db";
+import { useNotificationsStore } from "./notificationsStore";
 
 // Helper to generate a genuine 3-4-3 Google Meet room code e.g. "abc-defg-hij"
 export const generateMeetCode = (): string => {
@@ -142,7 +143,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
 
   deleteSession: (id: string) => {
     const updated = get().sessions.filter((s) => s.id !== id);
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     set({
       sessions: updated,
       activeSession: get().activeSession?.id === id ? null : get().activeSession
@@ -162,7 +163,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
   clearCompletedSessions: () => {
     const completedIds = get().sessions.filter((s) => s.status === "completed").map((s) => s.id);
     const updated = get().sessions.filter((s) => s.status !== "completed");
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     set({ sessions: updated });
     completedIds.forEach((id) => dbService.remove("live_sessions", id).catch(() => {}));
     if (typeof window !== "undefined") {
@@ -202,25 +203,20 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     };
 
     const updated = [newSession, ...get().sessions];
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     set({ sessions: updated });
     dbService.create("live_sessions", newSession).catch(() => {});
 
     // Auto-dispatch LMS Notification so enrolled students see the announcement immediately
     try {
-      const existingNotifs = getFromStorage<any>(STORAGE_KEYS.NOTIFICATIONS) || [];
-      const newNotif = {
-        id: "notif-" + Date.now(),
+      useNotificationsStore.getState().addNotification({
         type: "announcement",
         title: `📅 Scheduled Google Meet: ${data.title}`,
         content: `${data.trainerName} scheduled a live Google Meet lecture for "${data.courseTitle}". Room Code: ${meetDetails.code}. Click to view schedule and join.`,
-        createdAt: new Date().toISOString(),
         pinned: true,
         author: data.trainerName,
         link: "/trainee/live-classes"
-      };
-      const updatedNotifs = [newNotif, ...existingNotifs];
-      saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updatedNotifs);
+      });
     } catch {}
 
     if (typeof window !== "undefined") {
@@ -238,15 +234,8 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
 
   startInstantMeet: (data) => {
     let customUrl = data.customMeetUrl;
-    if (!customUrl && typeof window !== "undefined") {
-      const savedDefault = localStorage.getItem("faculty_default_meet_" + data.trainerId);
-      if (savedDefault) customUrl = savedDefault;
-    }
 
     const meetDetails = formatGoogleMeet(customUrl);
-    if (meetDetails.isReal && typeof window !== "undefined") {
-      localStorage.setItem("faculty_default_meet_" + data.trainerId, meetDetails.url);
-    }
 
     const newSession: LiveSession = {
       id: "meet-instant-" + Date.now(),
@@ -269,25 +258,20 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     };
 
     const updated = [newSession, ...get().sessions];
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     set({ sessions: updated, activeSession: newSession, isClassroomOpen: false });
     dbService.create("live_sessions", newSession).catch(() => {});
 
     // Auto-dispatch urgent Live Alert Notification so enrolled students are alerted instantly
     try {
-      const existingNotifs = getFromStorage<any>(STORAGE_KEYS.NOTIFICATIONS) || [];
-      const newNotif = {
-        id: "notif-live-" + Date.now(),
+      useNotificationsStore.getState().addNotification({
         type: "alert",
         title: `🔴 TEACHER IS LIVE: ${data.courseTitle}`,
         content: `${data.trainerName} is live right now on Google Meet for "${data.courseTitle}". Room Code: ${meetDetails.code}. 1-Click join link is active!`,
-        createdAt: new Date().toISOString(),
         pinned: true,
         author: data.trainerName,
         link: "/trainee/live-classes"
-      };
-      const updatedNotifs = [newNotif, ...existingNotifs];
-      saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updatedNotifs);
+      });
     } catch {}
     
     // Automatically launch Official Google Meet directly in a dedicated tab for the instructor
@@ -352,7 +336,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
           }
         : s
     );
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     const targetSession = updated.find((s) => s.id === id);
     set({
       sessions: updated,
@@ -378,7 +362,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     const updated = get().sessions.map((s) =>
       s.id === id ? { ...s, status: "completed" as const } : s
     );
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     set({
       sessions: updated,
       activeSession: get().activeSession?.id === id ? null : get().activeSession,
@@ -401,7 +385,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     const updated = get().sessions.map((s) =>
       s.id === id ? { ...s, status: "cancelled" as const } : s
     );
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     set({ sessions: updated });
     dbService.update("live_sessions", id, { status: "cancelled" }).catch(() => {});
 
@@ -444,7 +428,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       }
       return s;
     });
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     set({ sessions: updated });
   },
 
@@ -464,7 +448,7 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
       return s;
     });
 
-    saveToStorage(STORAGE_KEYS.LIVE_SESSIONS, updated);
+    
     set({
       sessions: updated,
       activeSession: get().activeSession?.id === sessionId
@@ -478,10 +462,6 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     });
 
     if (typeof window !== "undefined") {
-      const session = updated.find((s) => s.id === sessionId);
-      if (session?.trainerId) {
-        localStorage.setItem("faculty_default_meet_" + session.trainerId, formatted.url);
-      }
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new CustomEvent("capacity_live_session_update"));
       try {
@@ -528,26 +508,6 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
 
 // Real-time multi-tab & multi-window event synchronization
 if (typeof window !== "undefined") {
-  const syncFromStorage = () => {
-    try {
-      const fromStorage = getFromStorage<LiveSession>(STORAGE_KEYS.LIVE_SESSIONS);
-      if (fromStorage) {
-        const current = useLiveSessionsStore.getState().sessions;
-        if (JSON.stringify(fromStorage) !== JSON.stringify(current)) {
-          useLiveSessionsStore.setState({ sessions: fromStorage });
-        }
-      }
-    } catch {
-      // ignore
-    }
-  };
-
-  window.addEventListener("storage", (event) => {
-    if (event.key === STORAGE_KEYS.LIVE_SESSIONS || !event.key) {
-      useLiveSessionsStore.getState().load();
-    }
-  });
-
   window.addEventListener("capacity_live_session_update", () => {
     useLiveSessionsStore.getState().load();
   });
@@ -560,9 +520,6 @@ if (typeof window !== "undefined") {
   } catch {
     // ignore
   }
-
-  // Fast 1.5s background polling heartbeat to guarantee live class status sync across tabs without refreshing
-  setInterval(syncFromStorage, 1500);
 }
 
 
