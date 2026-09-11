@@ -52,22 +52,7 @@ export const LoginPage: React.FC = () => {
   const [reinstatementRequestedSuccess, setReinstatementRequestedSuccess] = useState(false);
   const [submittingReinstatement, setSubmittingReinstatement] = useState(false);
 
-  // If already authenticated and active, redirect to requested page or role dashboard
-  useEffect(() => {
-    if (currentUser && currentUser.status === "active") {
-      const from = (location.state as any)?.from?.pathname;
-      if (from && from !== "/login") {
-        navigate(from, { replace: true });
-        return;
-      }
-      const redirects: Record<string, string> = {
-        admin: "/admin/dashboard",
-        trainer: "/trainer/dashboard",
-        trainee: "/trainee/dashboard",
-      };
-      navigate(redirects[currentUser.role] || "/trainee/dashboard", { replace: true });
-    }
-  }, [currentUser, navigate, location.state]);
+
 
   useEffect(() => {
     const urlRole = searchParams.get("role") as "trainee" | "trainer" | "admin" | null;
@@ -108,9 +93,14 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter both your official email and password.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await validateCredentialsAsync(email, password, role);
+      const res = await validateCredentialsAsync(email.trim(), password, role);
       if (!res.success || !res.user) {
         if (res.isRemoved) {
           setIsRemovedBlocked(true);
@@ -331,6 +321,53 @@ export const LoginPage: React.FC = () => {
               <p className="text-[11px] text-slate-300 leading-relaxed">
                 Please sign in to your student account to access video lectures, curriculum materials, and downloadable study resources.
               </p>
+            </div>
+          )}
+
+          {currentUser && currentUser.status === "active" && (
+            <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs space-y-2.5 animate-fadeIn">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-white font-semibold min-w-0">
+                  <Shield className="w-4 h-4 text-[#2997ff] shrink-0" />
+                  <span className="truncate">Signed in as {currentUser.name}</span>
+                </div>
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold shrink-0">
+                  {currentUser.role}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 truncate">
+                Active session: <span className="text-white font-mono">{currentUser.email}</span>
+              </p>
+              <div className="flex items-center gap-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const redirects: Record<string, string> = {
+                      admin: "/admin/dashboard",
+                      trainer: "/trainer/dashboard",
+                      trainee: "/trainee/dashboard",
+                    };
+                    navigate(redirects[currentUser.role] || "/trainee/dashboard");
+                  }}
+                  className="apple-btn-primary !py-1.5 text-xs font-semibold flex-1 text-center cursor-pointer"
+                >
+                  Go to Dashboard →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    useAuthStore.getState().logout();
+                    addToast({
+                      title: "Signed Out",
+                      message: "Previous session cleared. You can now sign in with any account.",
+                      type: "info"
+                    });
+                  }}
+                  className="apple-btn-secondary !py-1.5 text-xs font-semibold flex-1 text-center text-rose-300 border-rose-500/30 hover:border-rose-400 cursor-pointer"
+                >
+                  Sign Out / Switch
+                </button>
+              </div>
             </div>
           )}
 

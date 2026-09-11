@@ -68,9 +68,14 @@ async function hashPassword(password: string): Promise<string> {
 
 /** Securely compare password vs stored hash */
 async function verifyPassword(password: string, hash: string): Promise<{ valid: boolean; isLegacy: boolean }> {
-  if (!hash) return { valid: false, isLegacy: false };
+  if (!password || typeof password !== "string" || password.trim().length === 0) {
+    return { valid: false, isLegacy: false };
+  }
+  if (!hash || typeof hash !== "string" || hash.trim().length === 0) {
+    return { valid: false, isLegacy: false };
+  }
 
-  // If hash starts with $2, use bcrypt compare
+  // If hash starts with $2 (bcrypt hash format: $2a$, $2b$, $2y$)
   if (hash.startsWith("$2")) {
     try {
       const match = await bcrypt.compare(password, hash);
@@ -81,7 +86,7 @@ async function verifyPassword(password: string, hash: string): Promise<{ valid: 
     }
   }
 
-  // Legacy plaintext match
+  // Legacy plaintext match (strict exact string equality)
   const valid = password === hash;
   return { valid, isLegacy: true };
 }
@@ -165,13 +170,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   validateCredentialsAsync: async (email, password, requiredRole) => {
+    if (!email || !password || email.trim().length === 0 || password.trim().length === 0) {
+      return { success: false, message: "Email and password are required." };
+    }
+
     const cleanEmail = email.trim().toLowerCase();
     let user: User | null = null;
 
     // 1. Check direct from Supabase Cloud
     if (isSupabaseConfigured) {
       try {
-        const cloudUsers = await supabase.select<User>("users", `email=eq.${encodeURIComponent(cleanEmail)}&limit=1`);
+        let cloudUsers = await supabase.select<User>("users", `email=eq.${encodeURIComponent(cleanEmail)}&limit=1`);
+        if ((!cloudUsers || cloudUsers.length === 0) && !cleanEmail.includes("@")) {
+          // If user entered username prefix without @ domain
+          cloudUsers = await supabase.select<User>("users", `email=ilike.${encodeURIComponent(cleanEmail)}@%&limit=1`);
+        }
         if (cloudUsers && cloudUsers.length > 0) {
           user = cloudUsers[0];
         }
@@ -182,7 +195,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // 2. Fallback to in-memory state if cloud lookup was empty
     if (!user) {
-      const inMemory = useUsersStore.getState().users.find((u) => u.email?.toLowerCase() === cleanEmail);
+      const inMemory = useUsersStore.getState().users.find((u) => {
+        const uEmail = u.email?.toLowerCase() || "";
+        return uEmail === cleanEmail || (!cleanEmail.includes("@") && uEmail.startsWith(`${cleanEmail}@`));
+      });
       if (inMemory) user = inMemory;
     }
 
@@ -287,16 +303,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   validateCredentials: (email, password, requiredRole) => {
+    if (!email || !password || email.trim().length === 0 || password.trim().length === 0) {
+      return { success: false, message: "Email and password are required." };
+    }
+
     const cleanEmail = email.trim().toLowerCase();
     const users = useUsersStore.getState().users;
-    const user = users.find((u) => u.email?.toLowerCase() === cleanEmail);
+    const user = users.find((u) => {
+      const uEmail = u.email?.toLowerCase() || "";
+      return uEmail === cleanEmail || (!cleanEmail.includes("@") && uEmail.startsWith(`${cleanEmail}@`));
+    });
 
     if (!user) {
       return { success: false, message: "Invalid official email or password." };
     }
 
     let valid = false;
-    if (user.password?.startsWith("$2")) {
+    if (!password || !user.password) {
+      valid = false;
+    } else if (user.password?.startsWith("$2")) {
       try {
         valid = bcrypt.compareSync(password, user.password);
       } catch {
