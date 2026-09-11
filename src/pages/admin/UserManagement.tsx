@@ -14,6 +14,7 @@ import { useAuthStore } from "../../store/authStore";
 import { isSupabaseConfigured } from "../../services/supabase";
 import { sendApprovalEmail } from "../../services/emailService";
 import { PasswordStrengthMeter, checkPasswordStrength } from "../../components/auth/PasswordStrengthMeter";
+import bcrypt from "bcryptjs";
 import { dbService } from "../../services/db";
 import type { User } from "../../types";
 
@@ -323,11 +324,13 @@ export const UserManagement: React.FC = () => {
     const resolvedSkills = newUserSkills === "Other" ? (customSkills.trim() || "General") : newUserSkills;
     const resolvedExp = newUserExperience === "Other" ? (customExperience.trim() || "1+ years") : newUserExperience;
 
+    const hashedPassword = bcrypt.hashSync(newUserPassword, 10);
+
     const newUser: User = {
       id: "u-" + Math.random().toString(36).substring(2, 9),
       name: newUserName.trim(),
       email: newUserEmail.trim().toLowerCase(),
-      password: newUserPassword,
+      password: hashedPassword,
       role: newUserRole,
       status: "active",
       createdAt: new Date().toISOString(),

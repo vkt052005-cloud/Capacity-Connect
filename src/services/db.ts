@@ -37,7 +37,9 @@ class DatabaseService {
       };
 
       this.eventSource.onerror = () => {
-        // EventSource will auto-reconnect
+        // If SSE endpoint is not available, close stream to prevent console 404 noise
+        this.eventSource?.close();
+        this.eventSource = null;
       };
     } catch (err) {
       console.warn('Real-time SSE stream initialized with fallback polling');

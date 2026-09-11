@@ -54,9 +54,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
+  let normEmail = '';
   try {
     const { email, name, otp, purpose } = req.body || {};
-    const normEmail = (email || '').trim().toLowerCase();
+    normEmail = (email || '').trim().toLowerCase();
     const finalOtp = otp || Math.floor(100000 + Math.random() * 900000).toString();
     const flowType = purpose === 'login' ? 'login' : 'register';
 

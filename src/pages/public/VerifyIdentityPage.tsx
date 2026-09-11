@@ -10,10 +10,13 @@ import { Footer } from "../../components/layout/Footer";
 export const VerifyIdentityPage: React.FC = () => {
   const [searchParams] = useSearchParams();
 
+  const certParam = searchParams.get("cert");
+  const courseParam = searchParams.get("course");
+  const gradeParam = searchParams.get("grade");
   const rawName = searchParams.get("name") || "Officer / Trainee";
   const id = searchParams.get("id") || "u-trainee-1";
-  const role = searchParams.get("role") || "trainee";
-  const code = searchParams.get("code") || `CC-${role.slice(0, 2).toUpperCase()}-2026-8841`;
+  const role = searchParams.get("role") || (certParam ? "Certified Trainee" : "trainee");
+  const code = certParam || searchParams.get("code") || `CC-${role.slice(0, 2).toUpperCase()}-2026-8841`;
 
   const name = (
     rawName.toLowerCase().includes("harry") ||
@@ -70,6 +73,20 @@ export const VerifyIdentityPage: React.FC = () => {
                 </span>
               </div>
             </div>
+
+            {courseParam && (
+              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/25 space-y-1">
+                <span className="text-[10px] text-blue-300 uppercase font-bold tracking-wider block">
+                  Certified Course & Distinction
+                </span>
+                <p className="text-sm font-bold text-white">{courseParam}</p>
+                {gradeParam && (
+                  <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Grade: {gradeParam}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-white/10">
               <div>

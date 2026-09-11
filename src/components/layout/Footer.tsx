@@ -39,7 +39,7 @@ export const Footer: React.FC = () => {
               <li><Link to="/admin/competency" className="hover:text-white transition">Competency Mapping Engine</Link></li>
               <li><Link to="/trainee/assessments" className="hover:text-white transition">Proctored MCQ Assessment Engine</Link></li>
               <li><Link to="/trainee/certificates" className="hover:text-white transition">Verifiable Digital Certificates</Link></li>
-              <li><Link to="/trainer/dashboard" className="hover:text-white transition">Live Classroom Sessions</Link></li>
+              <li><Link to="/trainee/live-classes" className="hover:text-white transition">Live Classroom Sessions</Link></li>
             </ul>
           </div>
 

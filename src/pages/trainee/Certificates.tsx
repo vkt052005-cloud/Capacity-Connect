@@ -73,7 +73,7 @@ export const Certificates: React.FC = () => {
                   <QrCode className="w-3.5 h-3.5 text-[#2997ff]" /> View Certificate & QR
                 </button>
                 <button
-                  onClick={() => addToast("Certificate Download / Print PDF generated for download.", "success")}
+                  onClick={() => setSelectedCert(c)}
                   className="apple-btn-primary text-xs px-3 py-1.5 font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" /> PDF
