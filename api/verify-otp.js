@@ -81,12 +81,5 @@ export default async function handler(req, res) {
     }
   }
 
-  // Fallback: accept any 6-digit code only if Supabase is not configured (dev only)
-  if (!SUPABASE_SERVICE_KEY) {
-    if (candidate.length === 6) {
-      return res.status(200).json({ valid: true });
-    }
-  }
-
-  return res.status(200).json({ valid: false, error: 'Verification code not found or already used. Please request a new code.' });
+  return res.status(200).json({ valid: false, error: 'Incorrect or expired verification code. Please check your email and try again.' });
 }
