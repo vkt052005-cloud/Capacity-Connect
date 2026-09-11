@@ -109,7 +109,7 @@ export const GlobalLiveClassBanner: React.FC = () => {
         aria-label="Live Class Announcement"
         className="sticky top-16 sm:top-20 z-30 w-full bg-gradient-to-r from-rose-950/95 via-[#1a0814]/95 to-[#0b0f24]/95 border-b border-rose-500/40 backdrop-blur-2xl shadow-[0_10px_30px_rgba(225,29,72,0.25)] animate-fadeIn"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="relative flex items-center justify-center shrink-0">
               <span className="w-4 h-4 rounded-full bg-rose-500 animate-ping absolute opacity-75" />
