@@ -5,7 +5,7 @@ import { Mail, MapPin } from "lucide-react";
 export const Footer: React.FC = () => {
   return (
     <footer className="w-full border-t border-white/[0.08] bg-black/90 backdrop-blur-2xl mt-auto relative z-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand & Description */}
           <div className="space-y-3">

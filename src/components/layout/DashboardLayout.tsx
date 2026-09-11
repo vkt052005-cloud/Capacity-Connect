@@ -26,7 +26,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <Header />
       <GlobalLiveClassBanner />
 
-      <div className="flex-1 flex max-w-7xl w-full mx-auto relative z-10">
+      <div className="flex-1 flex w-full relative z-10">
         <Sidebar />
 
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6">
