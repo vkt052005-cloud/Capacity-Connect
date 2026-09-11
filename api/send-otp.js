@@ -2,26 +2,26 @@ import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || 'https://osahxrfvcuxymkktrbwl.supabase.co').replace(/\/$/, '');
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AxPR4q9YGfHf-tywUOMuHw_3vaG15rV';
 
 async function storeOtp(email, otp) {
-  if (!SUPABASE_SERVICE_KEY) return;
+  if (!email || !otp) return;
   try {
     const hash = await bcrypt.hash(otp, 10);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+    const payload = JSON.stringify({ hash, expiresAt, email });
 
-    // Delete old OTPs for this email first
-    await fetch(`${SUPABASE_URL}/rest/v1/otp_verifications?email=eq.${encodeURIComponent(email)}`, {
+    // Delete old OTP records for this email first
+    await fetch(`${SUPABASE_URL}/rest/v1/audit_logs?action=eq.OTP_AUTH_VERIFICATION&user_id=eq.${encodeURIComponent(email)}`, {
       method: 'DELETE',
       headers: {
         apikey: SUPABASE_SERVICE_KEY,
         Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-        'Content-Type': 'application/json',
       },
-    });
+    }).catch(() => {});
 
-    // Insert new OTP
-    await fetch(`${SUPABASE_URL}/rest/v1/otp_verifications`, {
+    // Insert new OTP record in audit_logs
+    await fetch(`${SUPABASE_URL}/rest/v1/audit_logs`, {
       method: 'POST',
       headers: {
         apikey: SUPABASE_SERVICE_KEY,
@@ -29,7 +29,13 @@ async function storeOtp(email, otp) {
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
-      body: JSON.stringify({ email, otp_hash: hash, expires_at: expiresAt, used: false }),
+      body: JSON.stringify({
+        id: `otp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        user_id: email,
+        action: 'OTP_AUTH_VERIFICATION',
+        details: payload,
+        timestamp: new Date().toISOString(),
+      }),
     });
   } catch (err) {
     console.error('OTP store error:', err);

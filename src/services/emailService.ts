@@ -100,7 +100,51 @@ export async function verifyOtpCode(
     };
   }
 
-  // 1. Verify against authoritative serverless route (if reachable and responding)
+  // 1. Primary: Verify against active cryptographic session hash in memory
+  const session = localOtpSessions[normEmail];
+  if (session) {
+    if (Date.now() > session.expiresAt) {
+      delete localOtpSessions[normEmail];
+      return {
+        valid: false,
+        error: 'Verification code has expired. Please request a new code.'
+      };
+    }
+
+    if (session.attempts >= 5) {
+      delete localOtpSessions[normEmail];
+      return {
+        valid: false,
+        error: 'Too many incorrect attempts. This verification code has been invalidated for security. Please request a new one.'
+      };
+    }
+
+    // Verify candidate token against secure session bcrypt hash
+    try {
+      const isMatch = bcrypt.compareSync(token, session.hash);
+      if (isMatch) {
+        delete localOtpSessions[normEmail];
+        // Clean up server record asynchronously
+        fetch('/api/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normEmail, otp: token })
+        }).catch(() => {});
+
+        return { valid: true };
+      }
+    } catch (e) {
+      console.warn('Session hash verification error:', e);
+    }
+
+    session.attempts += 1;
+    return {
+      valid: false,
+      error: 'Incorrect verification code. Please check your email inbox and enter the exact 6-digit code.'
+    };
+  }
+
+  // 2. Secondary: Fallback to server verification (for cross-device / multi-tab logins)
   try {
     const res = await fetch('/api/verify-otp', {
       method: 'POST',
@@ -113,55 +157,20 @@ export async function verifyOtpCode(
       if (data.valid === true) {
         delete localOtpSessions[normEmail];
         return { valid: true };
-      } else if (data.valid === false && data.error && !data.error.includes('Method Not Allowed')) {
-        // If backend explicitly checked the hash and failed, return that failure
-        if (data.error.includes('Incorrect') || data.error.includes('expired') || data.error.includes('valid 6-digit')) {
-          return { valid: false, error: data.error };
-        }
       }
+      return {
+        valid: false,
+        error: data.error || 'Incorrect verification code. Please check your email inbox and enter the exact 6-digit code.'
+      };
     }
   } catch (err) {
-    console.warn('Backend OTP verification offline, proceeding to session verification:', err);
+    console.warn('Backend OTP verification error:', err);
   }
 
-  // 2. Cryptographic session verification
-  const session = localOtpSessions[normEmail];
-  if (!session) {
-    return {
-      valid: false,
-      error: 'No active verification code found for this email. Please request a new code.'
-    };
-  }
-
-  if (Date.now() > session.expiresAt) {
-    delete localOtpSessions[normEmail];
-    return {
-      valid: false,
-      error: 'Verification code has expired. Please request a new code.'
-    };
-  }
-
-  if (session.attempts >= 5) {
-    delete localOtpSessions[normEmail];
-    return {
-      valid: false,
-      error: 'Too many incorrect attempts. This verification code has been invalidated for security. Please request a new one.'
-    };
-  }
-
-  session.attempts += 1;
-
-  // Verify candidate OTP against secure bcrypt hash
-  const isMatch = bcrypt.compareSync(token, session.hash);
-  if (isMatch) {
-    delete localOtpSessions[normEmail];
-    return { valid: true };
-  } else {
-    return {
-      valid: false,
-      error: `Incorrect verification code. Please check your email inbox and enter the exact 6-digit code.`
-    };
-  }
+  return {
+    valid: false,
+    error: 'No active verification session found. Please request a new verification code.'
+  };
 }
 
 /**

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || 'https://osahxrfvcuxymkktrbwl.supabase.co').replace(/\/$/, '');
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AxPR4q9YGfHf-tywUOMuHw_3vaG15rV';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -29,11 +29,11 @@ export default async function handler(req, res) {
     return res.status(200).json({ valid: false, error: 'Please enter a valid 6-digit verification code' });
   }
 
-  // Attempt server-side verification via Supabase otp_verifications table
-  if (SUPABASE_SERVICE_KEY && normEmail) {
+  // Attempt server-side verification via Supabase audit_logs table
+  if (normEmail) {
     try {
       const resp = await fetch(
-        `${SUPABASE_URL}/rest/v1/otp_verifications?email=eq.${encodeURIComponent(normEmail)}&used=eq.false&order=created_at.desc&limit=1`,
+        `${SUPABASE_URL}/rest/v1/audit_logs?action=eq.OTP_AUTH_VERIFICATION&user_id=eq.${encodeURIComponent(normEmail)}&order=timestamp.desc&limit=1`,
         {
           headers: {
             apikey: SUPABASE_SERVICE_KEY,
@@ -47,32 +47,33 @@ export default async function handler(req, res) {
         const rows = await resp.json();
         if (rows && rows.length > 0) {
           const record = rows[0];
+          let otpData = {};
+          try {
+            otpData = JSON.parse(record.details || '{}');
+          } catch (e) {}
 
           // Check expiry
-          if (record.expires_at && new Date(record.expires_at) < new Date()) {
-            return res.status(200).json({ valid: false, error: 'Verification code has expired. Please request a new one.' });
+          if (otpData.expiresAt && Date.now() > otpData.expiresAt) {
+            return res.status(200).json({ valid: false, error: 'Verification code has expired. Please request a new code.' });
           }
 
-          // Compare against stored hash
-          const match = await bcrypt.compare(candidate, record.otp_hash);
-          if (match) {
-            // Mark as used (single-use)
-            await fetch(
-              `${SUPABASE_URL}/rest/v1/otp_verifications?id=eq.${record.id}`,
-              {
-                method: 'PATCH',
+          // Compare candidate code against stored bcrypt hash
+          if (otpData.hash) {
+            const match = await bcrypt.compare(candidate, otpData.hash);
+            if (match) {
+              // Mark as used (consume by deleting from audit_logs)
+              await fetch(`${SUPABASE_URL}/rest/v1/audit_logs?id=eq.${encodeURIComponent(record.id)}`, {
+                method: 'DELETE',
                 headers: {
                   apikey: SUPABASE_SERVICE_KEY,
                   Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-                  'Content-Type': 'application/json',
-                  Prefer: 'return=minimal',
                 },
-                body: JSON.stringify({ used: true }),
-              }
-            );
-            return res.status(200).json({ valid: true });
-          } else {
-            return res.status(200).json({ valid: false, error: 'Incorrect verification code. Please check your email and try again.' });
+              }).catch(() => {});
+
+              return res.status(200).json({ valid: true });
+            } else {
+              return res.status(200).json({ valid: false, error: 'Incorrect verification code. Please check your email and try again.' });
+            }
           }
         }
       }
@@ -81,5 +82,5 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ valid: false, error: 'Incorrect or expired verification code. Please check your email and try again.' });
+  return res.status(200).json({ valid: false, notFoundOnServer: true, error: 'No active OTP verification session found on server.' });
 }
