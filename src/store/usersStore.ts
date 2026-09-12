@@ -26,6 +26,38 @@ interface UsersState {
   getRemovedUsers: () => User[];
 }
 
+/**
+ * Cross-tab & multi-device session eviction for removed users.
+ * Immediately purges authentication cache and redirects to /login?removed=true.
+ */
+export function evictSessionIfRemoved(userId: string, email?: string) {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTH);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const authId = parsed?.userId || parsed?.user?.id || parsed?.id;
+      const authEmail = (parsed?.user?.email || parsed?.email || "").toLowerCase();
+      const targetEmail = (email || "").toLowerCase();
+      if (authId === userId || (targetEmail && authEmail === targetEmail)) {
+        localStorage.removeItem(STORAGE_KEYS.AUTH);
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?removed=true";
+        }
+      }
+    }
+  } catch (e) {}
+
+  // Broadcast across all open browser windows and tabs
+  try {
+    localStorage.setItem("cc_session_eviction", JSON.stringify({ userId, email, timestamp: Date.now() }));
+    if (typeof BroadcastChannel !== "undefined") {
+      const bc = new BroadcastChannel("cc_auth_channel");
+      bc.postMessage({ type: "SESSION_EVICTED", userId, email });
+      bc.close();
+    }
+  } catch (e) {}
+}
+
 export const useUsersStore = create<UsersState>((set, get) => ({
   users: [],
   isSubscribed: false,
@@ -40,6 +72,26 @@ export const useUsersStore = create<UsersState>((set, get) => ({
         const fresh = await dbService.getAll<User>('users', 500);
         if (fresh) {
           set({ users: fresh });
+
+          // Immediate multi-device session eviction check for current client
+          try {
+            const rawAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
+            if (rawAuth) {
+              const parsed = JSON.parse(rawAuth);
+              const authId = parsed?.userId || parsed?.user?.id || parsed?.id;
+              const authEmail = (parsed?.user?.email || parsed?.email || "").toLowerCase();
+              const freshUser = fresh.find(
+                (u) => u.id === authId || (u.email && u.email.toLowerCase() === authEmail)
+              );
+              if (freshUser && freshUser.status === "removed") {
+                console.warn("[Security] Real-time signal: Active account was removed by Administrator. Evicting session.");
+                localStorage.removeItem(STORAGE_KEYS.AUTH);
+                if (typeof window !== "undefined") {
+                  window.location.href = "/login?removed=true";
+                }
+              }
+            }
+          } catch (e) {}
         }
       } catch (e) {}
     });
@@ -236,17 +288,16 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       status: "WARNING"
     });
 
-    try {
-      const currentAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
-      if (currentAuth) {
-        const parsedAuth = JSON.parse(currentAuth);
-        const authId = parsedAuth?.userId || parsedAuth?.user?.id || parsedAuth?.id;
-        const authEmail = (parsedAuth?.user?.email || parsedAuth?.email || "").toLowerCase();
-        if (authId === userId || authEmail === targetUser.email.toLowerCase()) {
-          localStorage.removeItem(STORAGE_KEYS.AUTH);
-        }
-      }
-    } catch (e) {}
+    recordAuditEvent({
+      actor: "System Security Guard",
+      role: "admin",
+      action: "SESSION_FORCE_TERMINATED",
+      target: `${targetUser.name} (${targetUser.email}) - All active login tokens invalidated across all devices`,
+      status: "SUCCESS"
+    });
+
+    // Invalidate and evict session across all tabs and devices immediately
+    evictSessionIfRemoved(userId, targetUser.email);
   },
 
   allowUserAccess: async (userId) => {

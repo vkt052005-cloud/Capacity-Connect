@@ -16,8 +16,9 @@ export const TrainerReports: React.FC = () => {
   const trainerCourses = courses.filter((c) => c.trainerId === trainerId || (currentUser?.name && c.trainerName === currentUser.name));
   const trainerCourseIds = new Set(trainerCourses.map((c) => c.id));
 
-  // Real enrollments for this trainer's courses
-  const trainerEnrollments = enrollments.filter((e) => trainerCourseIds.has(e.courseId));
+  // Real enrollments for this trainer's courses (excludes removed users)
+  const removedUserIds = new Set(users.filter((u) => u.status === "removed").map((u) => u.id));
+  const trainerEnrollments = enrollments.filter((e) => trainerCourseIds.has(e.courseId) && !removedUserIds.has(e.traineeId));
   const uniqueTraineeIds = new Set(trainerEnrollments.map((e) => e.traineeId));
 
   // Real attempts on this trainer's course evaluations

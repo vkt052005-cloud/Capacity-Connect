@@ -127,6 +127,7 @@ interface AuthState {
   register: (data: Omit<User, "id" | "createdAt" | "status">) => Promise<{ success: boolean; message: string }>;
   updateProfile: (updates: Partial<User>) => void;
   loadFromStorage: () => void;
+  verifyCurrentSession: () => Promise<void>;
   findUserForRecovery: (query: { name: string; department?: string; designation?: string; role?: User["role"] }) => {
     success: boolean;
     message: string;
@@ -164,8 +165,59 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const user = getInitialAuthUser();
     if (user) {
       set({ currentUser: user, isInitialized: true });
+      get().verifyCurrentSession();
     } else {
       set({ currentUser: null, isInitialized: true });
+    }
+  },
+
+  verifyCurrentSession: async () => {
+    const user = get().currentUser;
+    if (!user) return;
+
+    try {
+      // 1. Check in-memory usersStore
+      const memoryUsers = useUsersStore.getState().users;
+      let matched = memoryUsers.find(
+        (u) => u.id === user.id || (u.email && user.email && u.email.toLowerCase() === user.email.toLowerCase())
+      );
+
+      // 2. Query direct from Supabase Cloud
+      if (isSupabaseConfigured) {
+        try {
+          const cloudUsers = await supabase.select<User>("users", `id=eq.${encodeURIComponent(user.id)}&limit=1`);
+          if (cloudUsers && cloudUsers.length > 0) {
+            matched = cloudUsers[0];
+          }
+        } catch (e) {}
+      }
+
+      if (matched) {
+        if (matched.status === "removed") {
+          console.warn("[AuthSecurity] Account revoked by Administrator. Ejecting session immediately.");
+          get().logout();
+          if (typeof window !== "undefined") {
+            window.location.href = "/login?removed=true";
+          }
+          return;
+        }
+
+        // If status or role changed, update local cache
+        if (matched.status !== user.status || matched.role !== user.role) {
+          const sanitized = sanitizeUserForSession(matched);
+          set({ currentUser: sanitized });
+          try {
+            const raw = localStorage.getItem(STORAGE_KEYS.AUTH);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              parsed.user = sanitized;
+              localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(parsed));
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.warn("verifyCurrentSession check:", err);
     }
   },
 

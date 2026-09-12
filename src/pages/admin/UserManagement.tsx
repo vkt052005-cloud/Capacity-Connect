@@ -257,7 +257,15 @@ export const UserManagement: React.FC = () => {
       u.role.toLowerCase().includes(search.toLowerCase());
 
     const matchesRole = roleFilter === "all" || u.role === roleFilter;
-    const matchesStatus = statusFilter === "all" || u.status === statusFilter;
+
+    // By default ("all"), strictly exclude removed users so the active directory only shows legitimate members.
+    // Removed users only show when explicitly viewing "removed" or "all_including_removed".
+    const matchesStatus =
+      statusFilter === "all"
+        ? u.status !== "removed"
+        : statusFilter === "all_including_removed"
+        ? true
+        : u.status === statusFilter;
 
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -412,28 +420,56 @@ export const UserManagement: React.FC = () => {
       ]}
     >
       <div className="space-y-6">
-        {/* Metric Cards */}
+        {/* Metric Cards (Clickable Quick Filters) */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Total Accounts</span>
-            <span className="text-xl font-extrabold text-white tracking-tight">{users.length}</span>
-          </div>
-          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
+          <button
+            type="button"
+            onClick={() => { setStatusFilter("all"); setRoleFilter("all"); }}
+            className={`p-3.5 rounded-xl text-left transition cursor-pointer border ${statusFilter === "all" && roleFilter === "all" ? "bg-white/10 border-white/30 shadow-md ring-1 ring-white/20" : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06]"}`}
+            title="Click to view all active directory members"
+          >
+            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Active Directory</span>
+            <span className="text-xl font-extrabold text-white tracking-tight">{users.filter((u) => u.status !== "removed").length}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setRoleFilter(roleFilter === "trainee" ? "all" : "trainee"); if (statusFilter === "removed") setStatusFilter("all"); }}
+            className={`p-3.5 rounded-xl text-left transition cursor-pointer border ${roleFilter === "trainee" ? "bg-emerald-500/15 border-emerald-500/40 shadow-md ring-1 ring-emerald-500/30" : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06]"}`}
+            title="Click to filter by Trainees"
+          >
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Trainees</span>
             <span className="text-xl font-extrabold text-emerald-400 tracking-tight">{traineeCount}</span>
-          </div>
-          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
+          </button>
+          <button
+            type="button"
+            onClick={() => { setRoleFilter(roleFilter === "trainer" ? "all" : "trainer"); if (statusFilter === "removed") setStatusFilter("all"); }}
+            className={`p-3.5 rounded-xl text-left transition cursor-pointer border ${roleFilter === "trainer" ? "bg-[#0071e3]/20 border-[#2997ff]/40 shadow-md ring-1 ring-[#2997ff]/30" : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06]"}`}
+            title="Click to filter by Faculty / Trainers"
+          >
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Trainers / Faculty</span>
             <span className="text-xl font-extrabold text-[#2997ff] tracking-tight">{trainerCount}</span>
-          </div>
-          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
+          </button>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter(statusFilter === "pending" ? "all" : "pending"); setRoleFilter("all"); }}
+            className={`p-3.5 rounded-xl text-left transition cursor-pointer border ${statusFilter === "pending" ? "bg-amber-500/20 border-amber-500/40 shadow-md ring-1 ring-amber-500/30" : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06]"}`}
+            title="Click to view pending approval requests"
+          >
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Pending Approvals</span>
             <span className="text-xl font-extrabold text-amber-400 tracking-tight">{pendingCount}</span>
-          </div>
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
-            <span className="text-[10px] text-rose-300/80 font-semibold uppercase block">Removed by Admin</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter(statusFilter === "removed" ? "all" : "removed"); setRoleFilter("all"); }}
+            className={`p-3.5 rounded-xl text-left transition cursor-pointer border ${statusFilter === "removed" ? "bg-rose-500/25 border-rose-500/60 shadow-lg ring-2 ring-rose-500/50" : "bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/15"}`}
+            title="Click to inspect removed users and allow access"
+          >
+            <span className="text-[10px] text-rose-300/80 font-semibold uppercase block flex items-center justify-between">
+              <span>Removed by Admin</span>
+              {statusFilter === "removed" && <span className="text-[8px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full font-bold">ACTIVE VIEW</span>}
+            </span>
             <span className="text-xl font-extrabold text-rose-400 tracking-tight">{removedCount}</span>
-          </div>
+          </button>
         </div>
 
         {/* Re-Admission Requests Pending Admin Permission */}
@@ -526,11 +562,12 @@ export const UserManagement: React.FC = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="apple-input text-xs py-1.5 px-2 bg-[#12141a] text-slate-200 border border-white/10 rounded-lg cursor-pointer"
             >
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="pending">Pending Approval</option>
-              <option value="inactive">Inactive / Suspended</option>
+              <option value="all">Active Directory (Excludes Removed)</option>
+              <option value="active">Active Only ({users.filter((u) => u.status === "active").length})</option>
+              <option value="pending">Pending Approval ({pendingCount})</option>
+              <option value="inactive">Inactive / Suspended ({users.filter((u) => u.status === "inactive").length})</option>
               <option value="removed">⛔ Removed / Access Revoked ({removedCount})</option>
+              <option value="all_including_removed">All Records (Including Removed) ({users.length})</option>
             </select>
           </div>
 
@@ -544,6 +581,27 @@ export const UserManagement: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Quarantine Banner When Viewing Removed Users */}
+        {statusFilter === "removed" && (
+          <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-200 animate-fadeIn">
+            <div className="flex items-start sm:items-center gap-2.5">
+              <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5 sm:mt-0" />
+              <div>
+                <span className="font-bold text-white block">Quarantine & Revocation Directory</span>
+                <span className="text-[11px] text-rose-200/90 leading-relaxed block">
+                  Showing {filtered.length} account(s) whose platform access was revoked by an Administrator. These users cannot log in anywhere on the website. Click <strong>Allow Access</strong> on any row to restore credentials.
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setStatusFilter("all")}
+              className="apple-btn-secondary text-[11px] py-1 px-3 whitespace-nowrap self-end sm:self-auto cursor-pointer"
+            >
+              Back to Active Directory →
+            </button>
+          </div>
+        )}
 
         {/* Users Table */}
         <div className="card p-3 sm:p-5 space-y-4">

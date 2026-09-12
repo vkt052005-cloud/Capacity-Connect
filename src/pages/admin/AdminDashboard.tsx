@@ -27,6 +27,8 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   const pendingUsers = users.filter((u) => u.status === "pending");
+  const activeMembersCount = users.filter((u) => u.status !== "removed").length;
+  const removedUsersCount = users.filter((u) => u.status === "removed").length;
 
   // Calculate actual verified certificates issued in system
   const totalVerifiedCertificates = Math.max(
@@ -39,11 +41,11 @@ export const AdminDashboard: React.FC = () => {
 
   const statCards = [
     {
-      label: "Total Registered Users",
-      value: users.length.toString(),
+      label: "Active Platform Members",
+      value: activeMembersCount.toString(),
       icon: Users,
       color: "blue",
-      change: `${users.filter(u => u.status === "active").length} Active • ${pendingUsers.length} Pending`
+      change: `${users.filter(u => u.status === "active").length} Active • ${pendingUsers.length} Pending${removedUsersCount > 0 ? ` • ${removedUsersCount} Removed` : ""}`
     },
     {
       label: "Active Courses",
@@ -98,7 +100,7 @@ export const AdminDashboard: React.FC = () => {
               <p className="text-xs text-slate-400">Review new instructor registrations before activating portal access</p>
             </div>
             <Link to="/admin/users" className="text-xs text-[#2997ff] hover:underline font-semibold">
-              Manage All Users ({users.length}) →
+              Manage Active Directory ({activeMembersCount}) →
             </Link>
           </div>
 

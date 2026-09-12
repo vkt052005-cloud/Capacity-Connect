@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useUsersStore } from '../../store/usersStore';
 import type { UserRole } from '../../types';
 
 interface ProtectedRouteProps {
@@ -9,7 +10,8 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-  const { currentUser, isInitialized } = useAuthStore();
+  const { currentUser, isInitialized, logout } = useAuthStore();
+  const { users } = useUsersStore();
   const location = useLocation();
 
   if (!isInitialized) {
@@ -24,14 +26,24 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if user account was removed by an administrator
-  const isRemoved = currentUser.status === "removed";
+  // Check if user account was removed by an administrator in current session OR in database
+  const matchingDbUser = users.find(
+    (u) => u.id === currentUser.id || (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase())
+  );
+  const isRemoved = currentUser.status === "removed" || matchingDbUser?.status === "removed";
 
   if (isRemoved) {
+    logout();
     return <Navigate to="/login?removed=true" replace />;
   }
 
+  if (matchingDbUser && matchingDbUser.status !== "active") {
+    logout();
+    return <Navigate to="/login?pending=true" replace />;
+  }
+
   if (currentUser.status !== "active") {
+    logout();
     return <Navigate to="/login?pending=true" replace />;
   }
 

@@ -57,7 +57,7 @@ function PageLoader() {
 }
 
 function App() {
-  const { loadFromStorage } = useAuthStore();
+  const { loadFromStorage, verifyCurrentSession } = useAuthStore();
   const { load: loadNotifications } = useNotificationsStore();
   const { load: loadCourses } = useCoursesStore();
   const { load: loadAssessments } = useAssessmentsStore();
@@ -78,6 +78,55 @@ function App() {
     loadLiveSessions();
     loadAttendance();
     loadAuditLogs();
+
+    // Cross-tab session eviction listener (for multi-tab / cross-window sync)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "cc_session_eviction" && e.newValue) {
+        try {
+          const { userId, email } = JSON.parse(e.newValue);
+          const current = useAuthStore.getState().currentUser;
+          if (
+            current &&
+            (current.id === userId || (email && current.email?.toLowerCase() === email.toLowerCase()))
+          ) {
+            useAuthStore.getState().logout();
+            window.location.href = "/login?removed=true";
+          }
+        } catch (err) {}
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+
+    let bc: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        bc = new BroadcastChannel("cc_auth_channel");
+        bc.onmessage = (msg) => {
+          if (msg.data?.type === "SESSION_EVICTED") {
+            const current = useAuthStore.getState().currentUser;
+            if (
+              current &&
+              (current.id === msg.data.userId || (msg.data.email && current.email?.toLowerCase() === msg.data.email.toLowerCase()))
+            ) {
+              useAuthStore.getState().logout();
+              window.location.href = "/login?removed=true";
+            }
+          }
+        };
+      } catch (err) {}
+    }
+
+    // Tab focus re-verification: verify account hasn't been revoked while tab was in background
+    const handleFocus = () => {
+      verifyCurrentSession();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", handleFocus);
+      if (bc) bc.close();
+    };
   }, []);
 
   return (

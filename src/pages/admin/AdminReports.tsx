@@ -5,26 +5,30 @@ import { useAppStore } from "../../store/appStore";
 import { useAttendanceStore } from "../../store/attendanceStore";
 import { useCoursesStore } from "../../store/coursesStore";
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
+import { useUsersStore } from "../../store/usersStore";
 
 export const AdminReports: React.FC = () => {
   const { addToast } = useAppStore();
   const { getAllAttendanceSummary, sessionAttendance, lessonAttendance, getSessionAttendees } = useAttendanceStore();
   const { courses } = useCoursesStore();
   const { sessions } = useLiveSessionsStore();
+  const { users } = useUsersStore();
   const [activeTab, setActiveTab] = useState<"competency" | "attendance">("attendance");
 
-  const attendanceSummary = getAllAttendanceSummary();
-  const totalSessionJoins = sessionAttendance.length;
-  const totalLessonsWatched = lessonAttendance.filter((a) => a.status === "watched").length;
+  const removedUserIds = new Set(users.filter((u) => u.status === "removed").map((u) => u.id));
+
+  const attendanceSummary = getAllAttendanceSummary().filter((a) => !removedUserIds.has(a.traineeId));
+  const totalSessionJoins = sessionAttendance.filter((a) => !removedUserIds.has(a.traineeId)).length;
+  const totalLessonsWatched = lessonAttendance.filter((a) => a.status === "watched" && !removedUserIds.has(a.traineeId)).length;
   const uniqueTrainees = new Set([
-    ...sessionAttendance.map((a) => a.traineeId),
-    ...lessonAttendance.map((a) => a.traineeId),
+    ...sessionAttendance.filter((a) => !removedUserIds.has(a.traineeId)).map((a) => a.traineeId),
+    ...lessonAttendance.filter((a) => !removedUserIds.has(a.traineeId)).map((a) => a.traineeId),
   ]).size;
 
   // Per-session attendance breakdown
   const sessionBreakdown = sessions.map((s) => ({
     session: s,
-    attendees: getSessionAttendees(s.id),
+    attendees: getSessionAttendees(s.id).filter((a) => !removedUserIds.has(a.traineeId)),
   })).filter((s) => s.attendees.length > 0);
 
   const handleExportAttendanceCSV = () => {

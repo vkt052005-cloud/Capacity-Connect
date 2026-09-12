@@ -9,13 +9,17 @@ import {
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
 import { useAuthStore } from "../../store/authStore";
 import { useCoursesStore } from "../../store/coursesStore";
+import { useUsersStore } from "../../store/usersStore";
 import { useAppStore } from "../../store/appStore";
 
 export const LiveMeetClassroom: React.FC = () => {
   const { activeSession, isClassroomOpen, closeClassroom, joinSession, endSession, launchGoogleMeet } = useLiveSessionsStore();
   const { currentUser } = useAuthStore();
+  const { users } = useUsersStore();
   const { enrollments } = useCoursesStore();
   const { addToast } = useAppStore();
+
+  const removedUserIds = new Set(users.filter((u) => u.status === "removed").map((u) => u.id));
 
   const [activeTab, setActiveTab] = useState<"meet" | "whiteboard" | "agenda" | "qa" | "attendance">("meet");
   const [copiedLink, setCopiedLink] = useState(false);
@@ -82,6 +86,17 @@ export const LiveMeetClassroom: React.FC = () => {
       };
     }
   }, [isClassroomOpen, activeSession?.id]);
+
+  // Eject removed users from active classroom immediately
+  useEffect(() => {
+    if (currentUser && (currentUser.status === "removed" || removedUserIds.has(currentUser.id))) {
+      closeClassroom();
+      useAuthStore.getState().logout();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login?removed=true";
+      }
+    }
+  }, [currentUser, users]);
 
   if (!isClassroomOpen || !activeSession) return null;
 
@@ -742,13 +757,18 @@ export const LiveMeetClassroom: React.FC = () => {
                 </div>
               )}
 
-              {/* Other Attendees */}
-              {activeSession.attendees?.filter(id => id !== activeSession.trainerId && id !== currentUser?.id).map((attId, idx) => (
-                <div key={attId} className="p-2 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs">
-                  <span className="text-slate-300 font-mono text-[11px]">Trainee #{idx + 1} ({attId.slice(0, 8)})</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">Present</span>
-                </div>
-              ))}
+              {/* Other Attendees (Excludes removed users) */}
+              {activeSession.attendees?.filter(id => id !== activeSession.trainerId && id !== currentUser?.id && !removedUserIds.has(id)).map((attId, idx) => {
+                const attendeeUser = users.find(u => u.id === attId);
+                return (
+                  <div key={attId} className="p-2 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs">
+                    <span className="text-slate-300 font-mono text-[11px] truncate max-w-[170px]">
+                      {attendeeUser ? attendeeUser.name : `Trainee #${idx + 1}`}
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono">Present</span>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Instructor Controls */}
