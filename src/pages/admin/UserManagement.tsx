@@ -251,6 +251,7 @@ export const UserManagement: React.FC = () => {
   };
 
   const filtered = users.filter((u) => {
+    const isRemoved = u.status === "removed" || Boolean(u.removedAt) || Boolean((u as any).removed_at) || Boolean(u.removalReason) || Boolean((u as any).removal_reason);
     const matchesSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -262,10 +263,12 @@ export const UserManagement: React.FC = () => {
     // Removed users only show when explicitly viewing "removed" or "all_including_removed".
     const matchesStatus =
       statusFilter === "all"
-        ? u.status !== "removed"
+        ? !isRemoved
         : statusFilter === "all_including_removed"
         ? true
-        : u.status === statusFilter;
+        : statusFilter === "removed"
+        ? isRemoved
+        : u.status === statusFilter && !isRemoved;
 
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -405,11 +408,14 @@ export const UserManagement: React.FC = () => {
     });
   };
 
-  const traineeCount = users.filter((u) => u.role === "trainee" && u.status !== "removed").length;
-  const trainerCount = users.filter((u) => u.role === "trainer" && u.status !== "removed").length;
-  const pendingCount = users.filter((u) => u.status === "pending").length;
-  const removedCount = users.filter((u) => u.status === "removed").length;
-  const reinstatementRequests = users.filter((u) => u.status === "removed" && u.reinstatementRequested);
+  const isUserRemoved = (u: User) =>
+    u.status === "removed" || Boolean(u.removedAt) || Boolean((u as any).removed_at) || Boolean(u.removalReason) || Boolean((u as any).removal_reason);
+
+  const traineeCount = users.filter((u) => u.role === "trainee" && !isUserRemoved(u)).length;
+  const trainerCount = users.filter((u) => u.role === "trainer" && !isUserRemoved(u)).length;
+  const pendingCount = users.filter((u) => u.status === "pending" && !isUserRemoved(u)).length;
+  const removedCount = users.filter((u) => isUserRemoved(u)).length;
+  const reinstatementRequests = users.filter((u) => isUserRemoved(u) && u.reinstatementRequested);
 
   return (
     <DashboardLayout
@@ -429,7 +435,7 @@ export const UserManagement: React.FC = () => {
             title="Click to view all active directory members"
           >
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Active Directory</span>
-            <span className="text-xl font-extrabold text-white tracking-tight">{users.filter((u) => u.status !== "removed").length}</span>
+            <span className="text-xl font-extrabold text-white tracking-tight">{users.filter((u) => !isUserRemoved(u)).length}</span>
           </button>
           <button
             type="button"
@@ -683,18 +689,18 @@ export const UserManagement: React.FC = () => {
                           <span
                             className={
                               "badge text-[9px] font-bold " +
-                              (u.status === "active"
+                              (isUserRemoved(u)
+                                ? "bg-rose-950/80 text-rose-300 border-rose-800/60 font-mono"
+                                : u.status === "active"
                                 ? "badge-green"
                                 : u.status === "pending"
                                 ? "badge-yellow"
-                                : u.status === "removed"
-                                ? "bg-rose-950/80 text-rose-300 border-rose-800/60 font-mono"
                                 : "badge-red")
                             }
                           >
-                            {u.status === "removed" ? "⛔ ACCESS REVOKED" : u.status.toUpperCase()}
+                            {isUserRemoved(u) ? "⛔ ACCESS REVOKED" : u.status.toUpperCase()}
                           </span>
-                          {u.status === "removed" && (
+                          {isUserRemoved(u) && (
                             <span className="text-[9px] text-slate-400">
                               Requires Admin Approval
                             </span>
@@ -721,7 +727,7 @@ export const UserManagement: React.FC = () => {
                       <td className="py-3 px-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {/* If user is removed by admin, show the primary Allow Access button */}
-                          {u.status === "removed" ? (
+                          {isUserRemoved(u) ? (
                             <div className="flex items-center gap-1.5">
                               <button
                                 onClick={() => handleAllowAccess(u)}

@@ -70,7 +70,16 @@ export class SupabaseClient {
       });
       if (res.ok) {
         const data = await res.json();
-        return Array.isArray(data) ? data.map(rowToCamelCase) : [rowToCamelCase(data)];
+        const mapped = Array.isArray(data) ? data.map(rowToCamelCase) : [rowToCamelCase(data)];
+        if (table === "users") {
+          return mapped.map((u: any) => {
+            if (u && (u.removedAt || u.removalReason || u.status === "removed")) {
+              return { ...u, status: "removed" };
+            }
+            return u;
+          }) as T[];
+        }
+        return mapped;
       }
     } catch (e) {
       console.error(`Supabase select error on ${table}:`, e);
@@ -81,7 +90,15 @@ export class SupabaseClient {
   async insert<T = any>(table: string, row: T | T[]): Promise<T | null> {
     if (!isSupabaseConfigured) return null;
     try {
-      const payload = rowToSnakeCase(row);
+      let payload = rowToSnakeCase(row);
+      // Supabase users table constraint check: status in ('active', 'inactive', 'pending', 'suspended')
+      if (table === "users") {
+        if (Array.isArray(payload)) {
+          payload = payload.map((p) => (p.status === "removed" ? { ...p, status: "suspended" } : p));
+        } else if (payload && payload.status === "removed") {
+          payload.status = "suspended";
+        }
+      }
       const res = await fetch(`${this.url}/rest/v1/${table}`, {
         method: "POST",
         headers: {
@@ -92,10 +109,16 @@ export class SupabaseClient {
       });
       if (res.ok) {
         const data = await res.json();
+        let result: any = null;
         if (Array.isArray(data)) {
-          return data.length > 0 ? rowToCamelCase(data[0]) : null;
+          result = data.length > 0 ? rowToCamelCase(data[0]) : null;
+        } else {
+          result = rowToCamelCase(data);
         }
-        return rowToCamelCase(data);
+        if (table === "users" && result && (result.removedAt || result.removalReason)) {
+          result.status = "removed";
+        }
+        return result;
       } else {
         const errText = await res.text();
         console.warn(`Supabase insert on ${table}:`, errText);
@@ -109,14 +132,23 @@ export class SupabaseClient {
   async update<T = any>(table: string, matchKey: string, matchVal: string, updates: Partial<T>): Promise<boolean> {
     if (!isSupabaseConfigured) return false;
     try {
-      const payload = rowToSnakeCase(updates);
+      let payload = rowToSnakeCase(updates);
+      // Supabase users table check constraint: status in ('active', 'inactive', 'pending', 'suspended')
+      if (table === "users" && payload && payload.status === "removed") {
+        payload.status = "suspended";
+      }
       const snakeMatchKey = toSnakeCaseKey(matchKey);
       const res = await fetch(`${this.url}/rest/v1/${table}?${snakeMatchKey}=eq.${encodeURIComponent(matchVal)}`, {
         method: "PATCH",
         headers: this.headers(),
         body: JSON.stringify(payload),
       });
-      return res.ok;
+      if (!res.ok) {
+        const errText = await res.text();
+        console.warn(`Supabase update error on ${table}:`, errText);
+        return false;
+      }
+      return true;
     } catch (e) {
       console.error(`Supabase update error on ${table}:`, e);
       return false;

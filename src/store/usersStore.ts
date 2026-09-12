@@ -71,7 +71,13 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       try {
         const fresh = await dbService.getAll<User>('users', 500);
         if (fresh) {
-          set({ users: fresh });
+          const mapped = fresh.map((u) => {
+            if (u && (u.removedAt || (u as any).removed_at || u.removalReason || (u as any).removal_reason)) {
+              return { ...u, status: "removed" as const };
+            }
+            return u;
+          });
+          set({ users: mapped });
 
           // Immediate multi-device session eviction check for current client
           try {
@@ -80,10 +86,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
               const parsed = JSON.parse(rawAuth);
               const authId = parsed?.userId || parsed?.user?.id || parsed?.id;
               const authEmail = (parsed?.user?.email || parsed?.email || "").toLowerCase();
-              const freshUser = fresh.find(
+              const freshUser = mapped.find(
                 (u) => u.id === authId || (u.email && u.email.toLowerCase() === authEmail)
               );
-              if (freshUser && freshUser.status === "removed") {
+              if (freshUser && (freshUser.status === "removed" || Boolean(freshUser.removedAt))) {
                 console.warn("[Security] Real-time signal: Active account was removed by Administrator. Evicting session.");
                 localStorage.removeItem(STORAGE_KEYS.AUTH);
                 if (typeof window !== "undefined") {
@@ -103,7 +109,13 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     try {
       const serverUsers = await dbService.getAll<User>('users', 500);
       if (serverUsers) {
-        set({ users: serverUsers });
+        const mapped = serverUsers.map((u) => {
+          if (u && (u.removedAt || (u as any).removed_at || u.removalReason || (u as any).removal_reason)) {
+            return { ...u, status: "removed" as const };
+          }
+          return u;
+        });
+        set({ users: mapped });
       }
     } catch (e) {
       console.warn('Could not load users from cloud:', e);
@@ -379,13 +391,13 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const clean = email.trim().toLowerCase();
     const { users } = get();
     const match = users.find((u) => u.email?.toLowerCase() === clean);
-    return match ? match.status === "removed" : false;
+    return match ? (match.status === "removed" || Boolean(match.removedAt) || Boolean((match as any).removed_at)) : false;
   },
 
-  getTrainees: () => get().users.filter((u) => u.role === 'trainee'),
-  getTrainers: () => get().users.filter((u) => u.role === 'trainer'),
-  getPendingUsers: () => get().users.filter((u) => u.status === 'pending'),
-  getRemovedUsers: () => get().users.filter((u) => u.status === 'removed'),
+  getTrainees: () => get().users.filter((u) => u.role === 'trainee' && u.status !== 'removed' && !u.removedAt && !(u as any).removed_at),
+  getTrainers: () => get().users.filter((u) => u.role === 'trainer' && u.status !== 'removed' && !u.removedAt && !(u as any).removed_at),
+  getPendingUsers: () => get().users.filter((u) => u.status === 'pending' && !u.removedAt && !(u as any).removed_at),
+  getRemovedUsers: () => get().users.filter((u) => u.status === 'removed' || Boolean(u.removedAt) || Boolean((u as any).removed_at)),
 }));
 
 // Initialize subscription on boot
