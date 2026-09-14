@@ -37,3 +37,7 @@ dist-ssr
 # Archives
 *.zip
 *.tar.gz
+
+# Local database cache
+src/server/db.json
+

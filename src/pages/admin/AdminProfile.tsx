@@ -13,7 +13,7 @@ export const AdminProfile: React.FC = () => {
 
   const [name, setName] = useState(currentUser?.name || "Dr. Rajeshwar Sharma");
   const [email, setEmail] = useState(currentUser?.email || "vkt052005@gmail.com");
-  const [password, setPassword] = useState(currentUser?.password || "SRNNv@2005");
+  const [newPassword, setNewPassword] = useState("");
   const [department, setDepartment] = useState(currentUser?.department || "National Capacity Building Commission");
   const [designation, setDesignation] = useState(currentUser?.designation || "Chief Director & Portal Administrator");
   const [phone, setPhone] = useState(currentUser?.phone || "+91 98110 54321");
@@ -21,14 +21,17 @@ export const AdminProfile: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile({
+    const updates: any = {
       name,
       email,
-      password,
       department,
       designation,
       phone
-    });
+    };
+    if (newPassword && newPassword.trim().length > 0) {
+      updates.password = newPassword.trim();
+    }
+    updateProfile(updates);
     setIsSaved(true);
     addToast({
       title: "Admin Data Updated",
@@ -109,13 +112,13 @@ export const AdminProfile: React.FC = () => {
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-[#2997ff]" /> Password
+                <Lock className="w-3.5 h-3.5 text-[#2997ff]" /> Change Password
               </label>
               <input
-                type="text"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password (leave blank to keep current)"
                 className="apple-input font-mono"
               />
             </div>

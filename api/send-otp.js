@@ -70,8 +70,8 @@ export default async function handler(req, res) {
     // Store OTP hash server-side in Supabase (for real verification)
     await storeOtp(normEmail, finalOtp);
 
-    const smtpEmail = process.env.SMTP_EMAIL || process.env.SMTP_USER || 'capacityconnect.org@gmail.com';
-    const smtpPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || 'lhvnhismvukivzna';
+    const smtpEmail = process.env.SMTP_EMAIL || process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
 
     if (smtpEmail && smtpPass && normEmail) {
       const transporter = nodemailer.createTransport({

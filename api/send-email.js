@@ -20,8 +20,8 @@ export default async function handler(req, res) {
 
   try {
     const { to, subject, html } = req.body || {};
-    const smtpEmail = process.env.SMTP_EMAIL || process.env.SMTP_USER || 'capacityconnect.org@gmail.com';
-    const smtpPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || 'lhvnhismvukivzna';
+    const smtpEmail = process.env.SMTP_EMAIL || process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
 
     if (smtpEmail && smtpPass && to) {
       const transporter = nodemailer.createTransport({
