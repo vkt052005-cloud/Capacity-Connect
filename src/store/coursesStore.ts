@@ -5,6 +5,7 @@ import { dbService } from "../services/db";
 import { deleteVideoBlob } from "../utils/videoStorage";
 import { useUsersStore } from "./usersStore";
 import { useAuthStore } from "./authStore";
+import { recordAuditEvent } from "./auditStore";
 
 interface CoursesState {
   courses: Course[];
@@ -235,6 +236,15 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     dbService.subscribe("enrollments", () => refreshAll());
     dbService.subscribe("feedbacks", () => refreshAll());
     dbService.subscribe("certificates", () => refreshAll());
+    dbService.subscribe("users", () => refreshAll());
+
+    // Also auto-refresh when usersStore receives fresh cloud data
+    try {
+      useUsersStore.subscribe(() => {
+        const fresh = mergeEnrollmentSources(get().enrollments);
+        set({ enrollments: fresh });
+      });
+    } catch {}
   },
 
   load: () => {
@@ -258,6 +268,13 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
         feedbacks: activeFeedbacks,
         certificates: activeCertificates
       });
+
+      if (useUsersStore.getState().users.length === 0) {
+        useUsersStore.getState().load().then(() => {
+          const fresh = mergeEnrollmentSources(get().enrollments);
+          set({ enrollments: fresh });
+        });
+      }
     }).catch(() => {});
   },
 
@@ -357,6 +374,17 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     } catch {}
 
     dbService.create("enrollments", newEnrollment).catch(() => {});
+
+    try {
+      const course = get().courses.find((c) => c.id === courseId);
+      recordAuditEvent({
+        actor: traineeId,
+        role: "trainee",
+        action: "COURSE_ENROLLED",
+        target: course?.title || courseId,
+        status: "SUCCESS"
+      });
+    } catch {}
   },
 
   unenroll: (traineeId, courseId) => {
@@ -450,6 +478,17 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     if (target?.id) {
       dbService.remove("enrollments", target.id).catch(() => {});
     }
+
+    try {
+      const course = get().courses.find((c) => c.id === courseId);
+      recordAuditEvent({
+        actor: traineeId,
+        role: "trainee",
+        action: "COURSE_UNENROLLED",
+        target: course?.title || courseId,
+        status: "SUCCESS"
+      });
+    } catch {}
   },
 
   updateProgress: (enrollmentId, progress) => {
@@ -476,6 +515,15 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     }
 
     const course = courses.find((c) => c.id === courseId);
+    try {
+      recordAuditEvent({
+        actor: traineeId,
+        role: "trainee",
+        action: "COURSE_COMPLETED",
+        target: course?.title || courseId,
+        status: "SUCCESS"
+      });
+    } catch {}
     const certExists = certificates.find((c) => c.traineeId === traineeId && c.courseId === courseId);
 
     if (course && !certExists) {
