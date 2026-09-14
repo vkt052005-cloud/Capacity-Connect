@@ -17,13 +17,15 @@ export function isStudentEnrolledInTeacherCourse(
 
   // 1. Direct course enrollment
   const directEnrollment = enrollments.some(
-    (e) => e.traineeId === traineeId && e.courseId === session.courseId
+    (e) => (e.traineeId === traineeId || (e as any).userId === traineeId) && e.courseId === session.courseId
   );
   if (directEnrollment) return true;
 
   // 2. Set of all course IDs the student is actively enrolled in
   const studentEnrolledCourseIds = new Set(
-    enrollments.filter((e) => e.traineeId === traineeId).map((e) => e.courseId)
+    enrollments
+      .filter((e) => e.traineeId === traineeId || (e as any).userId === traineeId)
+      .map((e) => e.courseId)
   );
 
   if (studentEnrolledCourseIds.size === 0) return false;

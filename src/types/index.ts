@@ -17,6 +17,8 @@ export interface TraineeProfile {
   streakDays: number;
   completedCoursesCount: number;
   badges: Badge[];
+  enrolledCourses?: string[];
+  enrolled_courses?: string[];
 }
 
 export interface TrainerProfile {

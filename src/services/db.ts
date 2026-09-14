@@ -93,7 +93,7 @@ class DatabaseService {
     // 1. Primary: Authoritative Cloud Supabase
     if (isSupabaseConfigured) {
       try {
-        const orderQuery = 'order=created_at.desc';
+        const orderQuery = collection === 'enrollments' ? '' : 'order=created_at.desc';
         const cloudData = await supabase.select<T>(collection, orderQuery, limit);
         if (cloudData !== null && Array.isArray(cloudData)) {
           return cloudData;

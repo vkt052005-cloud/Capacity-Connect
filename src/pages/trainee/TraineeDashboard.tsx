@@ -15,6 +15,7 @@ import { useAppStore } from "../../store/appStore";
 import { useLiveSessionsStore } from "../../store/liveSessionsStore";
 import { isStudentEnrolledInTeacherCourse } from "../../utils/liveMeetEnrollment";
 import { useAttendanceStore } from "../../store/attendanceStore";
+import { initialCourses } from "../../data/seed";
 
 export const TraineeDashboard: React.FC = () => {
   const { currentUser } = useAuthStore();
@@ -31,15 +32,28 @@ export const TraineeDashboard: React.FC = () => {
   const traineeId = currentUser?.id || "";
 
   // Real Enrolled courses for this student
-  const enrolledCourses = enrollments
-    .filter((e) => e.traineeId === traineeId)
-    .map((e) => {
-      const course = courses.find((c) => c.id === e.courseId);
-      return course ? { ...course, progress: e.progress, enrollmentId: e.id } : null;
+  const profileEnrolledIds: string[] =
+    (currentUser?.traineeProfile as any)?.enrolledCourses ||
+    (currentUser?.traineeProfile as any)?.enrolled_courses ||
+    [];
+
+  const studentEnrollments = enrollments.filter(
+    (e) => e.traineeId === traineeId || (e as any).userId === traineeId
+  );
+
+  const allEnrolledCourseIds = Array.from(
+    new Set([...studentEnrollments.map((e) => e.courseId), ...profileEnrolledIds])
+  );
+
+  const enrolledCourses = allEnrolledCourseIds
+    .map((cid) => {
+      const course = courses.find((c) => c.id === cid) || initialCourses.find((c) => c.id === cid);
+      const enr = studentEnrollments.find((e) => e.courseId === cid);
+      return course ? { ...course, progress: enr?.progress || 0, enrollmentId: enr?.id || `enr-${traineeId}-${cid}` } : null;
     })
     .filter(Boolean) as (typeof courses[0] & { progress: number; enrollmentId: string })[];
 
-  const completedCount = enrollments.filter((e) => e.traineeId === traineeId && e.progress === 100).length;
+  const completedCount = studentEnrollments.filter((e) => e.progress === 100).length;
   const userCertificates = certificates.filter((c) => c.traineeId === traineeId);
   const enrolledCourseIds = new Set(enrolledCourses.map((c) => c.id));
   const liveSession = sessions.find(

@@ -159,7 +159,11 @@ export const CourseDetail: React.FC = () => {
   const isEnrolled = Boolean(
     currentUser &&
     currentUser.role === "trainee" &&
-    enrollments.some((e) => e.traineeId === currentUser.id && e.courseId === id)
+    (enrollments.some(
+      (e) => (e.traineeId === currentUser.id || (e as any).userId === currentUser.id) && e.courseId === id
+    ) ||
+      Boolean((currentUser.traineeProfile as any)?.enrolledCourses?.includes(id)) ||
+      Boolean((currentUser.traineeProfile as any)?.enrolled_courses?.includes(id)))
   );
 
   const handleUnenrollCourse = () => {

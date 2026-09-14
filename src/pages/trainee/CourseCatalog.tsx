@@ -175,7 +175,13 @@ export const CourseCatalog: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredCourses.map((c) => {
               const isEnrolled = currentUser
-                ? enrollments.some((e) => e.traineeId === currentUser.id && e.courseId === c.id)
+                ? enrollments.some(
+                    (e) =>
+                      (e.traineeId === currentUser.id || (e as any).userId === currentUser.id) &&
+                      e.courseId === c.id
+                  ) ||
+                  Boolean((currentUser.traineeProfile as any)?.enrolledCourses?.includes(c.id)) ||
+                  Boolean((currentUser.traineeProfile as any)?.enrolled_courses?.includes(c.id))
                 : false;
 
               return (

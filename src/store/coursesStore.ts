@@ -1,9 +1,10 @@
 import { create } from "zustand";
-import type { Course, Enrollment, Certificate, Resource, Feedback } from "../types";
-import { generateId } from "../data/seed";
+import type { Course, Enrollment, Certificate, Resource, Feedback, TraineeProfile, User } from "../types";
+import { generateId, STORAGE_KEYS } from "../data/seed";
 import { dbService } from "../services/db";
 import { deleteVideoBlob } from "../utils/videoStorage";
 import { useUsersStore } from "./usersStore";
+import { useAuthStore } from "./authStore";
 
 interface CoursesState {
   courses: Course[];
@@ -83,12 +84,89 @@ const sanitizeCourses = (courses: Course[], feedbacks: Feedback[] = []): Course[
     });
 };
 
-const sanitizeEnrollments = (enrollments: Enrollment[]): Enrollment[] => {
-  return (enrollments || []).filter((e) => {
-    if (!e || !e.courseId) return false;
-    if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
-    return true;
-  });
+const loadLocalEnrollments = (): Enrollment[] => {
+  try {
+    if (typeof localStorage === "undefined") return [];
+    const raw = localStorage.getItem("cc_enrollments");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocalEnrollments = (enrollments: Enrollment[]) => {
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("cc_enrollments", JSON.stringify(enrollments));
+    }
+  } catch {}
+};
+
+const sanitizeEnrollments = (enrollments: any[]): Enrollment[] => {
+  return (enrollments || [])
+    .filter((e) => {
+      if (!e || !e.courseId) return false;
+      if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
+      return true;
+    })
+    .map((e) => ({
+      ...e,
+      traineeId: e.traineeId || e.userId || (e as any).user_id || "",
+    }));
+};
+
+const mergeEnrollmentSources = (cloudEnrollments: Enrollment[]): Enrollment[] => {
+  const local = loadLocalEnrollments();
+  const userEnrolls: Enrollment[] = [];
+  try {
+    const allUsers = useUsersStore.getState().users;
+    for (const u of allUsers) {
+      const enrolledList: string[] = (u.traineeProfile as any)?.enrolledCourses || (u.traineeProfile as any)?.enrolled_courses || [];
+      for (const cid of enrolledList) {
+        userEnrolls.push({
+          id: `enr-${u.id}-${cid}`,
+          traineeId: u.id,
+          courseId: cid,
+          enrolledAt: new Date().toISOString(),
+          progress: 0
+        });
+      }
+    }
+  } catch {}
+
+  // Also include currentUser from authStore
+  try {
+    const authUser = useAuthStore.getState().currentUser;
+    if (authUser) {
+      const authList: string[] =
+        (authUser.traineeProfile as any)?.enrolledCourses ||
+        (authUser.traineeProfile as any)?.enrolled_courses ||
+        [];
+      for (const cid of authList) {
+        userEnrolls.push({
+          id: `enr-${authUser.id}-${cid}`,
+          traineeId: authUser.id,
+          courseId: cid,
+          enrolledAt: new Date().toISOString(),
+          progress: 0
+        });
+      }
+    }
+  } catch {}
+
+  const mergedMap = new Map<string, Enrollment>();
+  for (const e of [...local, ...userEnrolls, ...cloudEnrollments]) {
+    if (e && (e.traineeId || (e as any).userId) && e.courseId) {
+      const tid = e.traineeId || (e as any).userId;
+      const key = `${tid}_${e.courseId}`;
+      if (!mergedMap.has(key)) {
+        mergedMap.set(key, { ...e, traineeId: tid });
+      }
+    }
+  }
+  const result = Array.from(mergedMap.values());
+  saveLocalEnrollments(result);
+  return result;
 };
 
 const sanitizeFeedbacks = (feedbacks: Feedback[]): Feedback[] => {
@@ -117,7 +195,7 @@ const sanitizeCertificates = (certificates: Certificate[]): Certificate[] => {
 
 export const useCoursesStore = create<CoursesState>((set, get) => ({
   courses: [],
-  enrollments: [],
+  enrollments: loadLocalEnrollments(),
   certificates: [],
   feedbacks: [],
   isSubscribed: false,
@@ -140,10 +218,11 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
         const validCourses = sanitizeCourses(cloudCourses || [], validFeedbacks);
         const validEnrollments = sanitizeEnrollments(cloudEnrollments || []);
         const validCertificates = sanitizeCertificates(cloudCertificates || []);
+        const finalEnrollments = mergeEnrollmentSources(validEnrollments);
 
         set({
           courses: validCourses,
-          enrollments: validEnrollments,
+          enrollments: finalEnrollments,
           feedbacks: validFeedbacks,
           certificates: validCertificates,
         });
@@ -171,10 +250,11 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       const activeCourses = sanitizeCourses(srvCourses || [], activeFeedbacks);
       const activeEnrollments = sanitizeEnrollments(srvEnrollments || []);
       const activeCertificates = sanitizeCertificates(srvCertificates || []);
+      const finalEnrollments = mergeEnrollmentSources(activeEnrollments);
 
       set({
         courses: activeCourses,
-        enrollments: activeEnrollments,
+        enrollments: finalEnrollments,
         feedbacks: activeFeedbacks,
         certificates: activeCertificates
       });
@@ -183,8 +263,11 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
   enroll: (traineeId, courseId) => {
     const { enrollments } = get();
-    const already = enrollments.find((e) => e.traineeId === traineeId && e.courseId === courseId);
+    const already = enrollments.find(
+      (e) => (e.traineeId === traineeId || (e as any).userId === traineeId) && e.courseId === courseId
+    );
     if (already) return;
+
     const newEnrollment: Enrollment = {
       id: generateId("enr"),
       traineeId,
@@ -194,14 +277,176 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     };
     const updated = [...enrollments, newEnrollment];
     set({ enrollments: updated });
+    saveLocalEnrollments(updated);
+
+    // 1. Update currentUser in authStore and localStorage
+    try {
+      const authUser = useAuthStore.getState().currentUser;
+      if (authUser && authUser.id === traineeId) {
+        const existingAuthCourses: string[] =
+          (authUser.traineeProfile as any)?.enrolledCourses ||
+          (authUser.traineeProfile as any)?.enrolled_courses ||
+          [];
+        const updatedAuthCourses = Array.from(new Set([...existingAuthCourses, courseId]));
+        const updatedAuthProfile: TraineeProfile = {
+          qualifications: [],
+          experience: [],
+          skills: [],
+          interests: [],
+          certificates: [],
+          bio: "",
+          phone: "",
+          department: "",
+          designation: "",
+          xpPoints: 0,
+          streakDays: 0,
+          completedCoursesCount: 0,
+          badges: [],
+          ...(authUser.traineeProfile || {}),
+          enrolledCourses: updatedAuthCourses
+        };
+        const updatedAuthUser: User = { ...authUser, traineeProfile: updatedAuthProfile };
+        useAuthStore.setState({ currentUser: updatedAuthUser });
+        try {
+          const raw = localStorage.getItem(STORAGE_KEYS.AUTH);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            parsed.user = updatedAuthUser;
+            localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(parsed));
+          }
+        } catch {}
+      }
+    } catch {}
+
+    // 2. Persist to usersStore & Supabase users table
+    try {
+      const allUsers = useUsersStore.getState().users;
+      const targetUser = allUsers.find((u) => u.id === traineeId);
+      const existingCourses: string[] =
+        (targetUser?.traineeProfile as any)?.enrolledCourses ||
+        (targetUser?.traineeProfile as any)?.enrolled_courses ||
+        [];
+      const enrolledCourses = Array.from(new Set([...existingCourses, courseId]));
+      const updatedProfile: TraineeProfile = {
+        qualifications: [],
+        experience: [],
+        skills: [],
+        interests: [],
+        certificates: [],
+        bio: "",
+        phone: "",
+        department: "",
+        designation: "",
+        xpPoints: 0,
+        streakDays: 0,
+        completedCoursesCount: 0,
+        badges: [],
+        ...(targetUser?.traineeProfile || {}),
+        enrolledCourses
+      };
+
+      if (targetUser) {
+        useUsersStore.setState((state) => ({
+          users: state.users.map((u) => (u.id === traineeId ? { ...u, traineeProfile: updatedProfile } : u))
+        }));
+      }
+
+      dbService.update("users", traineeId, {
+        trainee_profile: updatedProfile
+      }).catch(() => {});
+    } catch {}
+
     dbService.create("enrollments", newEnrollment).catch(() => {});
   },
 
   unenroll: (traineeId, courseId) => {
     const { enrollments } = get();
-    const target = enrollments.find((e) => e.traineeId === traineeId && e.courseId === courseId);
-    const updated = enrollments.filter((e) => !(e.traineeId === traineeId && e.courseId === courseId));
+    const target = enrollments.find(
+      (e) => (e.traineeId === traineeId || (e as any).userId === traineeId) && e.courseId === courseId
+    );
+    const updated = enrollments.filter(
+      (e) => !((e.traineeId === traineeId || (e as any).userId === traineeId) && e.courseId === courseId)
+    );
     set({ enrollments: updated });
+    saveLocalEnrollments(updated);
+
+    // 1. Sync removal to authStore if current user
+    try {
+      const authUser = useAuthStore.getState().currentUser;
+      if (authUser && authUser.id === traineeId) {
+        const existingAuthCourses: string[] =
+          (authUser.traineeProfile as any)?.enrolledCourses ||
+          (authUser.traineeProfile as any)?.enrolled_courses ||
+          [];
+        const updatedAuthCourses = existingAuthCourses.filter((cid) => cid !== courseId);
+        const updatedAuthProfile: TraineeProfile = {
+          qualifications: [],
+          experience: [],
+          skills: [],
+          interests: [],
+          certificates: [],
+          bio: "",
+          phone: "",
+          department: "",
+          designation: "",
+          xpPoints: 0,
+          streakDays: 0,
+          completedCoursesCount: 0,
+          badges: [],
+          ...(authUser.traineeProfile || {}),
+          enrolledCourses: updatedAuthCourses
+        };
+        const updatedAuthUser: User = { ...authUser, traineeProfile: updatedAuthProfile };
+        useAuthStore.setState({ currentUser: updatedAuthUser });
+        try {
+          const raw = localStorage.getItem(STORAGE_KEYS.AUTH);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            parsed.user = updatedAuthUser;
+            localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(parsed));
+          }
+        } catch {}
+      }
+    } catch {}
+
+    // 2. Sync removal to usersStore & Supabase users table
+    try {
+      const allUsers = useUsersStore.getState().users;
+      const targetUser = allUsers.find((u) => u.id === traineeId);
+      const existingCourses: string[] =
+        (targetUser?.traineeProfile as any)?.enrolledCourses ||
+        (targetUser?.traineeProfile as any)?.enrolled_courses ||
+        [];
+      const enrolledCourses = existingCourses.filter((cid) => cid !== courseId);
+      const updatedProfile: TraineeProfile = {
+        qualifications: [],
+        experience: [],
+        skills: [],
+        interests: [],
+        certificates: [],
+        bio: "",
+        phone: "",
+        department: "",
+        designation: "",
+        xpPoints: 0,
+        streakDays: 0,
+        completedCoursesCount: 0,
+        badges: [],
+        ...(targetUser?.traineeProfile || {}),
+        enrolledCourses
+      };
+
+      if (targetUser) {
+        useUsersStore.setState((state) => ({
+          users: state.users.map((u) => (u.id === traineeId ? { ...u, traineeProfile: updatedProfile } : u))
+        }));
+      }
+
+      dbService.update("users", traineeId, {
+        trainee_profile: updatedProfile
+      }).catch(() => {});
+    } catch {}
+
     if (target?.id) {
       dbService.remove("enrollments", target.id).catch(() => {});
     }
@@ -211,17 +456,21 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const { enrollments } = get();
     const updated = enrollments.map((e) => (e.id === enrollmentId ? { ...e, progress } : e));
     set({ enrollments: updated });
+    saveLocalEnrollments(updated);
     dbService.update("enrollments", enrollmentId, { progress }).catch(() => {});
   },
 
   completeCourse: (traineeId, courseId, grade, scorePercentage, certData) => {
     const { enrollments, certificates, courses } = get();
     const updated = enrollments.map((e) =>
-      e.traineeId === traineeId && e.courseId === courseId
+      (e.traineeId === traineeId || (e as any).userId === traineeId) && e.courseId === courseId
         ? { ...e, progress: 100, completedAt: new Date().toISOString() }
         : e
     );
-    const targetEnrollment = updated.find((e) => e.traineeId === traineeId && e.courseId === courseId);
+    saveLocalEnrollments(updated);
+    const targetEnrollment = updated.find(
+      (e) => (e.traineeId === traineeId || (e as any).userId === traineeId) && e.courseId === courseId
+    );
     if (targetEnrollment?.id) {
       dbService.update("enrollments", targetEnrollment.id, { progress: 100, completedAt: targetEnrollment.completedAt }).catch(() => {});
     }
@@ -359,9 +608,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const { feedbacks, courses, enrollments } = get();
 
     // Guard: Trainee MUST be enrolled in the course to rate it
-    const isEnrolled = enrollments.some(
-      (e) => e.traineeId === fb.traineeId && e.courseId === fb.courseId
-    );
+    const isEnrolled = get().isEnrolled(fb.traineeId, fb.courseId);
     if (!isEnrolled) {
       console.warn("Feedback rejected: Trainee is not enrolled in course", fb.courseId);
       return;
@@ -445,15 +692,57 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   },
 
   isEnrolled: (traineeId, courseId) => {
-    return get().enrollments.some((e) => e.traineeId === traineeId && e.courseId === courseId);
+    if (!traineeId || !courseId) return false;
+    const fromEnrollments = get().enrollments.some(
+      (e) => (e.traineeId === traineeId || (e as any).userId === traineeId) && e.courseId === courseId
+    );
+    if (fromEnrollments) return true;
+
+    try {
+      const authUser = useAuthStore.getState().currentUser;
+      if (authUser && authUser.id === traineeId) {
+        const list: string[] =
+          (authUser.traineeProfile as any)?.enrolledCourses ||
+          (authUser.traineeProfile as any)?.enrolled_courses ||
+          [];
+        if (list.includes(courseId)) return true;
+      }
+
+      const user = useUsersStore.getState().users.find((u) => u.id === traineeId);
+      if (user) {
+        const list: string[] =
+          (user.traineeProfile as any)?.enrolledCourses ||
+          (user.traineeProfile as any)?.enrolled_courses ||
+          [];
+        if (list.includes(courseId)) return true;
+      }
+    } catch {}
+
+    return false;
   },
 
   getEnrollment: (traineeId, courseId) => {
-    return get().enrollments.find((e) => e.traineeId === traineeId && e.courseId === courseId);
+    if (!traineeId || !courseId) return undefined;
+    const found = get().enrollments.find(
+      (e) => (e.traineeId === traineeId || (e as any).userId === traineeId) && e.courseId === courseId
+    );
+    if (found) return found;
+
+    if (get().isEnrolled(traineeId, courseId)) {
+      return {
+        id: `enr-${traineeId}-${courseId}`,
+        traineeId,
+        courseId,
+        enrolledAt: new Date().toISOString(),
+        progress: 0
+      };
+    }
+
+    return undefined;
   },
 
   getTraineeCertificates: (traineeId) => {
-    return get().certificates.filter((c) => c.traineeId === traineeId);
+    return get().certificates.filter((c) => c.traineeId === traineeId || (c as any).userId === traineeId);
   },
 
   getTrainerCourses: (trainerId) => {

@@ -15,10 +15,16 @@ export const FeedbackPage: React.FC = () => {
   const traineeId = currentUser?.id || "";
 
   // Set of courses this student is actively enrolled in
-  const enrolledCourseIds = useMemo(
-    () => new Set(enrollments.filter((e) => e.traineeId === traineeId).map((e) => e.courseId)),
-    [enrollments, traineeId]
-  );
+  const enrolledCourseIds = useMemo(() => {
+    const fromProfile: string[] =
+      (currentUser?.traineeProfile as any)?.enrolledCourses ||
+      (currentUser?.traineeProfile as any)?.enrolled_courses ||
+      [];
+    const fromEnrollments = enrollments
+      .filter((e) => e.traineeId === traineeId || (e as any).userId === traineeId)
+      .map((e) => e.courseId);
+    return new Set([...fromEnrollments, ...fromProfile]);
+  }, [enrollments, traineeId, currentUser]);
 
   // Filter courses: ONLY courses the student is enrolled in can be rated
   const enrolledCourses = useMemo(
