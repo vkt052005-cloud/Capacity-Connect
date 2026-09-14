@@ -206,31 +206,41 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     if (get().isSubscribed) return;
     set({ isSubscribed: true });
 
-    // Real-time server sync listeners for courses, enrollments, feedbacks, certificates
-    const refreshAll = async () => {
-      try {
-        const [cloudCourses, cloudEnrollments, cloudFeedbacks, cloudCertificates] = await Promise.all([
-          dbService.getAll<Course>("courses", 200),
-          dbService.getAll<Enrollment>("enrollments"),
-          dbService.getAll<Feedback>("feedbacks"),
-          dbService.getAll<Certificate>("certificates"),
-        ]);
+    // Real-time server sync listeners with 400ms debounce and lock to eliminate cascading render storms
+    let refreshDebounce: any = null;
+    let isRefreshing = false;
 
-        const validFeedbacks = sanitizeFeedbacks(cloudFeedbacks || []);
-        const validCourses = sanitizeCourses(cloudCourses || [], validFeedbacks);
-        const validEnrollments = sanitizeEnrollments(cloudEnrollments || []);
-        const validCertificates = sanitizeCertificates(cloudCertificates || []);
-        const finalEnrollments = mergeEnrollmentSources(validEnrollments);
+    const refreshAll = () => {
+      if (refreshDebounce) clearTimeout(refreshDebounce);
+      refreshDebounce = setTimeout(async () => {
+        if (isRefreshing) return;
+        isRefreshing = true;
+        try {
+          const [cloudCourses, cloudEnrollments, cloudFeedbacks, cloudCertificates] = await Promise.all([
+            dbService.getAll<Course>("courses", 200),
+            dbService.getAll<Enrollment>("enrollments"),
+            dbService.getAll<Feedback>("feedbacks"),
+            dbService.getAll<Certificate>("certificates"),
+          ]);
 
-        set({
-          courses: validCourses,
-          enrollments: finalEnrollments,
-          feedbacks: validFeedbacks,
-          certificates: validCertificates,
-        });
-      } catch (err) {
-        console.warn("Could not sync courses from cloud:", err);
-      }
+          const validFeedbacks = sanitizeFeedbacks(cloudFeedbacks || []);
+          const validCourses = sanitizeCourses(cloudCourses || [], validFeedbacks);
+          const validEnrollments = sanitizeEnrollments(cloudEnrollments || []);
+          const validCertificates = sanitizeCertificates(cloudCertificates || []);
+          const finalEnrollments = mergeEnrollmentSources(validEnrollments);
+
+          set({
+            courses: validCourses,
+            enrollments: finalEnrollments,
+            feedbacks: validFeedbacks,
+            certificates: validCertificates,
+          });
+        } catch (err) {
+          console.warn("Could not sync courses from cloud:", err);
+        } finally {
+          isRefreshing = false;
+        }
+      }, 400);
     };
 
     dbService.subscribe("courses", () => refreshAll());
@@ -238,14 +248,6 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     dbService.subscribe("feedbacks", () => refreshAll());
     dbService.subscribe("certificates", () => refreshAll());
     dbService.subscribe("users", () => refreshAll());
-
-    // Also auto-refresh when usersStore receives fresh cloud data
-    try {
-      useUsersStore.subscribe(() => {
-        const fresh = mergeEnrollmentSources(get().enrollments);
-        set({ enrollments: fresh });
-      });
-    } catch {}
   },
 
   load: () => {

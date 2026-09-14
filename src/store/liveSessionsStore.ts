@@ -119,9 +119,11 @@ export const useLiveSessionsStore = create<LiveSessionsState>((set, get) => ({
     if (get().isSubscribed) return;
     set({ isSubscribed: true });
 
-    dbService.subscribe("live_sessions", async () => {
+    dbService.subscribe("live_sessions", async (event) => {
       try {
-        const cloudSessions = await dbService.getAll<LiveSession>("live_sessions");
+        const cloudSessions = (event?.data && Array.isArray(event.data))
+          ? event.data
+          : await dbService.getAll<LiveSession>("live_sessions");
         if (cloudSessions) {
           const cleaned = sanitizeLiveSessions(cloudSessions);
           set({ sessions: cleaned });

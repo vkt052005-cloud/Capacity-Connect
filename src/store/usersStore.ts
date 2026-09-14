@@ -82,9 +82,11 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     set({ isSubscribed: true });
 
     // Listen to real-time server events across all devices on the network
-    dbService.subscribe('users', async () => {
+    dbService.subscribe('users', async (event) => {
       try {
-        const fresh = await dbService.getAll<User>('users', 500);
+        const fresh = (event?.data && Array.isArray(event.data))
+          ? event.data
+          : await dbService.getAll<User>('users', 500);
         if (fresh) {
           const mapped = fresh.map((u) => {
             const { password, ...safeUser } = u as any;

@@ -36,15 +36,23 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
 
   load: () => {
     try {
-      dbService.subscribe("session_attendance", () => {
-        dbService.getAll<SessionAttendance>("session_attendance").then((sessions) => {
-          if (sessions) set({ sessionAttendance: sessions });
-        }).catch(() => {});
+      dbService.subscribe("session_attendance", (event) => {
+        if (event?.data && Array.isArray(event.data)) {
+          set({ sessionAttendance: event.data });
+        } else {
+          dbService.getAll<SessionAttendance>("session_attendance").then((sessions) => {
+            if (sessions) set({ sessionAttendance: sessions });
+          }).catch(() => {});
+        }
       });
-      dbService.subscribe("lesson_attendance", () => {
-        dbService.getAll<LessonAttendance>("lesson_attendance").then((lessons) => {
-          if (lessons) set({ lessonAttendance: lessons });
-        }).catch(() => {});
+      dbService.subscribe("lesson_attendance", (event) => {
+        if (event?.data && Array.isArray(event.data)) {
+          set({ lessonAttendance: event.data });
+        } else {
+          dbService.getAll<LessonAttendance>("lesson_attendance").then((lessons) => {
+            if (lessons) set({ lessonAttendance: lessons });
+          }).catch(() => {});
+        }
       });
     } catch (e) {}
 

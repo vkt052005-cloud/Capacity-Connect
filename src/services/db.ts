@@ -6,9 +6,40 @@ class DatabaseService {
   private eventSource: EventSource | null = null;
   private listeners: Map<string, Set<ChangeCallback>> = new Map();
   private pollTimers: Map<string, any> = new Map();
+  private cache: Map<string, { data: any[]; timestamp: number }> = new Map();
+  private readonly CACHE_TTL_MS = 6000; // 6 seconds in-memory cache to eliminate redundant back-to-back fetches
 
   constructor() {
     this.initRealtimeStream();
+    this.initVisibilityListener();
+  }
+
+  private initVisibilityListener() {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        // Tab became visible again: trigger a gentle sync for active listeners
+        for (const [collection, callbacks] of this.listeners.entries()) {
+          if (callbacks.size > 0) {
+            this.getAll(collection, undefined, true).then((items) => {
+              callbacks.forEach((cb) => cb({ action: 'sync', data: items }));
+            }).catch(() => {});
+          }
+        }
+      }
+    });
+  }
+
+  public invalidateCache(collection?: string) {
+    if (!collection) {
+      this.cache.clear();
+      return;
+    }
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(`${collection}_`)) {
+        this.cache.delete(key);
+      }
+    }
   }
 
   private getBaseUrl(): string {
@@ -29,6 +60,7 @@ class DatabaseService {
 
           const collection = payload.collection;
           if (collection && this.listeners.has(collection)) {
+            this.invalidateCache(collection);
             this.listeners.get(collection)?.forEach((cb) => cb(payload));
           }
         } catch (err) {
@@ -46,26 +78,33 @@ class DatabaseService {
     }
   }
 
-  // Subscribe to real-time changes
+  // Subscribe to real-time changes (with intelligent, low-overhead background polling)
   public subscribe(collection: string, callback: ChangeCallback): () => void {
     if (!this.listeners.has(collection)) {
       this.listeners.set(collection, new Set());
     }
     this.listeners.get(collection)!.add(callback);
 
-    // Background polling safety net (every 2.5 seconds)
+    // Optimized background polling safety net (15s interval, skips inactive tabs)
     if (!this.pollTimers.has(collection)) {
       let lastHash = '';
       const timer = setInterval(async () => {
         try {
-          const items = await this.getAll(collection);
-          const newHash = JSON.stringify(items.map((i: any) => (i.id || '') + (i.status || '') + (i.role || '') + (i.rating || '')));
+          // Do not poll if the user is currently on another tab or window is minimized
+          if (typeof document !== 'undefined' && document.hidden) return;
+
+          const items = await this.getAll(collection, undefined, true);
+          // High-performance lightweight fingerprint instead of JSON.stringify on entire records
+          const newHash = items
+            .map((i: any) => `${i.id || ''}:${i.status || ''}:${i.role || ''}:${i.rating || ''}:${i.progress || ''}`)
+            .join('|');
+
           if (lastHash && newHash !== lastHash) {
-            this.listeners.get(collection)?.forEach((cb) => cb({ action: 'sync' }));
+            this.listeners.get(collection)?.forEach((cb) => cb({ action: 'sync', data: items }));
           }
           lastHash = newHash;
         } catch (e) {}
-      }, 2500);
+      }, 15000); // 15 seconds instead of 2.5s -> 85% drop in network overhead!
       this.pollTimers.set(collection, timer);
     }
 
@@ -79,6 +118,7 @@ class DatabaseService {
   }
 
   private notifySubscribers(collection: string, payload: any) {
+    this.invalidateCache(collection);
     if (this.listeners.has(collection)) {
       this.listeners.get(collection)?.forEach((cb) => {
         try {
@@ -88,14 +128,25 @@ class DatabaseService {
     }
   }
 
-  // GET ALL Records directly from Cloud (with optional limit for pagination)
-  public async getAll<T = any>(collection: string, limit?: number): Promise<T[]> {
+  // GET ALL Records directly from Cloud (with in-memory cache and optional limit for pagination)
+  public async getAll<T = any>(collection: string, limit?: number, forceRefresh = false): Promise<T[]> {
+    const cacheKey = `${collection}_${limit || 'all'}`;
+
+    // Fast-path in-memory cache: absorbs rapid component mounts and tab switching
+    if (!forceRefresh) {
+      const cached = this.cache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
+        return cached.data as T[];
+      }
+    }
+
     // 1. Primary: Authoritative Cloud Supabase
     if (isSupabaseConfigured) {
       try {
         const orderQuery = collection === 'enrollments' ? '' : 'order=created_at.desc';
         const cloudData = await supabase.select<T>(collection, orderQuery, limit);
         if (cloudData !== null && Array.isArray(cloudData)) {
+          this.cache.set(cacheKey, { data: cloudData, timestamp: Date.now() });
           return cloudData;
         }
       } catch (err) {
@@ -112,6 +163,7 @@ class DatabaseService {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
+          this.cache.set(cacheKey, { data, timestamp: Date.now() });
           return data as T[];
         }
       }

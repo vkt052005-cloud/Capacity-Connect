@@ -21,10 +21,14 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     if (get().isSubscribed) return;
     set({ isSubscribed: true });
 
-    dbService.subscribe('notifications', () => {
-      dbService.getAll<Notification>('notifications').then((server) => {
-        if (server) set({ notifications: server });
-      }).catch(() => {});
+    dbService.subscribe('notifications', (event) => {
+      if (event?.data && Array.isArray(event.data)) {
+        set({ notifications: event.data });
+      } else {
+        dbService.getAll<Notification>('notifications').then((server) => {
+          if (server) set({ notifications: server });
+        }).catch(() => {});
+      }
     });
   },
 
