@@ -23,34 +23,36 @@ const defaultRajTrainerProfile: TrainerProfile = {
 };
 
 function sanitizeUserForSession(user: User): User {
+  const { password, ...safeUser } = user as any;
+  const target = safeUser as User;
   if (
-    user.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
-    (user.id === "u-trainer-official" && !user.email?.toLowerCase().includes("harry")) ||
-    user.id === "trainer-mto8vdlt-rpmv8"
+    target.email?.toLowerCase() === "tiwariraj052005@gmail.com" ||
+    (target.id === "u-trainer-official" && !target.email?.toLowerCase().includes("harry")) ||
+    target.id === "trainer-mto8vdlt-rpmv8"
   ) {
     return {
-      ...user,
+      ...target,
       id: "u-trainer-official",
       name: "Raj Tiwari",
       email: "tiwariraj052005@gmail.com",
       trainerProfile: {
         ...defaultRajTrainerProfile,
-        ...(user.trainerProfile || {}),
+        ...(target.trainerProfile || {}),
         bio: defaultRajTrainerProfile.bio,
         designation: defaultRajTrainerProfile.designation,
         verifiedCredentials: defaultRajTrainerProfile.verifiedCredentials,
         isVerifiedByAdmin: true
       }
     };
-  } else if (user.email?.toLowerCase() === "codewithharry@gmail.com" || user.id === "u-trainer-codewithharry") {
+  } else if (target.email?.toLowerCase() === "codewithharry@gmail.com" || target.id === "u-trainer-codewithharry") {
     return {
-      ...user,
+      ...target,
       id: "u-trainer-codewithharry",
       name: "CodeWithHarry (Haris Khan)",
       email: "codewithharry@gmail.com"
     };
   }
-  return user;
+  return target;
 }
 
 // ── Session duration: 8 hours ─────────────────────────────────

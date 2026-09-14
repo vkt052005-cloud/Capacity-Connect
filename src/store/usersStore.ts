@@ -73,10 +73,11 @@ export const useUsersStore = create<UsersState>((set, get) => ({
         const fresh = await dbService.getAll<User>('users', 500);
         if (fresh) {
           const mapped = fresh.map((u) => {
-            if (u && (u.removedAt || (u as any).removed_at || u.removalReason || (u as any).removal_reason)) {
-              return { ...u, status: "removed" as const };
+            const { password, ...safeUser } = u as any;
+            if (safeUser && (safeUser.removedAt || safeUser.removed_at || safeUser.removalReason || safeUser.removal_reason)) {
+              return { ...safeUser, status: "removed" as const };
             }
-            return u;
+            return safeUser as User;
           });
           set({ users: mapped });
 
@@ -111,10 +112,11 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       const serverUsers = await dbService.getAll<User>('users', 500);
       if (serverUsers) {
         const mapped = serverUsers.map((u) => {
-          if (u && (u.removedAt || (u as any).removed_at || u.removalReason || (u as any).removal_reason)) {
-            return { ...u, status: "removed" as const };
+          const { password, ...safeUser } = u as any;
+          if (safeUser && (safeUser.removedAt || safeUser.removed_at || safeUser.removalReason || safeUser.removal_reason)) {
+            return { ...safeUser, status: "removed" as const };
           }
-          return u;
+          return safeUser as User;
         });
         set({ users: mapped });
       }
