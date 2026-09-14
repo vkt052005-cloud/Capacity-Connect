@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Assessment, Attempt } from '../types';
-import { generateId } from '../data/seed';
+import { generateId, initialAssessments } from '../data/seed';
 import { dbService } from '../services/db';
 
 interface AssessmentsState {
@@ -38,8 +38,13 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
           }));
         }).catch(() => [])
       ]);
+
+      const validAssessments = (serverAssessments && serverAssessments.length > 0 && (serverAssessments[0] as any).questions)
+        ? serverAssessments
+        : initialAssessments;
+
       set({
-        assessments: serverAssessments || [],
+        assessments: validAssessments,
         attempts: serverAttempts || []
       });
     } catch (e) {
@@ -62,7 +67,7 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
   }
 
   return {
-    assessments: [],
+    assessments: initialAssessments,
     attempts: [],
 
     load: () => {
