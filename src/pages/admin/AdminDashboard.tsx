@@ -12,8 +12,11 @@ import { useAssessmentsStore } from "../../store/assessmentsStore";
 import { useAppStore } from "../../store/appStore";
 import { useAuditStore } from "../../store/auditStore";
 import { useNotificationsStore } from "../../store/notificationsStore";
+import { useAuthStore } from "../../store/authStore";
+import { isDemoAccount, isRealAdmin, PRIMARY_ADMIN_EMAIL } from "../../utils/demoMode";
 
 export const AdminDashboard: React.FC = () => {
+  const { currentUser } = useAuthStore();
   const { users, load: loadUsers, approveUser, rejectUser } = useUsersStore();
   const { courses, certificates, load: loadCourses, updateCourse } = useCoursesStore();
   const { attempts, load: loadAssessments } = useAssessmentsStore();
@@ -140,28 +143,46 @@ export const AdminDashboard: React.FC = () => {
                     >
                       Preview
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updateCourse(c.id, { status: "active" });
-                        addNotification({
-                          title: `New Curriculum Published: ${c.title}`,
-                          content: `${c.trainerName || "Faculty"} has published a new ${c.category} program: "${c.title}". Trainees can now enroll and start learning.`,
-                          type: "new_content",
-                          pinned: true,
-                          author: "MoES Platform Administration"
-                        });
-                        addToast({
-                          title: "Course Approved & Published",
-                          message: `"${c.title}" is now active in the trainee catalog.`,
-                          type: "success"
-                        });
-                      }}
-                      className="apple-btn-success text-xs px-3 py-1 font-semibold flex items-center gap-1 cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Approve & Publish</span>
-                    </button>
+                    {isDemoAccount(currentUser) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addToast({
+                            title: "Real Admin Verification Required",
+                            message: `Action Restricted in Demo Mode. Course submissions must be verified and approved by the Primary Platform Admin (${PRIMARY_ADMIN_EMAIL}).`,
+                            type: "warning"
+                          });
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer transition"
+                        title={`Requires Real Admin (${PRIMARY_ADMIN_EMAIL})`}
+                      >
+                        <Shield className="w-3 h-3 text-amber-400" />
+                        <span>Verify (Real Admin Only)</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateCourse(c.id, { status: "active" });
+                          addNotification({
+                            title: `New Curriculum Published: ${c.title}`,
+                            content: `${c.trainerName || "Faculty"} has published a new ${c.category} program: "${c.title}". Trainees can now enroll and start learning.`,
+                            type: "new_content",
+                            pinned: true,
+                            author: "MoES Platform Administration"
+                          });
+                          addToast({
+                            title: "Course Approved & Published",
+                            message: `"${c.title}" is now active in the trainee catalog.`,
+                            type: "success"
+                          });
+                        }}
+                        className="apple-btn-success text-xs px-3 py-1 font-semibold flex items-center gap-1 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Approve & Publish</span>
+                      </button>
+                    )}
                     <Link
                       to="/admin/courses"
                       className="apple-btn-secondary text-xs px-3 py-1 font-medium cursor-pointer"

@@ -14,7 +14,7 @@ import { useNotificationsStore } from "../../store/notificationsStore";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
 import { formatCourseDuration, extractMediaDuration } from "../../utils/courseDuration";
 import { storeVideoBlob, uploadVideoToSupabase } from "../../utils/videoStorage";
-import { isDemoAccount, isProtectedProductionCourse } from "../../utils/demoMode";
+import { isDemoAccount, isProtectedProductionCourse, isRealAdmin, PRIMARY_ADMIN_EMAIL } from "../../utils/demoMode";
 import type { CourseCategory, CourseLesson, Resource } from "../../types";
 
 export const THUMBNAIL_PRESETS = [
@@ -373,7 +373,7 @@ export const TrainerCourses: React.FC = () => {
         });
         addToast({
           title: "Course Submitted for Review",
-          message: "Your course was submitted to the Administrator for approval. It will appear in the catalog once approved.",
+          message: `Your course was submitted to the Primary Platform Admin (${PRIMARY_ADMIN_EMAIL}) for verification. It will appear in the catalog once approved.`,
           type: "info"
         });
       }

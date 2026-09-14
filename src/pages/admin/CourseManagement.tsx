@@ -8,7 +8,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useNotificationsStore } from "../../store/notificationsStore";
 import { formatCourseDuration } from "../../utils/courseDuration";
 import { CourseCategory, CourseLesson, Resource } from "../../types";
-import { isDemoAccount, isProtectedProductionCourse } from "../../utils/demoMode";
+import { isDemoAccount, isProtectedProductionCourse, isRealAdmin, PRIMARY_ADMIN_EMAIL } from "../../utils/demoMode";
 
 const ADMIN_THUMBNAIL_PRESETS = [
   { label: "Computer Science & IT", url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80" },
@@ -97,6 +97,9 @@ export const CourseManagement: React.FC = () => {
       });
     }
 
+    const isSandboxDemo = isDemoAccount(currentUser) || !isRealAdmin(currentUser);
+    const courseStatus = isSandboxDemo ? "pending_approval" : "active";
+
     addCourse({
       id: courseId,
       title: courseTitle,
@@ -105,9 +108,9 @@ export const CourseManagement: React.FC = () => {
       duration: initialLessons.length > 0 ? initialVideoDuration.trim() || initialDuration : initialDuration,
       modules: modNum || (initialLessons.length > 0 ? 1 : undefined),
       level,
-      status: "active",
+      status: courseStatus,
       trainerId: currentUser?.id || "admin-root",
-      trainerName: trainerName.trim() || "MoES Platform Administration",
+      trainerName: isSandboxDemo ? `${trainerName.trim() || "Instructor"} (Sandbox)` : trainerName.trim() || "MoES Platform Administration",
       thumbnail: thumbnailUrl.trim() || ADMIN_THUMBNAIL_PRESETS[0].url,
       createdAt: new Date().toISOString(),
       tags: [category, level, "Official Government Curriculum"],
@@ -115,13 +118,33 @@ export const CourseManagement: React.FC = () => {
       lessons: initialLessons
     });
 
-    addNotification({
-      title: `New Official Course: ${courseTitle}`,
-      content: `Platform Administration has published a new certified ${category} program: "${courseTitle}".`,
-      type: "new_content",
-      pinned: true,
-      author: trainerName.trim() || "MoES Administration"
-    });
+    if (courseStatus === "active") {
+      addNotification({
+        title: `New Official Course: ${courseTitle}`,
+        content: `Platform Administration has published a new certified ${category} program: "${courseTitle}".`,
+        type: "new_content",
+        pinned: true,
+        author: trainerName.trim() || "MoES Administration"
+      });
+      addToast({
+        title: "Course Curriculum Published",
+        message: `"${courseTitle}" is now live in the global trainee catalog.`,
+        type: "success"
+      });
+    } else {
+      addNotification({
+        title: `Sandbox Course Submitted: ${courseTitle}`,
+        content: `A course submission "${courseTitle}" was created and awaits verification by Primary Admin (${PRIMARY_ADMIN_EMAIL}).`,
+        type: "announcement",
+        pinned: false,
+        author: "Course Moderation Queue"
+      });
+      addToast({
+        title: "Curriculum Submitted for Review",
+        message: `"${courseTitle}" was created in Sandbox. It requires verification by the Primary Admin (${PRIMARY_ADMIN_EMAIL}) before publishing.`,
+        type: "info"
+      });
+    }
 
     setShowCreateModal(false);
     setTitle("");
@@ -132,12 +155,6 @@ export const CourseManagement: React.FC = () => {
     setInitialVideoTitle("");
     setThumbnailUrl(ADMIN_THUMBNAIL_PRESETS[0].url);
     setIsSubmittingCourse(false);
-
-    addToast({
-      title: "Course Curriculum Published",
-      message: `"${courseTitle}" is now live in the global trainee catalog.`,
-      type: "success"
-    });
   };
 
   const filteredFeedbacks =
@@ -160,6 +177,16 @@ export const CourseManagement: React.FC = () => {
   });
 
   const handleApproveCourse = (course: any) => {
+    // SECURITY: Only the Real Admin (e.g. vkt052005@gmail.com) can verify and approve courses into the live catalog
+    if (isDemoAccount(currentUser) || !isRealAdmin(currentUser)) {
+      addToast({
+        title: "Real Admin Verification Required",
+        message: `Action Restricted in Demo Mode. Teacher uploads and course submissions must be verified and approved by the Primary Platform Admin (${PRIMARY_ADMIN_EMAIL}).`,
+        type: "warning"
+      });
+      return;
+    }
+
     updateCourse(course.id, { status: "active" });
     addNotification({
       title: `New Curriculum Published: ${course.title}`,
@@ -176,10 +203,18 @@ export const CourseManagement: React.FC = () => {
   };
 
   const handleRejectCourse = (course: any) => {
-    if (isDemoAccount(currentUser) && isProtectedProductionCourse(course)) {
+    if (isDemoAccount(currentUser) || !isRealAdmin(currentUser)) {
       addToast({
-        title: "Sandbox Protected",
-        message: "Production courses cannot be rejected or removed in demo mode.",
+        title: "Real Admin Action Required",
+        message: `Course rejection is restricted to the Primary Platform Admin (${PRIMARY_ADMIN_EMAIL}). Demo Admin cannot modify the review queue.`,
+        type: "warning"
+      });
+      return;
+    }
+    if (isProtectedProductionCourse(course)) {
+      addToast({
+        title: "Protected Course",
+        message: "Production courses cannot be rejected or removed.",
         type: "warning"
       });
       return;
@@ -243,12 +278,12 @@ export const CourseManagement: React.FC = () => {
       <div className="space-y-6">
         {/* Sandbox Evaluation Mode Banner */}
         {isDemoAccount(currentUser) && (
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-200 text-xs flex items-center gap-3 shadow-lg animate-fadeIn">
-            <Shield className="w-5 h-5 text-[#2997ff] shrink-0" />
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center gap-3 shadow-lg animate-fadeIn">
+            <Shield className="w-5 h-5 text-amber-400 shrink-0" />
             <div className="space-y-0.5">
-              <p className="font-bold text-blue-300">Course Moderation Sandbox (Curriculum Protected)</p>
-              <p className="text-[11px] text-blue-200/80 leading-relaxed">
-                You are authenticated as <strong>Demo Administrator</strong>. You can preview curriculum submissions and test approving demo courses. Core production courses are locked from deletion to maintain catalog integrity.
+              <p className="font-bold text-amber-300">Curriculum Moderation Sandbox (Approval Restricted to Real Admin)</p>
+              <p className="text-[11px] text-amber-200/80 leading-relaxed">
+                You are logged in as <strong>Demo Administrator</strong>. You can inspect submissions, preview videos, and review syllabus data. However, <strong>approving teacher uploads or publishing courses into the trainee catalog is locked</strong> — it strictly requires verification by the <strong>Primary Platform Admin ({PRIMARY_ADMIN_EMAIL})</strong>.
               </p>
             </div>
           </div>
@@ -455,20 +490,34 @@ export const CourseManagement: React.FC = () => {
                           >
                             <Eye className="w-3.5 h-3.5 text-[#2997ff]" /> Preview
                           </Link>
-                          <button
-                            onClick={() => handleApproveCourse(c)}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-emerald-600/20 cursor-pointer"
-                            title="Approve this course and publish to all trainees"
-                          >
-                            <Check className="w-3.5 h-3.5" /> Approve & Publish
-                          </button>
-                          <button
-                            onClick={() => handleRejectCourse(c)}
-                            className="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
-                            title="Reject and discard this course submission"
-                          >
-                            <X className="w-3.5 h-3.5" /> Reject
-                          </button>
+                          {isDemoAccount(currentUser) ? (
+                            <button
+                              type="button"
+                              onClick={() => handleApproveCourse(c)}
+                              className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                              title={`Approval Locked: Requires Real Admin (${PRIMARY_ADMIN_EMAIL})`}
+                            >
+                              <Shield className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Verify (Real Admin Only)</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleApproveCourse(c)}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-emerald-600/20 cursor-pointer"
+                              title="Approve this course and publish to all trainees"
+                            >
+                              <Check className="w-3.5 h-3.5" /> Approve & Publish
+                            </button>
+                          )}
+                          {!isDemoAccount(currentUser) && (
+                            <button
+                              onClick={() => handleRejectCourse(c)}
+                              className="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                              title="Reject and discard this course submission"
+                            >
+                              <X className="w-3.5 h-3.5" /> Reject
+                            </button>
+                          )}
                         </>
                       ) : (
                         <>

@@ -6,7 +6,7 @@ import { deleteVideoBlob } from "../utils/videoStorage";
 import { useUsersStore } from "./usersStore";
 import { useAuthStore } from "./authStore";
 import { recordAuditEvent } from "./auditStore";
-import { isDemoAccount, isProtectedProductionCourse } from "../utils/demoMode";
+import { isDemoAccount, isProtectedProductionCourse, isRealAdmin } from "../utils/demoMode";
 
 interface CoursesState {
   courses: Course[];
@@ -582,15 +582,23 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
   addCourse: (course) => {
     const { courses } = get();
+    const currentUser = useAuthStore.getState().currentUser;
     // Prevent duplicate entries of the same course
     const exists = courses.some((c) => c.id === course.id || (c.title.trim().toLowerCase() === course.title.trim().toLowerCase() && c.trainerId === course.trainerId));
     if (exists) {
       console.warn("Course with identical ID or title/trainer already exists, skipping duplicate addition:", course.title);
       return;
     }
-    const updated = [...courses, course];
+
+    // If created by a demo account (or any non-real-admin), strictly enforce pending_approval
+    let sanitizedCourse = { ...course };
+    if (isDemoAccount(currentUser) || !isRealAdmin(currentUser)) {
+      sanitizedCourse.status = "pending_approval";
+    }
+
+    const updated = [...courses, sanitizedCourse];
     set({ courses: updated });
-    dbService.create("courses", course).catch(() => {});
+    dbService.create("courses", sanitizedCourse).catch(() => {});
   },
 
   updateCourse: (courseId, updates) => {
@@ -603,6 +611,14 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       return;
     }
 
+    // CRITICAL: Only REAL ADMIN (e.g. vkt052005@gmail.com) can verify & approve courses into active state
+    if (updates.status === "active" && targetCourse?.status === "pending_approval") {
+      if (isDemoAccount(currentUser) || !isRealAdmin(currentUser)) {
+        console.warn("[DemoSandbox] Verification & approval restricted to Real Admin. Blocked for:", currentUser?.email);
+        return;
+      }
+    }
+
     const updated = courses.map((c) => (c.id === courseId ? { ...c, ...updates } : c));
     set({ courses: updated });
     dbService.update("courses", courseId, updates).catch(() => {});
@@ -613,9 +629,12 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const courseToDelete = courses.find((c) => c.id === courseId);
     const currentUser = useAuthStore.getState().currentUser;
 
-    if (isDemoAccount(currentUser) && isProtectedProductionCourse(courseToDelete)) {
-      console.warn("[DemoSandbox] Deletion of production course blocked for demo session:", courseId);
-      return;
+    if (isDemoAccount(currentUser)) {
+      // Demo accounts cannot delete production courses OR pending courses awaiting real admin review
+      if (isProtectedProductionCourse(courseToDelete) || courseToDelete?.status === "pending_approval") {
+        console.warn("[DemoSandbox] Deletion blocked for demo session:", courseId);
+        return;
+      }
     }
 
     // 1. Remove course from state

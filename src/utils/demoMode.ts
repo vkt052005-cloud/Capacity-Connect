@@ -46,3 +46,20 @@ export function isProtectedProductionCourse(course?: Course | { id: string; trai
   }
   return false;
 }
+
+/**
+ * Primary platform administrator email
+ */
+export const PRIMARY_ADMIN_EMAIL = "vkt052005@gmail.com";
+
+/**
+ * Checks if a user is an authentic Real Administrator (e.g. vkt052005@gmail.com)
+ * and NOT a disposable demo/dummy admin account.
+ */
+export function isRealAdmin(user?: User | null | { email?: string; role?: string; id?: string }): boolean {
+  if (!user) return false;
+  const email = (user.email || "").toLowerCase().trim();
+  const id = (user.id || "").toLowerCase().trim();
+  if (email === PRIMARY_ADMIN_EMAIL || id === "u-admin-official") return true;
+  return user.role === "admin" && !isDemoAccount(user);
+}
