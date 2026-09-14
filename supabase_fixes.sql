@@ -1,10 +1,39 @@
 -- ==============================================================================
--- CAPACITY CONNECT: FIX ALL DATABASE RLS & SCHEMA CONFLICTS (V2 - FK SAFE)
+-- CAPACITY CONNECT: FIX ALL DATABASE RLS & SCHEMA CONFLICTS (V3 - POLICY & FK SAFE)
 -- Run this in your Supabase SQL Editor:
 -- https://supabase.com/dashboard/project/osahxrfvcuxymkktrbwl/sql
 -- ==============================================================================
 
--- STEP 1: Dynamically drop all foreign key constraints on dependent tables
+-- STEP 1: Drop views that might depend on column definitions
+DROP VIEW IF EXISTS public.assessment_attempts CASCADE;
+
+-- STEP 2: Dynamically drop ALL existing RLS policies on these tables
+-- This eliminates error 0A000 (cannot alter type of a column used in a policy definition)
+DO $$
+DECLARE
+    pol RECORD;
+BEGIN
+    FOR pol IN (
+        SELECT policyname, tablename
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename IN (
+            'courses',
+            'enrollments',
+            'live_sessions',
+            'assessments',
+            'assessment_results',
+            'certificates',
+            'feedbacks',
+            'session_attendance',
+            'lesson_attendance'
+          )
+    ) LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(pol.policyname) || ' ON public.' || quote_ident(pol.tablename);
+    END LOOP;
+END $$;
+
+-- STEP 3: Dynamically drop all foreign key constraints on these tables
 -- This eliminates error 42804 (incompatible types text and uuid)
 DO $$
 DECLARE
@@ -14,14 +43,21 @@ BEGIN
         SELECT constraint_name, table_name
         FROM information_schema.table_constraints
         WHERE constraint_type = 'FOREIGN KEY'
-          AND table_name IN ('live_sessions', 'assessments', 'enrollments', 'assessment_results', 'certificates', 'courses')
+          AND table_name IN (
+            'live_sessions',
+            'assessments',
+            'enrollments',
+            'assessment_results',
+            'certificates',
+            'courses'
+          )
           AND table_schema = 'public'
     ) LOOP
         EXECUTE 'ALTER TABLE public.' || quote_ident(r.table_name) || ' DROP CONSTRAINT IF EXISTS ' || quote_ident(r.constraint_name) || ' CASCADE';
     END LOOP;
 END $$;
 
--- STEP 2: Convert UUID columns to TEXT across all tables so custom string IDs work
+-- STEP 4: Convert UUID columns to TEXT across all tables so custom string IDs work
 DO $$
 BEGIN
     -- courses: id
@@ -68,7 +104,7 @@ BEGIN
     END IF;
 END $$;
 
--- STEP 3: Ensure all standard columns exist for courses and enrollments
+-- STEP 5: Ensure standard columns exist for courses and enrollments
 ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS trainer_name TEXT;
 ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS lessons JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS modules JSONB DEFAULT '[]'::jsonb;
@@ -79,7 +115,7 @@ ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS total_ratings INT DEFAULT 0;
 
 ALTER TABLE public.enrollments ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
 
--- STEP 4: Enable RLS and grant open read/write policies to the public/anon API key
+-- STEP 6: Re-enable RLS and create fresh open read/write policies for the public/anon API key
 DO $$
 BEGIN
     -- Courses
@@ -146,7 +182,7 @@ BEGIN
     END IF;
 END $$;
 
--- STEP 5: Create view assessment_attempts pointing to assessment_results (ensures backward compatibility)
+-- STEP 7: Re-create view assessment_attempts pointing to assessment_results
 CREATE OR REPLACE VIEW public.assessment_attempts AS
 SELECT 
     id,
