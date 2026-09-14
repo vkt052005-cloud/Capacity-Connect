@@ -135,7 +135,7 @@ class DatabaseService {
       };
     } else if (collection === 'certificates') {
       cloudRecord = {
-        ...record,
+        id: (record as any).id,
         certificate_number: (record as any).certificateHash || (record as any).certificate_number || (record as any).id,
         user_name: (record as any).traineeName || (record as any).user_name || 'Student',
         course_title: (record as any).courseTitle || (record as any).course_title || 'Course',
@@ -158,6 +158,14 @@ class DatabaseService {
         trainee_name: (record as any).traineeName || (record as any).trainee_name || 'Student',
         course_title: (record as any).courseTitle || (record as any).course_title || 'Course',
         comment: (record as any).comment || 'Feedback submitted'
+      };
+    } else if (collection === 'assessment_results' || collection === 'assessment_attempts') {
+      cloudRecord = {
+        id: (record as any).id,
+        user_id: (record as any).traineeId || (record as any).user_id,
+        assessment_id: (record as any).assessmentId || (record as any).assessment_id,
+        score: Math.round((record as any).score ?? (record as any).percentage ?? 0),
+        submitted_at: (record as any).submittedAt || (record as any).submitted_at || new Date().toISOString()
       };
     }
 
@@ -226,6 +234,25 @@ class DatabaseService {
         method: 'DELETE'
       });
       this.notifySubscribers(collection, { action: 'delete', data: { id } });
+    } catch (e) {}
+  }
+
+  // DELETE Records matching a condition from Cloud
+  public async removeWhere(collection: string, column: string, value: string): Promise<void> {
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.delete(collection, column, value);
+        this.notifySubscribers(collection, { action: 'delete', data: { [column]: value } });
+      } catch (err) {
+        console.warn(`Supabase delete failed on ${collection} where ${column}=${value}:`, err);
+      }
+    }
+
+    try {
+      await fetch(`${this.getBaseUrl()}/api/db/${collection}?${encodeURIComponent(column)}=eq.${encodeURIComponent(value)}`, {
+        method: 'DELETE'
+      });
+      this.notifySubscribers(collection, { action: 'delete', data: { [column]: value } });
     } catch (e) {}
   }
 }

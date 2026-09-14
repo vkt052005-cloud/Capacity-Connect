@@ -68,7 +68,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     );
     if (already) return;
     const record: SessionAttendance = {
-      id: generateId("satd"),
+      id: `satd_${session.id}_${traineeId}`,
       sessionId: session.id,
       sessionTitle: session.title,
       courseId: session.courseId,
@@ -136,7 +136,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     }
 
     const record: LessonAttendance = {
-      id: generateId("latd"),
+      id: `latd_${lesson.id}_${traineeId}`,
       courseId: lesson.courseId,
       courseTitle: lesson.courseTitle,
       lessonId: lesson.id,

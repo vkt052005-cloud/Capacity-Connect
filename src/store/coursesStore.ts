@@ -637,12 +637,12 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
     // 7. Cascade remove assessments and attempts for this course
     try {
-      dbService.remove("assessments", `course_id=eq.${courseId}`).catch(() => {});
+      dbService.removeWhere("assessments", "course_id", courseId).catch(() => {});
     } catch (e) {}
 
     // 8. Cascade remove live sessions
     try {
-      dbService.remove("live_sessions", `course_id=eq.${courseId}`).catch(() => {});
+      dbService.removeWhere("live_sessions", "course_id", courseId).catch(() => {});
     } catch (e) {}
 
     // 10. Permanently remove from central DB & cloud Supabase

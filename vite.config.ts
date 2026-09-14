@@ -534,4 +534,17 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-charts': ['recharts'],
+          'vendor-icons': ['lucide-react']
+        }
+      }
+    }
+  }
 })
+

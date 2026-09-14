@@ -22,7 +22,21 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
     try {
       const [serverAssessments, serverAttempts] = await Promise.all([
         dbService.getAll<Assessment>('assessments'),
-        dbService.getAll<Attempt>('assessment_attempts')
+        dbService.getAll<any>('assessment_results').then(res => {
+          if (!res || !Array.isArray(res)) return [];
+          return res.map((r: any) => ({
+            id: r.id,
+            assessmentId: r.assessmentId || r.assessment_id,
+            traineeId: r.traineeId || r.user_id,
+            score: r.score ?? 0,
+            submittedAt: r.submittedAt || r.submitted_at || new Date().toISOString(),
+            answers: r.answers || [],
+            totalPoints: r.totalPoints || 100,
+            percentage: r.percentage ?? r.score ?? 0,
+            passed: r.passed ?? ((r.score ?? 0) >= 70),
+            timeTakenSeconds: r.timeTakenSeconds || 0
+          }));
+        }).catch(() => [])
       ]);
       set({
         assessments: serverAssessments || [],
@@ -38,7 +52,7 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
     dbService.subscribe('assessments', () => {
       refreshAssessments();
     });
-    dbService.subscribe('assessment_attempts', () => {
+    dbService.subscribe('assessment_results', () => {
       refreshAssessments();
     });
     // Initial fetch on module load
@@ -82,7 +96,7 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
       const newAttempt: Attempt = { ...attempt, id: generateId('att') };
       const updated = [...attempts, newAttempt];
       set({ attempts: updated });
-      dbService.create('assessment_attempts', newAttempt).catch(() => {});
+      dbService.create('assessment_results', newAttempt).catch(() => {});
     },
 
     getAttemptsByTrainee: (traineeId) => get().attempts.filter(a => a.traineeId === traineeId),
