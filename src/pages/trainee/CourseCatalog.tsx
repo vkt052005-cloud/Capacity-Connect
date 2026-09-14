@@ -18,7 +18,9 @@ export const CourseCatalog: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const allCourses = courses && courses.length > 0 ? courses : initialCourses;
+  const allCourses = (courses && courses.length > 0 ? courses : initialCourses).filter(
+    (c) => c.status !== "pending_approval"
+  );
 
   const availableCategories = ["All", ...Array.from(new Set(allCourses.map((c) => c.category).filter(Boolean)))];
 

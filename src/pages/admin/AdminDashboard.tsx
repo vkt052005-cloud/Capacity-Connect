@@ -11,13 +11,15 @@ import { useCoursesStore } from "../../store/coursesStore";
 import { useAssessmentsStore } from "../../store/assessmentsStore";
 import { useAppStore } from "../../store/appStore";
 import { useAuditStore } from "../../store/auditStore";
+import { useNotificationsStore } from "../../store/notificationsStore";
 
 export const AdminDashboard: React.FC = () => {
   const { users, load: loadUsers, approveUser, rejectUser } = useUsersStore();
-  const { courses, certificates, load: loadCourses } = useCoursesStore();
+  const { courses, certificates, load: loadCourses, updateCourse } = useCoursesStore();
   const { attempts, load: loadAssessments } = useAssessmentsStore();
   const { logs: auditLogs, load: loadAuditLogs } = useAuditStore();
   const { addToast } = useAppStore();
+  const { addNotification } = useNotificationsStore();
 
   React.useEffect(() => {
     loadUsers();
@@ -29,6 +31,8 @@ export const AdminDashboard: React.FC = () => {
   const pendingUsers = users.filter((u) => u.status === "pending");
   const activeMembersCount = users.filter((u) => u.status !== "removed").length;
   const removedUsersCount = users.filter((u) => u.status === "removed").length;
+  const pendingCourses = courses.filter((c) => c.status === "pending_approval");
+  const activeCourses = courses.filter((c) => c.status !== "pending_approval");
 
   // Calculate actual verified certificates issued in system
   const totalVerifiedCertificates = Math.max(
@@ -49,10 +53,10 @@ export const AdminDashboard: React.FC = () => {
     },
     {
       label: "Active Courses",
-      value: courses.length.toString(),
+      value: activeCourses.length.toString(),
       icon: BookOpen,
       color: "purple",
-      change: `${courses.length} Specializations Active`
+      change: `${activeCourses.length} Active${pendingCourses.length > 0 ? ` • ${pendingCourses.length} Pending Review` : ""}`
     },
     {
       label: "Verified Certificates",
@@ -91,6 +95,85 @@ export const AdminDashboard: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Pending Course Approvals Section */}
+        {pendingCourses.length > 0 && (
+          <div className="card p-6 space-y-4 border-amber-500/30 bg-amber-500/5 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                    <span>Pending Course Curricula for Review</span>
+                    <span className="badge text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase font-bold">
+                      {pendingCourses.length} Pending
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Teacher submitted programs requiring administrative approval before student publishing</p>
+                </div>
+              </div>
+              <Link to="/admin/courses" className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1">
+                Moderation Queue ({pendingCourses.length}) →
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {pendingCourses.map((c) => (
+                <div key={c.id} className="p-3.5 rounded-xl bg-black/40 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-bold text-white">{c.title}</h4>
+                      <span className="badge-blue text-[9px]">{c.category}</span>
+                      <span className="badge-gray text-[9px]">{c.level}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      Submitted by Instructor: <span className="text-slate-200 font-semibold">{c.trainerName}</span> • Duration: {c.duration || "N/A"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                      to={`/trainee/course/${c.id}`}
+                      target="_blank"
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-semibold transition"
+                    >
+                      Preview
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateCourse(c.id, { status: "active" });
+                        addNotification({
+                          title: `New Curriculum Published: ${c.title}`,
+                          content: `${c.trainerName || "Faculty"} has published a new ${c.category} program: "${c.title}". Trainees can now enroll and start learning.`,
+                          type: "new_content",
+                          pinned: true,
+                          author: "MoES Platform Administration"
+                        });
+                        addToast({
+                          title: "Course Approved & Published",
+                          message: `"${c.title}" is now active in the trainee catalog.`,
+                          type: "success"
+                        });
+                      }}
+                      className="apple-btn-success text-xs px-3 py-1 font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>Approve & Publish</span>
+                    </button>
+                    <Link
+                      to="/admin/courses"
+                      className="apple-btn-secondary text-xs px-3 py-1 font-medium cursor-pointer"
+                    >
+                      Review Queue
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Pending Trainer & User Approvals */}
         <div className="card p-6 space-y-4">

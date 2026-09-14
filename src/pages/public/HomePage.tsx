@@ -35,9 +35,14 @@ export const HomePage: React.FC = () => {
   const [subscribed, setSubscribed] = useState(false);
   const [noticeFilter, setNoticeFilter] = useState<"all" | "announcement" | "new_content">("all");
 
-  const featuredCourses = (courses && courses.length > 0 ? courses : initialCourses).slice(0, 4);
+  const featuredCourses = (courses && courses.length > 0 ? courses : initialCourses)
+    .filter((c) => c.status !== "pending_approval")
+    .slice(0, 4);
   const displayNotices = (notifications && notifications.length > 0 ? notifications : initialNotifications).filter(
-    (n) => n.type !== "achievement"
+    (n) =>
+      n.type !== "achievement" &&
+      !n.title.toLowerCase().includes("pending admin review") &&
+      !n.title.toLowerCase().includes("pending approval")
   );
   const filteredNotices = displayNotices.filter((n) => {
     if (noticeFilter === "all") return true;

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { BookOpen, CheckCircle2, Shield, Trash2, Star, MessageSquare, Filter, AlertTriangle, Plus, X, Video, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+import { BookOpen, CheckCircle2, Shield, Trash2, Star, MessageSquare, Filter, AlertTriangle, Plus, X, Video, FileText, Clock, Eye, Check } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useCoursesStore } from "../../store/coursesStore";
 import { useAppStore } from "../../store/appStore";
@@ -19,11 +20,12 @@ const ADMIN_THUMBNAIL_PRESETS = [
 ];
 
 export const CourseManagement: React.FC = () => {
-  const { courses, addCourse, deleteCourse, feedbacks, deleteFeedback, enrollments } = useCoursesStore();
+  const { courses, addCourse, updateCourse, deleteCourse, feedbacks, deleteFeedback, enrollments } = useCoursesStore();
   const { addToast } = useAppStore();
   const { addNotification } = useNotificationsStore();
   const { currentUser } = useAuthStore();
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending_approval" | "active">("all");
 
   // Create Course Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -147,6 +149,49 @@ export const CourseManagement: React.FC = () => {
       ? (feedbacks.reduce((acc, f) => acc + f.rating, 0) / feedbacks.length).toFixed(1)
       : "5.0";
 
+  const pendingCourses = courses.filter((c) => c.status === "pending_approval");
+  const activeCourses = courses.filter((c) => c.status !== "pending_approval");
+
+  const displayedCourses = courses.filter((c) => {
+    if (statusFilter === "pending_approval") return c.status === "pending_approval";
+    if (statusFilter === "active") return c.status !== "pending_approval";
+    return true;
+  });
+
+  const handleApproveCourse = (course: any) => {
+    updateCourse(course.id, { status: "active" });
+    addNotification({
+      title: `New Curriculum Published: ${course.title}`,
+      content: `${course.trainerName || "Faculty"} has published a new ${course.category} program: "${course.title}". Trainees can now enroll and start learning.`,
+      type: "new_content",
+      pinned: true,
+      author: "MoES Platform Administration"
+    });
+    addToast({
+      title: "Course Approved & Published",
+      message: `"${course.title}" is now officially published to the trainee catalog.`,
+      type: "success"
+    });
+  };
+
+  const handleRejectCourse = (course: any) => {
+    if (window.confirm(`Are you sure you want to reject the course "${course.title}" submitted by ${course.trainerName}? This will permanently remove it from the platform.`)) {
+      deleteCourse(course.id);
+      addNotification({
+        title: `Course Submission Rejected: ${course.title}`,
+        content: `The curriculum submission "${course.title}" was reviewed and rejected by Platform Administration.`,
+        type: "announcement",
+        pinned: false,
+        author: "MoES Platform Administration"
+      });
+      addToast({
+        title: "Course Rejected",
+        message: `"${course.title}" has been rejected and removed from review queue.`,
+        type: "info"
+      });
+    }
+  };
+
   const handleConfirmDeleteCourse = async () => {
     if (!courseToDelete) return;
     setIsDeleting(true);
@@ -179,32 +224,80 @@ export const CourseManagement: React.FC = () => {
     >
       <div className="space-y-6">
         {/* Quality Rating Overview Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="card p-4 space-y-1">
-            <span className="text-xs text-slate-400">Total Courses Published</span>
+            <span className="text-xs text-slate-400">Total Courses</span>
             <p className="text-2xl font-bold text-white">{courses.length}</p>
+            <p className="text-[10px] text-slate-400 font-mono">{activeCourses.length} Live • {pendingCourses.length} Pending</p>
+          </div>
+          <div
+            onClick={() => setStatusFilter("pending_approval")}
+            className={`card p-4 space-y-1 cursor-pointer transition ${
+              pendingCourses.length > 0
+                ? "border-amber-500/40 bg-amber-500/5 hover:bg-amber-500/10"
+                : ""
+            }`}
+          >
+            <span className="text-xs text-slate-400 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>Pending Approvals</span>
+            </span>
+            <p className="text-2xl font-bold text-amber-400">{pendingCourses.length}</p>
+            <p className="text-[10px] text-slate-400 font-mono">
+              {pendingCourses.length === 0 ? "Queue Empty • All Reviewed" : "Requires Admin Review"}
+            </p>
           </div>
           <div className="card p-4 space-y-1">
-            <span className="text-xs text-slate-400">Total Student Ratings & Reviews</span>
+            <span className="text-xs text-slate-400">Student Reviews</span>
             <p className="text-2xl font-bold text-[#2997ff]">{feedbacks.length}</p>
+            <p className="text-[10px] text-slate-400 font-mono">Across all specializations</p>
           </div>
           <div className="card p-4 space-y-1">
             <span className="text-xs text-slate-400 flex items-center gap-1">
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              <span>Platform Average Quality Score</span>
+              <span>Platform Quality Score</span>
             </span>
             <p className="text-2xl font-bold text-amber-300">
               {avgPlatformRating} <span className="text-xs text-slate-400 font-normal">/ 5.0</span>
             </p>
+            <p className="text-[10px] text-slate-400 font-mono">Feedback verified</p>
           </div>
         </div>
 
+        {/* Pending Approval Urgent Alert Banner */}
+        {pendingCourses.length > 0 && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-amber-900/20 to-black border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeIn shadow-xl">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/40">
+                <Clock className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>{pendingCourses.length} Course{pendingCourses.length > 1 ? "s" : ""} Awaiting Admin Approval</span>
+                  <span className="badge text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase font-bold tracking-wider">
+                    Action Required
+                  </span>
+                </h4>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Instructors have submitted new curricula. Review the lessons and click "Approve & Publish" to make them live to trainees.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setStatusFilter("pending_approval")}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition cursor-pointer shrink-0 shadow-lg shadow-amber-500/20"
+            >
+              Filter Pending ({pendingCourses.length})
+            </button>
+          </div>
+        )}
+
         {/* Courses List */}
         <div className="card p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
             <div>
-              <h3 className="text-sm font-bold text-white">Active Specializations & Modules ({courses.length})</h3>
-              <p className="text-xs text-slate-400">Course catalogs with dynamic student quality ratings</p>
+              <h3 className="text-sm font-bold text-white">Course Curricula & Moderation Queue</h3>
+              <p className="text-xs text-slate-400">Review instructor submissions and manage live catalog offerings</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
@@ -214,52 +307,162 @@ export const CourseManagement: React.FC = () => {
               <span>Create New Course</span>
             </button>
           </div>
-          <div className="divide-y divide-white/5">
-            {courses.map((c) => {
-              const courseFbs = feedbacks.filter((f) => f.courseId === c.id);
-              const hasRatings = courseFbs.length > 0 || (c.totalRatings && c.totalRatings > 0);
-              const courseAvg =
-                courseFbs.length > 0
-                  ? (courseFbs.reduce((acc, f) => acc + f.rating, 0) / courseFbs.length).toFixed(1)
-                  : (c.totalRatings && c.totalRatings > 0 && c.rating)
-                  ? c.rating.toFixed(1)
-                  : null;
 
-              return (
-                <div key={c.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="text-sm font-bold text-white">{c.title}</h4>
-                      <span className="badge-blue text-[9px]">{c.category}</span>
-                      {hasRatings ? (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-bold">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          <span>{courseAvg}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">({courseFbs.length} reviews)</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-400 text-[10px]">
-                          <Star className="w-3 h-3 text-slate-500" />
-                          <span>No ratings yet</span>
-                        </div>
+          {/* Status Tabs */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-b border-white/5 pb-3">
+            <button
+              onClick={() => setStatusFilter("all")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                statusFilter === "all"
+                  ? "bg-white/10 text-white border border-white/15"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              All Courses ({courses.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter("pending_approval")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+                statusFilter === "pending_approval"
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                  : pendingCourses.length > 0
+                  ? "text-amber-400 hover:bg-amber-500/10"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Pending Approval</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${pendingCourses.length > 0 ? "bg-amber-500/30 text-amber-200" : "bg-white/10 text-slate-400"}`}>
+                {pendingCourses.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setStatusFilter("active")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+                statusFilter === "active"
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Published & Live ({activeCourses.length})</span>
+            </button>
+          </div>
+
+          <div className="divide-y divide-white/5">
+            {displayedCourses.length === 0 ? (
+              <div className="py-12 text-center text-xs text-slate-400 space-y-1">
+                <p className="font-semibold text-slate-300">
+                  {statusFilter === "pending_approval"
+                    ? "No courses currently awaiting administrative review."
+                    : "No courses found."}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {statusFilter === "pending_approval"
+                    ? "All instructor submissions have been approved and published."
+                    : "No curricula match the selected filter."}
+                </p>
+              </div>
+            ) : (
+              displayedCourses.map((c) => {
+                const isPending = c.status === "pending_approval";
+                const courseFbs = feedbacks.filter((f) => f.courseId === c.id);
+                const hasRatings = courseFbs.length > 0 || (c.totalRatings && c.totalRatings > 0);
+                const courseAvg =
+                  courseFbs.length > 0
+                    ? (courseFbs.reduce((acc, f) => acc + f.rating, 0) / courseFbs.length).toFixed(1)
+                    : (c.totalRatings && c.totalRatings > 0 && c.rating)
+                    ? c.rating.toFixed(1)
+                    : null;
+
+                return (
+                  <div key={c.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="text-sm font-bold text-white">{c.title}</h4>
+                        <span className="badge-blue text-[9px]">{c.category}</span>
+                        {isPending ? (
+                          <span className="badge text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1">
+                            <Clock className="w-3 h-3 animate-pulse" /> PENDING ADMIN REVIEW
+                          </span>
+                        ) : (
+                          <span className="badge-green text-[9px]">LIVE IN CATALOG</span>
+                        )}
+                        {hasRatings ? (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-bold">
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                            <span>{courseAvg}</span>
+                            <span className="text-[10px] text-slate-400 font-normal">({courseFbs.length} reviews)</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-400 text-[10px]">
+                            <Star className="w-3 h-3 text-slate-500" />
+                            <span>No ratings yet</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Instructor: <span className="text-slate-200 font-medium">{c.trainerName}</span> • Level: {c.level} • Duration: {formatCourseDuration(c)}
+                        {c.lessons && c.lessons.length > 0 && ` • ${c.lessons.length} Videos`}
+                        {c.resources && c.resources.length > 0 && ` • ${c.resources.length} Materials`}
+                      </p>
+                      {isPending && (
+                        <p className="text-[11px] text-amber-300/80 italic">
+                          Submitted by teacher awaiting verification. Trainees cannot see or enroll in this course until approved.
+                        </p>
                       )}
                     </div>
-                    <p className="text-xs text-slate-400">Faculty: {c.trainerName} • Level: {c.level} • Duration: {formatCourseDuration(c)}</p>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="badge-green text-[9px]">ACTIVE & PUBLISHED</span>
-                    <button
-                      onClick={() => setCourseToDelete(c)}
-                      className="p-1.5 text-rose-400 hover:text-rose-300 rounded-lg cursor-pointer transition"
-                      title="Permanently Delete Course"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isPending ? (
+                        <>
+                          <Link
+                            to={`/trainee/course/${c.id}`}
+                            target="_blank"
+                            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition"
+                            title="Preview syllabus, videos & study materials"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-[#2997ff]" /> Preview
+                          </Link>
+                          <button
+                            onClick={() => handleApproveCourse(c)}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-emerald-600/20 cursor-pointer"
+                            title="Approve this course and publish to all trainees"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Approve & Publish
+                          </button>
+                          <button
+                            onClick={() => handleRejectCourse(c)}
+                            className="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                            title="Reject and discard this course submission"
+                          >
+                            <X className="w-3.5 h-3.5" /> Reject
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Link
+                            to={`/trainee/course/${c.id}`}
+                            target="_blank"
+                            className="p-1.5 text-slate-400 hover:text-white rounded-lg transition"
+                            title="View in Catalog"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => setCourseToDelete(c)}
+                            className="p-1.5 text-rose-400 hover:text-rose-300 rounded-lg cursor-pointer transition"
+                            title="Permanently Delete Course"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 

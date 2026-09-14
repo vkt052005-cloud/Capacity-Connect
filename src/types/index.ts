@@ -90,7 +90,7 @@ export type CourseCategory =
   | "AI & Data"
   | "MoES & IMD Operations"
   | "Atmospheric & Ocean Sciences";
-export type CourseStatus = "active" | "draft" | "archived";
+export type CourseStatus = "active" | "draft" | "archived" | "pending_approval";
 export type ResourceType = "video" | "pdf" | "presentation" | "document" | "link";
 
 export interface SlideItem {

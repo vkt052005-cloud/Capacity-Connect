@@ -246,7 +246,7 @@ export const CourseDetail: React.FC = () => {
       <DashboardLayout
         pageTitle="Course Not Found"
         breadcrumbs={[
-          { label: "Courses", to: "/trainee/courses" },
+          { label: "Courses", to: "/courses" },
           { label: "Not Found" }
         ]}
       >
@@ -259,10 +259,48 @@ export const CourseDetail: React.FC = () => {
             The requested course could not be located in the curriculum catalog.
           </p>
           <button
-            onClick={() => navigate("/trainee/courses")}
+            onClick={() => navigate("/courses")}
             className="apple-btn-primary text-xs px-5 py-2.5 font-bold mx-auto flex items-center gap-2 cursor-pointer"
           >
             Return to Catalog
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const isAuthorizedViewer = Boolean(
+    currentUser &&
+    (currentUser.role === "admin" ||
+     course.trainerId === currentUser.id ||
+     (course.trainerName && currentUser.name && course.trainerName.toLowerCase() === currentUser.name.toLowerCase()))
+  );
+
+  if (course.status === "pending_approval" && !isAuthorizedViewer) {
+    return (
+      <DashboardLayout
+        pageTitle="Curriculum Under Review"
+        breadcrumbs={[
+          { label: "Courses", to: "/courses" },
+          { label: "Under Review" }
+        ]}
+      >
+        <div className="max-w-md mx-auto my-16 p-8 glass-panel border border-amber-500/25 rounded-3xl text-center space-y-4 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+            <Clock className="w-8 h-8 animate-pulse" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Curriculum Under Administrative Review</h2>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            "{course.title}" was authored by {course.trainerName || "Faculty"} and is currently awaiting approval from platform administrators before general availability.
+          </p>
+          <p className="text-[11px] text-slate-400">
+            Please explore our currently active and published courses in the catalog.
+          </p>
+          <button
+            onClick={() => navigate("/courses")}
+            className="apple-btn-primary text-xs px-5 py-2.5 font-bold mx-auto flex items-center gap-2 cursor-pointer"
+          >
+            Explore Available Courses
           </button>
         </div>
       </DashboardLayout>
@@ -369,6 +407,36 @@ export const CourseDetail: React.FC = () => {
       ]}
     >
       <div className="space-y-6">
+        {/* Course Under Review Preview Banner for Admin & Author */}
+        {course.status === "pending_approval" && (
+          <div className="glass-card p-4 border border-amber-500/40 bg-amber-500/10 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <span className="badge text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold uppercase tracking-wider">
+                  Admin Review Pending
+                </span>
+                <p className="text-xs text-white font-semibold mt-0.5">
+                  Authorized Preview Mode: This curriculum is currently pending administrative approval.
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Trainees cannot see or enroll in this course until an administrator approves and publishes it.
+                </p>
+              </div>
+            </div>
+            {currentUser?.role === "admin" && (
+              <button
+                onClick={() => navigate("/admin/courses")}
+                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition shrink-0 cursor-pointer"
+              >
+                Go to Approval Portal
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Course-Specific Live Meet Alert (If teacher is live right now for this course) */}
         {courseLiveSession && (
           <div className="glass-card p-5 border-2 border-rose-500/60 bg-gradient-to-r from-rose-950/70 via-[#1a0818] to-[#0c0f1c] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_0_35px_rgba(244,63,94,0.3)] relative overflow-hidden animate-pulse">

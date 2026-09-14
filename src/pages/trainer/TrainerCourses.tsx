@@ -317,6 +317,9 @@ export const TrainerCourses: React.FC = () => {
         });
       }
 
+      const isTeacher = currentUser?.role !== "admin";
+      const courseStatus = isTeacher ? "pending_approval" : "active";
+
       addCourse({
         id: courseId,
         title: courseTitle,
@@ -325,7 +328,7 @@ export const TrainerCourses: React.FC = () => {
         duration: initialLessons.length > 0 ? initialVideoDuration.trim() || initialDuration : initialDuration,
         modules: modNum || (initialLessons.length > 0 ? 1 : undefined),
         level,
-        status: "active",
+        status: courseStatus,
         trainerId,
         trainerName: trainerDisplayName,
         thumbnail: thumbnailUrl.trim() || THUMBNAIL_PRESETS[0].url,
@@ -335,14 +338,35 @@ export const TrainerCourses: React.FC = () => {
         lessons: initialLessons
       });
 
-      // Automatically broadcast notification: 'A teacher uploaded a course'
-      addNotification({
-        title: `A teacher uploaded a course: ${courseTitle}`,
-        content: `${trainerDisplayName} has published a new ${category} curriculum: "${courseTitle}". Trainees can now enroll and start learning.`,
-        type: "new_content",
-        pinned: true,
-        author: trainerDisplayName
-      });
+      if (courseStatus === "active") {
+        // Automatically broadcast notification: 'A teacher uploaded a course'
+        addNotification({
+          title: `New Curriculum Published: ${courseTitle}`,
+          content: `${trainerDisplayName} has published a new ${category} curriculum: "${courseTitle}". Trainees can now enroll and start learning.`,
+          type: "new_content",
+          pinned: true,
+          author: trainerDisplayName
+        });
+        addToast({
+          title: "Course Published Successfully",
+          message: "New curriculum published to catalog and trainees notified.",
+          type: "success"
+        });
+      } else {
+        // Automatically alert admin: 'Course submitted for review'
+        addNotification({
+          title: `Course Pending Admin Review: ${courseTitle}`,
+          content: `${trainerDisplayName} has submitted a new ${category} curriculum "${courseTitle}" for administrative review before going live.`,
+          type: "announcement",
+          pinned: true,
+          author: trainerDisplayName
+        });
+        addToast({
+          title: "Course Submitted for Review",
+          message: "Your course was submitted to the Administrator for approval. It will appear in the catalog once approved.",
+          type: "info"
+        });
+      }
 
       setShowAddModal(false);
       setTitle("");
@@ -355,11 +379,6 @@ export const TrainerCourses: React.FC = () => {
       setInitialResourceUrl("");
       setThumbnailUrl(THUMBNAIL_PRESETS[0].url);
       setIsSubmittingCourse(false);
-      addToast({
-        title: "Course Created Successfully",
-        message: "New curriculum published to catalog and trainees notified.",
-        type: "success"
-      });
     };
 
     // Handle Study Material Upload
@@ -646,6 +665,15 @@ export const TrainerCourses: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="badge-blue text-[9px]">{c.category}</span>
                       <div className="flex items-center gap-1.5">
+                        {c.status === "pending_approval" ? (
+                          <span className="badge text-[9px] bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-semibold">
+                            <Clock className="w-3 h-3 text-amber-400 animate-pulse" /> Review Pending
+                          </span>
+                        ) : (
+                          <span className="badge text-[9px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-semibold">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Published
+                          </span>
+                        )}
                         <span className="badge text-[9px] bg-purple-500/15 text-purple-300 border border-purple-500/30 flex items-center gap-1">
                           <Film className="w-3 h-3" /> {videoCount} {videoCount === 1 ? "Video" : "Videos"}
                         </span>
@@ -655,6 +683,17 @@ export const TrainerCourses: React.FC = () => {
                     <div>
                       <h4 className="text-sm font-bold text-white line-clamp-1">{c.title}</h4>
                       <p className="text-xs text-slate-400 line-clamp-2 mt-1">{c.description}</p>
+                      {c.status === "pending_approval" && (
+                        <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-[11px] text-amber-200/90 flex items-start gap-2">
+                          <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                          <div className="space-y-0.5">
+                            <p className="font-semibold text-amber-300">Under Administrator Review</p>
+                            <p className="text-[10px] text-amber-200/70 leading-relaxed">
+                              This curriculum is awaiting admin approval before being made visible to trainees in the catalog.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Student Quality Rating & Reviews trigger */}
