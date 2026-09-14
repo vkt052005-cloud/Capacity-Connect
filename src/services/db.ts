@@ -255,6 +255,28 @@ class DatabaseService {
       this.notifySubscribers(collection, { action: 'delete', data: { [column]: value } });
     } catch (e) {}
   }
+
+  // Robust unenrollment from Cloud Supabase by student ID and course ID
+  public async removeEnrollment(traineeId: string, courseId: string, enrollmentId?: string): Promise<void> {
+    if (isSupabaseConfigured) {
+      try {
+        if (enrollmentId) {
+          await supabase.delete('enrollments', 'id', enrollmentId);
+        }
+        await supabase.deleteQuery('enrollments', `trainee_id=eq.${encodeURIComponent(traineeId)}&course_id=eq.${encodeURIComponent(courseId)}`);
+        await supabase.deleteQuery('enrollments', `user_id=eq.${encodeURIComponent(traineeId)}&course_id=eq.${encodeURIComponent(courseId)}`);
+        this.notifySubscribers('enrollments', { action: 'delete', data: { traineeId, courseId } });
+      } catch (err) {
+        console.warn('Supabase removeEnrollment failed:', err);
+      }
+    }
+
+    if (enrollmentId) {
+      try {
+        await fetch(`${this.getBaseUrl()}/api/db/enrollments/${enrollmentId}`, { method: 'DELETE' });
+      } catch (e) {}
+    }
+  }
 }
 
 export const dbService = new DatabaseService();

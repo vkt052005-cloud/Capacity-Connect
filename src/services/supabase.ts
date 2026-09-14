@@ -170,6 +170,20 @@ export class SupabaseClient {
     }
   }
 
+  async deleteQuery(table: string, query: string): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+    try {
+      const res = await fetch(`${this.url}/rest/v1/${table}?${query}`, {
+        method: "DELETE",
+        headers: this.headers(),
+      });
+      return res.ok;
+    } catch (e) {
+      console.error(`Supabase deleteQuery error on ${table}:`, e);
+      return false;
+    }
+  }
+
   async uploadFile(bucket: string, path: string, file: Blob | File): Promise<string | null> {
     if (!isSupabaseConfigured) return null;
     try {

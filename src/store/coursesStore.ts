@@ -475,9 +475,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       }).catch(() => {});
     } catch {}
 
-    if (target?.id) {
-      dbService.remove("enrollments", target.id).catch(() => {});
-    }
+    dbService.removeEnrollment(traineeId, courseId, target?.id).catch(() => {});
 
     try {
       const course = get().courses.find((c) => c.id === courseId);
