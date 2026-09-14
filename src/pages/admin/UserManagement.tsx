@@ -278,6 +278,15 @@ export const UserManagement: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!userToDelete) return;
+    if (userToDelete.id === "u-admin-official" || userToDelete.email?.toLowerCase() === "vkt052005@gmail.com") {
+      addToast({
+        title: "Action Restricted",
+        message: "Primary Platform Owner account cannot be removed.",
+        type: "error"
+      });
+      setUserToDelete(null);
+      return;
+    }
     const name = userToDelete.name;
     const email = userToDelete.email;
     const id = userToDelete.id;
@@ -303,6 +312,15 @@ export const UserManagement: React.FC = () => {
 
   const handleConfirmPermanentDelete = async () => {
     if (!userToPermanentDelete) return;
+    if (userToPermanentDelete.id === "u-admin-official" || userToPermanentDelete.email?.toLowerCase() === "vkt052005@gmail.com") {
+      addToast({
+        title: "Action Restricted",
+        message: "Primary Platform Owner account cannot be erased.",
+        type: "error"
+      });
+      setUserToPermanentDelete(null);
+      return;
+    }
     const name = userToPermanentDelete.name;
     const email = userToPermanentDelete.email;
     const id = userToPermanentDelete.id;
@@ -677,6 +695,8 @@ export const UserManagement: React.FC = () => {
               <tbody className="divide-y divide-white/5">
                 {filtered.map((u) => {
                   const isCurrentAdmin = currentUser?.id === u.id;
+                  const isPrimaryOwner = u.id === "u-admin-official" || u.email?.toLowerCase() === "vkt052005@gmail.com";
+                  const isProtectedAdmin = isCurrentAdmin || isPrimaryOwner;
                   return (
                     <tr key={u.id} className="hover:bg-white/[0.02] transition">
                       {/* Name & Email */}
@@ -691,6 +711,9 @@ export const UserManagement: React.FC = () => {
                               {isCurrentAdmin && (
                                 <span className="badge-blue text-[8px] py-0">You (Current Admin)</span>
                               )}
+                              {isPrimaryOwner && !isCurrentAdmin && (
+                                <span className="badge-purple text-[8px] py-0">Primary Platform Owner</span>
+                              )}
                             </p>
                             <p className="text-[10px] text-slate-400">{u.email}</p>
                           </div>
@@ -699,7 +722,7 @@ export const UserManagement: React.FC = () => {
 
                       {/* Role Dropdown */}
                       <td className="py-3 px-3">
-                        {isCurrentAdmin ? (
+                        {isProtectedAdmin ? (
                           <span className="badge-purple text-[9px] uppercase font-bold">Admin</span>
                         ) : (
                           <select
@@ -868,7 +891,7 @@ export const UserManagement: React.FC = () => {
                               )}
 
                               {/* Suspend / Activate toggle */}
-                              {!isCurrentAdmin && (
+                              {!isProtectedAdmin && (
                                 <>
                                   {u.status === "active" ? (
                                     <button
@@ -905,7 +928,7 @@ export const UserManagement: React.FC = () => {
                               )}
 
                               {/* Remove / Delete User Button */}
-                              {isCurrentAdmin ? (
+                              {isProtectedAdmin ? (
                                 <span className="text-[9.5px] text-slate-500 font-mono italic px-2">Protected</span>
                               ) : (
                                 <button
