@@ -16,6 +16,7 @@ interface UsersState {
   updateRole: (userId: string, role: User['role']) => Promise<void>;
   verifyTrainer: (userId: string, isVerified: boolean) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
+  purgeRevokedUsers: () => Promise<number>;
   removeUser: (userId: string, reason?: string) => Promise<void>;
   allowUserAccess: (userId: string) => Promise<void>;
   requestReinstatement: (email: string, note?: string) => Promise<{ success: boolean; message: string }>;
@@ -263,6 +264,38 @@ export const useUsersStore = create<UsersState>((set, get) => ({
         status: "SUCCESS"
       });
     }
+  },
+
+  purgeRevokedUsers: async () => {
+    const { users } = get();
+    const isRemoved = (u: User) =>
+      u.status === "removed" ||
+      Boolean(u.removedAt) ||
+      Boolean((u as any).removed_at) ||
+      Boolean(u.removalReason) ||
+      Boolean((u as any).removal_reason);
+
+    const revokedUsers = users.filter(isRemoved);
+    const remainingUsers = users.filter((u) => !isRemoved(u));
+    set({ users: remainingUsers });
+
+    for (const u of revokedUsers) {
+      try {
+        await dbService.remove('users', u.id);
+      } catch (e) {
+        console.warn(`Failed to delete revoked user ${u.id}:`, e);
+      }
+    }
+
+    recordAuditEvent({
+      actor: "Capacity Connect Admin",
+      role: "admin",
+      action: "REVOKED_USERS_PURGED",
+      target: `Permanently purged ${revokedUsers.length} revoked user records from database`,
+      status: "SUCCESS"
+    });
+
+    return revokedUsers.length;
   },
 
   removeUser: async (userId, reason) => {

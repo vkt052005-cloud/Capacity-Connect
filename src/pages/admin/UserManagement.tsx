@@ -164,7 +164,7 @@ const generateStrongPasswordString = () => {
 };
 
 export const UserManagement: React.FC = () => {
-  const { users, load, approveUser, rejectUser, deleteUser, deactivateUser, activateUser, updateRole, verifyTrainer, removeUser, allowUserAccess } = useUsersStore();
+  const { users, load, approveUser, rejectUser, deleteUser, purgeRevokedUsers, deactivateUser, activateUser, updateRole, verifyTrainer, removeUser, allowUserAccess } = useUsersStore();
   const { currentUser } = useAuthStore();
   const { addToast } = useAppStore();
 
@@ -176,6 +176,9 @@ export const UserManagement: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToPermanentDelete, setUserToPermanentDelete] = useState<User | null>(null);
+  const [purgeAllModalOpen, setPurgeAllModalOpen] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
   const [removalReason, setRemovalReason] = useState("");
 
   const formatDate = (dateStr?: string) => {
@@ -296,6 +299,43 @@ export const UserManagement: React.FC = () => {
       message: `${targetUser.name} (${targetUser.email}) has been re-admitted and can now log in to Capacity Connect.`,
       type: "success"
     });
+  };
+
+  const handleConfirmPermanentDelete = async () => {
+    if (!userToPermanentDelete) return;
+    const name = userToPermanentDelete.name;
+    const email = userToPermanentDelete.email;
+    const id = userToPermanentDelete.id;
+
+    await deleteUser(id);
+    setUserToPermanentDelete(null);
+
+    addToast({
+      title: "User Data Permanently Erased",
+      message: `The account and all associated records for ${name} (${email}) have been permanently deleted from the database.`,
+      type: "success"
+    });
+  };
+
+  const handleConfirmPurgeAll = async () => {
+    setIsPurging(true);
+    try {
+      const count = await purgeRevokedUsers();
+      setPurgeAllModalOpen(false);
+      addToast({
+        title: "Revoked Records Purged",
+        message: `Successfully deleted ${count} revoked user record(s) permanently from the database.`,
+        type: "success"
+      });
+    } catch (e) {
+      addToast({
+        title: "Purge Failed",
+        message: "Failed to purge some records. Please try again.",
+        type: "error"
+      });
+    } finally {
+      setIsPurging(false);
+    }
   };
 
   const handleCreateUser = (e: React.FormEvent) => {
@@ -596,16 +636,28 @@ export const UserManagement: React.FC = () => {
               <div>
                 <span className="font-bold text-white block">Quarantine & Revocation Directory</span>
                 <span className="text-[11px] text-rose-200/90 leading-relaxed block">
-                  Showing {filtered.length} account(s) whose platform access was revoked by an Administrator. These users cannot log in anywhere on the website. Click <strong>Allow Access</strong> on any row to restore credentials.
+                  Showing {filtered.length} account(s) whose platform access was revoked by an Administrator. Click <strong>Allow Access</strong> to restore, or <strong>Delete Data</strong> to permanently erase their data from the system.
                 </span>
               </div>
             </div>
-            <button
-              onClick={() => setStatusFilter("all")}
-              className="apple-btn-secondary text-[11px] py-1 px-3 whitespace-nowrap self-end sm:self-auto cursor-pointer"
-            >
-              Back to Active Directory →
-            </button>
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              {filtered.length > 0 && (
+                <button
+                  onClick={() => setPurgeAllModalOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer"
+                  title="Permanently delete all revoked users and their data from the database"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Purge All Revoked Data ({filtered.length})</span>
+                </button>
+              )}
+              <button
+                onClick={() => setStatusFilter("all")}
+                className="apple-btn-secondary text-[11px] py-1 px-3 whitespace-nowrap cursor-pointer"
+              >
+                Back to Active Directory →
+              </button>
+            </div>
           </div>
         )}
 
@@ -726,7 +778,7 @@ export const UserManagement: React.FC = () => {
                       {/* Action Buttons */}
                       <td className="py-3 px-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* If user is removed by admin, show the primary Allow Access button */}
+                          {/* If user is removed by admin, show Allow Access and Delete Permanently buttons */}
                           {isUserRemoved(u) ? (
                             <div className="flex items-center gap-1.5">
                               <button
@@ -736,6 +788,14 @@ export const UserManagement: React.FC = () => {
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                                 <span>Allow Access</span>
+                              </button>
+                              <button
+                                onClick={() => setUserToPermanentDelete(u)}
+                                className="px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-600 hover:text-white text-rose-300 border border-rose-500/40 text-[10px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm hover:scale-[1.02]"
+                                title="Permanently delete user record and data from database"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                                <span>Delete Data</span>
                               </button>
                             </div>
                           ) : u.status === "pending" ? (
@@ -953,6 +1013,126 @@ export const UserManagement: React.FC = () => {
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Confirm & Revoke Access</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Confirmation Modal to Permanently Delete a Single Revoked User */}
+      {userToPermanentDelete && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
+          <div className="relative max-w-md w-full bg-[#0c1017] p-6 border border-rose-500/50 rounded-2xl shadow-2xl space-y-4 my-auto">
+            <div className="flex items-center gap-3 text-rose-400 border-b border-white/10 pb-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30">
+                <Trash2 className="w-5 h-5 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-tight">Permanently Delete User Data</h3>
+                <p className="text-[10.5px] text-rose-300 font-mono">Irreversible Database Deletion</p>
+              </div>
+              <button
+                onClick={() => setUserToPermanentDelete(null)}
+                className="ml-auto text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300 leading-relaxed bg-white/[0.02] p-3.5 rounded-xl border border-white/5">
+              <p>
+                Are you sure you want to permanently delete <strong className="text-white font-bold">{userToPermanentDelete.name}</strong>?
+              </p>
+              <div className="space-y-1 text-[11px] text-slate-400">
+                <p>• Email: <span className="text-slate-200 font-mono">{userToPermanentDelete.email}</span></p>
+                <p>• Role: <span className="uppercase text-[#2997ff] font-semibold">{userToPermanentDelete.role}</span></p>
+                <p>• Status: <span className="text-rose-400 font-bold uppercase">Access Revoked</span></p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-200 text-[11px] space-y-1">
+                <p className="font-bold flex items-center gap-1 text-rose-300">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Warning: Permanent Data Erasure</span>
+                </p>
+                <p className="text-rose-200/90 leading-relaxed">
+                  This user&apos;s account and all associated profile records will be permanently erased from the database. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setUserToPermanentDelete(null)}
+                className="apple-btn-secondary text-xs px-4 py-2 font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPermanentDelete}
+                className="apple-btn-danger text-xs px-4 py-2 font-bold flex items-center gap-1.5 shadow-lg shadow-rose-900/40 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Permanently Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Confirmation Modal to Purge ALL Revoked Users */}
+      {purgeAllModalOpen && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
+          <div className="relative max-w-md w-full bg-[#0c1017] p-6 border border-rose-600/60 rounded-2xl shadow-2xl space-y-4 my-auto">
+            <div className="flex items-center gap-3 text-rose-400 border-b border-white/10 pb-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-500/25 flex items-center justify-center border border-rose-500/40">
+                <ShieldAlert className="w-5 h-5 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-tight">Purge All Revoked User Data</h3>
+                <p className="text-[10.5px] text-rose-300 font-mono">Bulk Permanent Erasure</p>
+              </div>
+              <button
+                onClick={() => setPurgeAllModalOpen(false)}
+                disabled={isPurging}
+                className="ml-auto text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300 leading-relaxed bg-white/[0.02] p-3.5 rounded-xl border border-white/5">
+              <p>
+                Are you sure you want to permanently delete the data of <strong>all revoked users</strong> ({users.filter(isUserRemoved).length} accounts)?
+              </p>
+
+              <div className="p-3 rounded-lg bg-rose-500/15 border border-rose-500/35 text-rose-200 text-[11px] space-y-1">
+                <p className="font-bold flex items-center gap-1 text-rose-300">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Irreversible Database Action:</span>
+                </p>
+                <p className="text-rose-200/90 leading-relaxed">
+                  All {users.filter(isUserRemoved).length} quarantined accounts will be permanently removed from the database and will no longer appear anywhere in the portal.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setPurgeAllModalOpen(false)}
+                disabled={isPurging}
+                className="apple-btn-secondary text-xs px-4 py-2 font-medium cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPurgeAll}
+                disabled={isPurging}
+                className="apple-btn-danger text-xs px-4 py-2 font-bold flex items-center gap-1.5 shadow-lg shadow-rose-900/50 cursor-pointer disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isPurging ? "Purging Records..." : `Confirm Purge (${users.filter(isUserRemoved).length} Users)`}</span>
               </button>
             </div>
           </div>
