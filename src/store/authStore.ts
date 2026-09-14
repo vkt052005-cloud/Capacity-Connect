@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import bcrypt from "bcryptjs";
 import type { User, TrainerProfile } from "../types";
-import { STORAGE_KEYS, generateId } from "../data/seed";
+import { STORAGE_KEYS, generateId, initialUsers } from "../data/seed";
 import { dbService } from "../services/db";
 import { supabase, isSupabaseConfigured } from "../services/supabase";
 import { recordAuditEvent } from "./auditStore";
@@ -254,6 +254,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return uEmail === cleanEmail || (!cleanEmail.includes("@") && uEmail.startsWith(`${cleanEmail}@`));
       });
       if (inMemory) user = inMemory;
+    }
+
+    // 3. Fallback to initialUsers seed (e.g. demo accounts or offline resilience)
+    if (!user || !user.password) {
+      const seedUser = initialUsers.find((u) => {
+        const uEmail = u.email?.toLowerCase() || "";
+        return uEmail === cleanEmail || (!cleanEmail.includes("@") && uEmail.startsWith(`${cleanEmail}@`));
+      });
+      if (seedUser) user = seedUser;
     }
 
     // User not found

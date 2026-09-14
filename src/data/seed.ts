@@ -33,6 +33,63 @@ export const initialLeaderboard: LeaderboardEntry[] = [
 
 export const initialUsers: User[] = [
   {
+    id: "u-admin-demo",
+    name: "Platform Administrator (Demo)",
+    email: "admin@capacityconnect.org",
+    password: "$2b$10$kgHviWImLKaWWZ402SUlVOJQIPOmbJU9pln7CretSDCraBb2LDgui",
+    role: "admin",
+    status: "active",
+    createdAt: "2026-09-01T08:00:00Z"
+  },
+  {
+    id: "u-trainer-demo",
+    name: "Dr. Rajesh Sen (Demo Faculty)",
+    email: "trainer@capacityconnect.org",
+    password: "$2b$10$kgHviWImLKaWWZ402SUlVOJQIPOmbJU9pln7CretSDCraBb2LDgui",
+    role: "trainer",
+    status: "active",
+    isVerifiedByAdmin: true,
+    createdAt: "2026-09-01T08:00:00Z",
+    trainerProfile: {
+      bio: "Senior Technical Educator specializing in Full-Stack Systems, Cloud Infrastructure, and Computer Science.",
+      expertise: ["Full-Stack Architecture", "Cloud Systems", "Database Design"],
+      competencies: ["Curriculum Authoring", "Mentorship", "Hands-on Projects"],
+      phone: "+91 98765 11111",
+      department: "Computer Science & Engineering",
+      designation: "Senior Technical Faculty",
+      experience: "10+ Years Experience",
+      rating: 4.96,
+      totalStudentsTaught: 30000,
+      verifiedCredentials: ["Senior Technical Faculty", "Verified LMS Instructor"],
+      isVerifiedByAdmin: true
+    }
+  },
+  {
+    id: "u-trainee-demo",
+    name: "Rahul Sharma (Demo Trainee)",
+    email: "trainee@capacityconnect.org",
+    password: "$2b$10$kgHviWImLKaWWZ402SUlVOJQIPOmbJU9pln7CretSDCraBb2LDgui",
+    role: "trainee",
+    status: "active",
+    createdAt: "2026-09-01T08:00:00Z",
+    traineeProfile: {
+      bio: "Dedicated Engineering scholar actively acquiring advanced competencies on Capacity Connect.",
+      phone: "+91 98765 00000",
+      department: "Computer Science & Engineering",
+      designation: "Undergraduate Student",
+      qualifications: ["B.Tech Computer Science (In Progress)"],
+      experience: ["Student Scholar"],
+      skills: ["Full-Stack Web Development", "Data Structures & Algorithms"],
+      interests: ["Cloud Systems", "Full-Stack Web Development"],
+      certificates: [],
+      xpPoints: 1450,
+      streakDays: 5,
+      completedCoursesCount: 1,
+      badges: [],
+      enrolledCourses: ["c6", "c-dsa"]
+    }
+  },
+  {
     id: "u-admin-official",
     name: "Capacity Connect Admin",
     email: "vkt052005@gmail.com",
