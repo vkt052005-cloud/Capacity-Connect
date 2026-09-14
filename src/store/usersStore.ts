@@ -3,6 +3,20 @@ import type { User } from '../types';
 import { STORAGE_KEYS } from '../data/seed';
 import { dbService } from '../services/db';
 import { recordAuditEvent } from './auditStore';
+import { isDemoAccount } from '../utils/demoMode';
+
+/** Checks if the currently active logged-in user is a dummy demo account */
+function isCurrentSessionDemo(): boolean {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTH);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    const user = parsed?.user || parsed;
+    return isDemoAccount(user);
+  } catch (e) {
+    return false;
+  }
+}
 
 interface UsersState {
   users: User[];
@@ -126,6 +140,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   approveUser: async (userId) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud user approval restricted in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, status: 'active' as const } : u));
@@ -144,6 +162,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   rejectUser: async (userId) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud user rejection restricted in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, status: "rejected" as const } : u));
@@ -162,6 +184,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   deactivateUser: async (userId) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud user deactivation restricted in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, status: 'inactive' as const } : u));
@@ -180,6 +206,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   activateUser: async (userId) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud user activation restricted in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, status: 'active' as const } : u));
@@ -198,6 +228,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   updateRole: async (userId, role) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud user role updates restricted in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => (u.id === userId ? { ...u, role } : u));
@@ -216,6 +250,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   verifyTrainer: async (userId, isVerified) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud trainer verification restricted in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.map((u) => {
@@ -251,6 +289,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   deleteUser: async (userId) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud user deletion strictly blocked in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     const updated = users.filter((u) => u.id !== userId);
@@ -269,6 +311,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   purgeRevokedUsers: async () => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Purge revoked users strictly blocked in demo session.");
+      return 0;
+    }
     const { users } = get();
     const isRemoved = (u: User) =>
       u.status === "removed" ||
@@ -301,6 +347,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   removeUser: async (userId, reason) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud user removal strictly blocked in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     if (!targetUser) return;
@@ -348,6 +398,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   allowUserAccess: async (userId) => {
+    if (isCurrentSessionDemo()) {
+      console.warn("[DemoSandbox] Cloud user allowAccess blocked in demo session.");
+      return;
+    }
     const { users } = get();
     const targetUser = users.find((u) => u.id === userId);
     if (!targetUser) return;

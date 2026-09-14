@@ -14,6 +14,7 @@ import { useNotificationsStore } from "../../store/notificationsStore";
 import { AdaptiveVideoPlayer } from "../../components/video/AdaptiveVideoPlayer";
 import { formatCourseDuration, extractMediaDuration } from "../../utils/courseDuration";
 import { storeVideoBlob, uploadVideoToSupabase } from "../../utils/videoStorage";
+import { isDemoAccount, isProtectedProductionCourse } from "../../utils/demoMode";
 import type { CourseCategory, CourseLesson, Resource } from "../../types";
 
 export const THUMBNAIL_PRESETS = [
@@ -152,6 +153,15 @@ export const TrainerCourses: React.FC = () => {
   // Permanent course deletion handler
   const handleConfirmDeleteCourse = async () => {
     if (!courseToDelete) return;
+    if (isDemoAccount(currentUser) && isProtectedProductionCourse(courseToDelete)) {
+      addToast({
+        title: "Sandbox Protected",
+        message: "Production courses cannot be deleted in demo mode.",
+        type: "warning"
+      });
+      setCourseToDelete(null);
+      return;
+    }
     setIsDeletingCourse(true);
     try {
       deleteCourse(courseToDelete.id);
@@ -572,6 +582,19 @@ export const TrainerCourses: React.FC = () => {
       ]}
     >
       <div className="space-y-6">
+        {/* Sandbox Evaluation Mode Banner */}
+        {isDemoAccount(currentUser) && (
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-200 text-xs flex items-center gap-3 shadow-lg animate-fadeIn">
+            <Sparkles className="w-5 h-5 text-indigo-400 shrink-0" />
+            <div className="space-y-0.5">
+              <p className="font-bold text-indigo-300">Faculty Curriculum Sandbox (Production Protected)</p>
+              <p className="text-[11px] text-indigo-200/80 leading-relaxed">
+                You are authenticated as <strong>Demo Faculty</strong>. You can test building new courses, uploading materials, and scheduling live classes. Production courses authored by other instructors cannot be deleted or altered.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Verification Status Banner */}
         {!isVerifiedTrainer ? (
           <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -907,13 +930,17 @@ export const TrainerCourses: React.FC = () => {
                       >
                         <Video className="w-3.5 h-3.5" /> +Video
                       </button>
-                      <button
-                        onClick={() => setCourseToDelete(c)}
-                        className="text-rose-400 hover:text-rose-300 transition p-1 cursor-pointer"
-                        title="Permanently Delete Course"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {isProtectedProductionCourse(c) && isDemoAccount(currentUser) ? (
+                        <span className="text-[9.5px] text-slate-500 font-mono italic px-2">Protected</span>
+                      ) : (
+                        <button
+                          onClick={() => setCourseToDelete(c)}
+                          className="text-rose-400 hover:text-rose-300 transition p-1 cursor-pointer"
+                          title="Permanently Delete Course"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

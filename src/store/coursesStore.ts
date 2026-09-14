@@ -6,6 +6,7 @@ import { deleteVideoBlob } from "../utils/videoStorage";
 import { useUsersStore } from "./usersStore";
 import { useAuthStore } from "./authStore";
 import { recordAuditEvent } from "./auditStore";
+import { isDemoAccount, isProtectedProductionCourse } from "../utils/demoMode";
 
 interface CoursesState {
   courses: Course[];
@@ -594,6 +595,14 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
   updateCourse: (courseId, updates) => {
     const { courses } = get();
+    const targetCourse = courses.find((c) => c.id === courseId);
+    const currentUser = useAuthStore.getState().currentUser;
+
+    if (isDemoAccount(currentUser) && isProtectedProductionCourse(targetCourse)) {
+      console.warn("[DemoSandbox] Cloud update of production course blocked for demo session:", courseId);
+      return;
+    }
+
     const updated = courses.map((c) => (c.id === courseId ? { ...c, ...updates } : c));
     set({ courses: updated });
     dbService.update("courses", courseId, updates).catch(() => {});
@@ -602,6 +611,12 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   deleteCourse: (courseId) => {
     const { courses, enrollments, feedbacks, certificates } = get();
     const courseToDelete = courses.find((c) => c.id === courseId);
+    const currentUser = useAuthStore.getState().currentUser;
+
+    if (isDemoAccount(currentUser) && isProtectedProductionCourse(courseToDelete)) {
+      console.warn("[DemoSandbox] Deletion of production course blocked for demo session:", courseId);
+      return;
+    }
 
     // 1. Remove course from state
     const updatedCourses = courses.filter((c) => c.id !== courseId);

@@ -8,6 +8,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useNotificationsStore } from "../../store/notificationsStore";
 import { formatCourseDuration } from "../../utils/courseDuration";
 import { CourseCategory, CourseLesson, Resource } from "../../types";
+import { isDemoAccount, isProtectedProductionCourse } from "../../utils/demoMode";
 
 const ADMIN_THUMBNAIL_PRESETS = [
   { label: "Computer Science & IT", url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80" },
@@ -175,6 +176,14 @@ export const CourseManagement: React.FC = () => {
   };
 
   const handleRejectCourse = (course: any) => {
+    if (isDemoAccount(currentUser) && isProtectedProductionCourse(course)) {
+      addToast({
+        title: "Sandbox Protected",
+        message: "Production courses cannot be rejected or removed in demo mode.",
+        type: "warning"
+      });
+      return;
+    }
     if (window.confirm(`Are you sure you want to reject the course "${course.title}" submitted by ${course.trainerName}? This will permanently remove it from the platform.`)) {
       deleteCourse(course.id);
       addNotification({
@@ -194,6 +203,15 @@ export const CourseManagement: React.FC = () => {
 
   const handleConfirmDeleteCourse = async () => {
     if (!courseToDelete) return;
+    if (isDemoAccount(currentUser) && isProtectedProductionCourse(courseToDelete)) {
+      addToast({
+        title: "Sandbox Protected",
+        message: "Production courses cannot be deleted in demo mode to protect platform content.",
+        type: "warning"
+      });
+      setCourseToDelete(null);
+      return;
+    }
     setIsDeleting(true);
     try {
       deleteCourse(courseToDelete.id);
@@ -223,6 +241,19 @@ export const CourseManagement: React.FC = () => {
       ]}
     >
       <div className="space-y-6">
+        {/* Sandbox Evaluation Mode Banner */}
+        {isDemoAccount(currentUser) && (
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-200 text-xs flex items-center gap-3 shadow-lg animate-fadeIn">
+            <Shield className="w-5 h-5 text-[#2997ff] shrink-0" />
+            <div className="space-y-0.5">
+              <p className="font-bold text-blue-300">Course Moderation Sandbox (Curriculum Protected)</p>
+              <p className="text-[11px] text-blue-200/80 leading-relaxed">
+                You are authenticated as <strong>Demo Administrator</strong>. You can preview curriculum submissions and test approving demo courses. Core production courses are locked from deletion to maintain catalog integrity.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Quality Rating Overview Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="card p-4 space-y-1">
@@ -449,13 +480,17 @@ export const CourseManagement: React.FC = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
-                          <button
-                            onClick={() => setCourseToDelete(c)}
-                            className="p-1.5 text-rose-400 hover:text-rose-300 rounded-lg cursor-pointer transition"
-                            title="Permanently Delete Course"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {isProtectedProductionCourse(c) && isDemoAccount(currentUser) ? (
+                            <span className="text-[9.5px] text-slate-500 font-mono italic px-2">Protected</span>
+                          ) : (
+                            <button
+                              onClick={() => setCourseToDelete(c)}
+                              className="p-1.5 text-rose-400 hover:text-rose-300 rounded-lg cursor-pointer transition"
+                              title="Permanently Delete Course"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
