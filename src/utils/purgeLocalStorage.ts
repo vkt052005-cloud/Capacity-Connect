@@ -22,4 +22,15 @@ export function purgeLocalDeviceData(): void {
       // Ignore errors
     }
   }
+
+  try {
+    const raw = window.localStorage.getItem("cc_enrollments");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const filtered = parsed.filter((e: any) => e && e.courseId !== "c-raj-tiwari-dsa");
+        window.localStorage.setItem("cc_enrollments", JSON.stringify(filtered));
+      }
+    }
+  } catch (e) {}
 }

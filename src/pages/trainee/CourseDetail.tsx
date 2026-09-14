@@ -137,8 +137,7 @@ const COURSE_ASSESSMENT_MAP: Record<string, string> = {
   "c-dbms": "a-dbms-neso",
   "c-cn": "a-cn-gate",
   "c-daa": "a-daa-kg",
-  "c-se": "a-se-iit",
-  "c-raj-tiwari-dsa": "a-dsa-striver"
+  "c-se": "a-se-iit"
 };
 
 export const CourseDetail: React.FC = () => {

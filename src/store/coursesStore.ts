@@ -55,9 +55,10 @@ const sanitizeCourses = (courses: Course[], feedbacks: Feedback[] = []): Course[
       if (c.title && c.title.trim() && seenTitleTrainer.has(titleKey)) return false;
       if (c.title && c.title.trim()) seenTitleTrainer.add(titleKey);
 
-      if (["c1", "c2", "c3", "c4", "c5"].includes(c.id)) return false;
+      if (["c1", "c2", "c3", "c4", "c5", "c-raj-tiwari-dsa"].includes(c.id)) return false;
       const trainer = (c.trainerName || "").toLowerCase();
-      if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar")) return false;
+      if (trainer.includes("marcus vance") || trainer.includes("sarah chen") || trainer.includes("rajesh kumar") || trainer.includes("raj tiwari")) return false;
+      if (c.trainerId === "u-trainer-official" && (c.title || "").toLowerCase().includes("data structures")) return false;
       const title = (c.title || "").toLowerCase();
       if (
         title.includes("advanced cloud infrastructure") ||
@@ -108,7 +109,7 @@ const sanitizeEnrollments = (enrollments: any[]): Enrollment[] => {
   return (enrollments || [])
     .filter((e) => {
       if (!e || !e.courseId) return false;
-      if (["c1", "c2", "c3", "c4", "c5"].includes(e.courseId)) return false;
+      if (["c1", "c2", "c3", "c4", "c5", "c-raj-tiwari-dsa"].includes(e.courseId)) return false;
       return true;
     })
     .map((e) => ({
@@ -191,6 +192,7 @@ const sanitizeFeedbacks = (feedbacks: Feedback[]): Feedback[] => {
 const sanitizeCertificates = (certificates: Certificate[]): Certificate[] => {
   return (certificates || []).filter((c) => {
     if (!c || !c.courseId) return false;
+    if (c.courseId === "c-raj-tiwari-dsa") return false;
     return true;
   });
 };
